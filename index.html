@@ -20,35 +20,45 @@
 *{box-sizing:border-box;}
 html,body{margin:0; padding:0; min-height:100%;}
 body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, var(--bg2) 45%, var(--bg1) 100%); color:var(--ink); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
-.wrap{width:100%; max-width:620px; text-align:center;}
+.wrap{width:100%; max-width:860px; text-align:center;}
 h1{font-family:'Secular One'; font-size:clamp(34px,5.5vw,58px); margin:0 0 8px; color:var(--gold);}
-.sub{font-size:18px; color:var(--ink-dim); max-width:440px; margin:0 auto 36px; line-height:1.5;}
-.cards{display:flex; gap:20px; flex-wrap:wrap; justify-content:center;}
-.card{flex:1 1 240px; max-width:280px; background:var(--card); border-radius:22px; padding:32px 24px; cursor:pointer; text-decoration:none; color:var(--ink); transition:transform .15s ease, background .15s ease; border:2px solid transparent;}
+.sub{font-size:18px; color:var(--ink-dim); max-width:520px; margin:0 auto 36px; line-height:1.5;}
+.cards{display:flex; gap:18px; flex-wrap:wrap; justify-content:center;}
+.card{flex:1 1 220px; max-width:260px; background:var(--card); border-radius:22px; padding:30px 22px; cursor:pointer; text-decoration:none; color:var(--ink); transition:transform .15s ease, background .15s ease; border:2px solid transparent;}
 .card:hover{transform:translateY(-4px); background:var(--card-hi); border-color:var(--gold);}
-.card .emoji{font-size:56px; margin-bottom:14px;}
-.card h2{font-family:'Secular One'; font-size:26px; margin:0 0 8px;}
-.card p{font-size:15px; color:var(--ink-dim); margin:0; line-height:1.5;}
-.foot{margin-top:38px; font-size:13px; color:var(--ink-dim);}
+.card .emoji{font-size:50px; margin-bottom:12px;}
+.card h2{font-family:'Secular One'; font-size:24px; margin:0 0 8px;}
+.card p{font-size:14px; color:var(--ink-dim); margin:0; line-height:1.5;}
+.card.combo{border-color:var(--teal);}
+.card.combo:hover{border-color:var(--gold);}
+.tag{display:inline-block; font-size:12px; font-weight:700; color:var(--teal); margin-bottom:6px;}
+.foot{margin-top:34px; font-size:13px; color:var(--ink-dim); line-height:1.6;}
+.foot a{color:var(--gold);}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🎓 כלים למורה</h1>
-  <p class="sub">בחרו מה לבנות — חידון טריוויה כיתתי, או מצגת תמונות עם מוזיקה.</p>
+  <p class="sub">בחרו כלי. אפשר חידון טריוויה, מצגת תמונות, או את שניהם יחד עם מעבר ביניהם.</p>
   <div class="cards">
+    <a class="card" href="teachermontage.html" target="_blank" rel="noopener">
+      <div class="emoji">🎬</div>
+      <h2>מצגת</h2>
+      <p>תמונות ומוזיקה על המסך.</p>
+    </a>
     <a class="card" href="teacherquiz.html" target="_blank" rel="noopener">
       <div class="emoji">🧠</div>
       <h2>חידון</h2>
-      <p>בנו חידון טריוויה, והתלמידים משחקים מהטלפון.</p>
+      <p>טריוויה, והתלמידים משחקים מהטלפון.</p>
     </a>
-    <a class="card" href="teachermontage.html" target="_blank" rel="noopener">
-      <div class="emoji">🎬</div>
-      <h2>מצגת תמונות</h2>
-      <p>בחרו תמונות ומוזיקה, והציגו על המסך.</p>
+    <a class="card combo" href="teachercombo.html" target="_blank" rel="noopener">
+      <span class="tag">שניהם יחד</span>
+      <div class="emoji">🎬🧠</div>
+      <h2>מצגת + חידון</h2>
+      <p>שני הכלים בדף אחד, עם מעבר ביניהם בלי לאבד כלום.</p>
     </a>
   </div>
-  <p class="foot">כל כלי נפתח בלשונית נפרדת, כך שאפשר לעבוד על שניהם בלי שאחד ידרוס את השני.</p>
+  <p class="foot">כל כלי נפתח בלשונית נפרדת.<br>לא בטוחים מאיפה להתחיל? יש <a href="teacher-guide.html" target="_blank" rel="noopener">דף הסבר קצר למורים</a>.</p>
 </div>
 </body>
 </html>
