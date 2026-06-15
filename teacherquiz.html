@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>בונה חידונים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Heebo:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#05080f; --bg2:#0a1020;
+  --ink:#f7f4ec; --ink-dim:#aab4cf;
+  --gold:#ffd166; --teal:#2ec4b6; --coral:#ff6b6b; --violet:#8d8df2;
+  --card:#22325c; --card-hi:#2c3f72;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; padding:0; min-height:100%;}
+body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, var(--bg2) 45%, var(--bg1) 100%); color:var(--ink); min-height:100vh;}
+.screen{display:none; min-height:100vh; padding:24px; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; z-index:2;}
+.screen.on{display:flex;}
+.wrap{width:100%; max-width:680px;}
+h1{font-family:'Secular One'; font-size:clamp(30px,5vw,52px); margin:0 0 6px; color:var(--gold);}
+h2{font-family:'Secular One'; font-size:clamp(22px,3.4vw,34px); margin:0 0 14px;}
+.sub{font-size:17px; color:var(--ink-dim); max-width:460px; margin:0 auto 26px; line-height:1.5;}
+.btn{font-family:'Heebo'; font-weight:700; font-size:18px; border:none; border-radius:14px; padding:14px 28px; cursor:pointer; background:var(--gold); color:#1a2342; transition:transform .12s ease;}
+.btn:active{transform:translateY(1px);}
+.btn.ghost{background:transparent; color:var(--ink); box-shadow:inset 0 0 0 2px var(--ink-dim);}
+.btn.teal{background:var(--teal); color:#06231f;}
+.btn:disabled{opacity:.45; cursor:default;}
+.btn.sm{font-size:15px; padding:10px 18px;}
+.row{display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
+input[type=text], input[type=number]{font-family:'Heebo'; font-size:17px; padding:12px 16px; border-radius:12px; border:2px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--ink); width:100%; text-align:right;}
+input:focus{border-color:var(--gold); outline:none;}
+.field{margin:0 0 16px; text-align:right;}
+.field label{display:block; font-size:15px; color:var(--ink-dim); margin-bottom:6px; font-weight:700;}
+.conn{position:fixed; top:12px; left:14px; font-size:12px; color:var(--ink-dim); display:flex; align-items:center; gap:6px; z-index:50;}
+.dot{width:9px; height:9px; border-radius:50%; background:var(--coral);}
+.dot.on{background:var(--teal);}
+.codepill{display:inline-block; font-family:'Secular One'; font-size:30px; letter-spacing:.12em; background:var(--card); color:var(--gold); border-radius:12px; padding:8px 22px; margin:6px 0;}
+
+/* עורך השאלות */
+.qcard{background:var(--card); border-radius:16px; padding:18px; margin-bottom:16px; text-align:right;}
+.qcard .qtop{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+.qcard .qtop .qlabel{font-weight:900; color:var(--gold); font-size:17px;}
+.qcard .del{background:none; border:1px solid rgba(255,255,255,.25); color:var(--coral); border-radius:8px; padding:5px 12px; cursor:pointer; font-size:14px; font-family:'Heebo';}
+.ans-row{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+.ans-row .pick{flex:0 0 auto; width:30px; height:30px; border-radius:50%; border:2px solid var(--ink-dim); background:rgba(255,255,255,.05); color:var(--ink-dim); cursor:pointer; font-size:15px; font-weight:900;}
+.ans-row .pick:hover{border-color:var(--teal);}
+.ans-row .pick.on{background:var(--teal); border-color:var(--teal); color:#06231f;}
+.ans-row input{flex:1;}
+.ans-row .rem{flex:0 0 auto; background:none; border:none; color:var(--coral); cursor:pointer; font-size:18px;}
+.addans{font-size:14px; color:var(--teal); background:none; border:1px dashed rgba(46,196,182,.6); border-radius:8px; padding:7px 14px; cursor:pointer; font-family:'Heebo'; margin-top:4px;}
+.save-state{font-size:13px; color:var(--ink-dim); margin:8px 0;}
+.teamline{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+.teamline input{flex:1;}
+.help{font-size:13px; color:var(--ink-dim); margin-top:8px; line-height:1.5;}
+
+/* משחק - מארח */
+.qhead{display:flex; align-items:center; gap:18px; width:100%; max-width:980px; justify-content:space-between; margin-bottom:8px;}
+.qnum{font-size:clamp(20px,2.4vw,28px); color:var(--ink-dim); font-weight:700;}
+.timerball{width:clamp(56px,7vw,84px); height:clamp(56px,7vw,84px); border-radius:50%; background:var(--card); display:flex; align-items:center; justify-content:center; font-family:'Secular One'; font-size:clamp(26px,3.4vw,40px); color:var(--gold);}
+.timerball.low{background:var(--coral); color:#fff;}
+.statement{font-family:'Secular One'; font-size:clamp(40px,6.5vw,76px); line-height:1.25; max-width:1200px; margin:30px 0; color:#fff; font-weight:900; text-shadow:0 3px 16px rgba(0,0,0,.9);}
+.answeredline{font-size:clamp(26px,3vw,36px); color:#fff; font-weight:600; text-shadow:0 2px 10px rgba(0,0,0,.8);}
+.answeredline b{color:var(--teal); font-size:clamp(32px,3.6vw,44px);}
+.tbar{width:min(900px,92vw); height:14px; background:rgba(255,255,255,.12); border-radius:8px; overflow:hidden; margin-top:18px;}
+.tbar i{display:block; height:100%; width:100%; background:var(--gold);}
+.opts-preview{display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin-top:26px; max-width:1000px;}
+.opt-chip{background:var(--card); border-radius:14px; padding:16px 26px; font-size:clamp(22px,2.6vw,30px); font-weight:700;}
+.correct-line{font-size:clamp(28px,3.6vw,42px); color:#fff; margin-bottom:10px; font-weight:700; text-shadow:0 2px 10px rgba(0,0,0,.8);}
+.winner-name{font-family:'Secular One'; font-size:clamp(40px,6vw,72px); color:var(--teal); margin:6px 0 18px; text-shadow:0 4px 18px rgba(0,0,0,.9);}
+.bar{display:grid; grid-template-columns:200px 1fr 64px; align-items:center; gap:14px; font-size:clamp(20px,2.4vw,28px); margin-bottom:8px; max-width:760px; width:100%;}
+.bar .name{text-align:right; font-weight:700; color:#fff;}
+.bar .track{height:30px; background:rgba(255,255,255,.14); border-radius:8px; overflow:hidden;}
+.bar .fill{height:100%; width:0; background:var(--violet); border-radius:8px; transition:width .9s cubic-bezier(.2,.8,.2,1);}
+.bar.is-correct .fill{background:var(--teal);}
+.bar.is-correct .name{color:var(--gold);}
+.bar .n{color:#fff; text-align:left; font-weight:800;}
+.host-bar{position:fixed; bottom:14px; right:14px; z-index:80; display:flex; gap:8px;}
+.host-bar button{font-family:'Heebo'; font-size:14px; font-weight:700; color:var(--ink); background:rgba(34,50,92,.92); border:1px solid rgba(255,255,255,.22); border-radius:10px; padding:9px 14px; cursor:pointer;}
+
+/* משחק - שחקן */
+.pwrap{width:100%; max-width:520px;}
+.pstatement{font-size:22px; line-height:1.4; font-weight:700; margin:0 0 8px; color:var(--ink);}
+.phint{font-size:14px; color:var(--gold); margin:0 0 14px; font-weight:700;}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.pbtn{font-family:'Heebo'; font-weight:700; font-size:18px; border:none; border-radius:14px; padding:20px 14px; cursor:pointer; background:var(--card-hi); color:var(--ink); transition:transform .1s ease;}
+.pbtn:active{transform:scale(.97);}
+.pbtn.sel{background:var(--teal); color:#06231f;}
+.ptimer{height:10px; background:rgba(255,255,255,.12); border-radius:6px; overflow:hidden; margin-bottom:18px;}
+.ptimer i{display:block; height:100%; width:100%; background:var(--gold);}
+.big-emoji{font-size:58px; margin:0;}
+
+.leadrow{display:flex; justify-content:space-between; background:var(--card); border-radius:12px; padding:12px 18px; margin-bottom:8px; font-size:18px; max-width:520px; width:100%;}
+.leadrow .rank{color:var(--gold); font-weight:900; margin-left:10px;}
+.leadrow .sc{color:var(--teal); font-weight:700;}
+.podium{display:flex; align-items:flex-end; justify-content:center; gap:14px; margin:24px 0;}
+.pod{background:var(--card); border-radius:14px 14px 0 0; padding:16px 18px; text-align:center; min-width:90px;}
+.pod .nm{font-weight:900; font-size:18px;}
+.pod .pts{color:var(--teal); font-size:15px;}
+.pod.p1{height:170px; background:linear-gradient(180deg,var(--gold),#caa13a);} .pod.p1 .nm,.pod.p1 .pts{color:#1a2342;}
+.pod.p2{height:130px;} .pod.p3{height:100px;}
+</style>
+</head>
+<body>
+
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v5</span></div>
+
+<!-- ============ מסך בית ============ -->
+<div class="screen on" id="home">
+  <div class="wrap">
+    <h1>🧠 בונה חידונים</h1>
+    <p class="sub">בנו חידון טריוויה משלכם, והתלמידים משחקים מהטלפון. בלי התקנה.</p>
+    <div class="row" style="margin-bottom:22px;">
+      <button class="btn" onclick="newQuiz()">➕ בניית חידון חדש</button>
+    </div>
+    <div class="field" style="max-width:360px; margin:0 auto;">
+      <label>יש לכם כבר חידון? הקלידו את מספר העריכה שלו:</label>
+      <input type="text" id="open-code" inputmode="numeric" maxlength="6" placeholder="לדוגמה 4827">
+    </div>
+    <div class="row">
+      <button class="btn ghost" onclick="openQuiz()">📂 פתיחת חידון קיים</button>
+    </div>
+    <p id="home-msg" style="color:var(--coral); min-height:20px; margin-top:12px;"></p>
+  </div>
+</div>
+
+<!-- ============ עורך החידון ============ -->
+<div class="screen" id="editor">
+  <div class="wrap">
+    <h2>✏️ עריכת החידון</h2>
+    <div style="background:var(--card-hi); border-radius:12px; padding:12px; margin-bottom:18px;">
+      <div style="font-size:14px; color:var(--ink-dim);">מספר העריכה שלכם (שמרו אותו כדי לחזור):</div>
+      <span class="codepill" id="edit-code">----</span>
+    </div>
+
+    <div class="field">
+      <label>שם החידון</label>
+      <input type="text" id="quiz-title" maxlength="40" placeholder="לדוגמה: חידון סוף שנה" oninput="touch()">
+    </div>
+
+    <div class="field">
+      <label>זמן לכל שאלה (שניות)</label>
+      <input type="number" id="quiz-time" min="5" max="60" value="20" oninput="touch()">
+    </div>
+
+    <div class="field">
+      <label>מספר הקבוצות המשתתפות בחידון</label>
+      <select id="team-count" onchange="teamCountChanged()" style="font-family:'Heebo'; font-size:17px; padding:12px 16px; border-radius:12px; border:2px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--ink); width:100%;">
+        <option value="0">בלי קבוצות (כל אחד לעצמו)</option>
+        <option value="2">2 קבוצות</option>
+        <option value="3">3 קבוצות</option>
+        <option value="4">4 קבוצות</option>
+      </select>
+      <div id="team-names" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="field">
+      <label>מוזיקת רקע (לא חובה)</label>
+      <button class="btn ghost sm" onclick="$('music-input').click()" id="music-btn" style="width:100%;">🎵 בחירת מוזיקה מהמחשב</button>
+      <input type="file" id="music-input" accept="audio/*" multiple style="display:none" onchange="musicChosen(this.files)">
+      <div id="music-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px; font-size:14px;"></div>
+      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">המוזיקה תתנגן בשקט בזמן החידון. נטענת מהמחשב הזה ולא נשמרת, אז צריך לבחור אותה מחדש בכל פעם שפותחים את החידון.</div>
+    </div>
+
+    <h2 style="margin-top:24px;">השאלות</h2>
+    <div id="q-list"></div>
+    <button class="btn ghost" onclick="addQuestion()" style="margin-top:6px;">➕ הוספת שאלה</button>
+
+    <p class="save-state" id="save-state">נשמר אוטומטית ✓</p>
+
+    <div class="row" style="margin-top:18px;">
+      <button class="btn teal" onclick="goPlay()">▶️ התחלת משחק עם הכיתה</button>
+      <button class="btn ghost sm" onclick="backHome()">→ חזרה</button>
+    </div>
+    <p class="help">איך זה עובד: מלאו שאלות, ולכל שאלה סמנו את התשובה הנכונה בעיגול הירוק. הכול נשמר אוטומטית לפי מספר העריכה. כשתרצו לשחק, לחצו "התחלת משחק" ותקבלו קוד אחר שאותו נותנים לתלמידים.</p>
+  </div>
+</div>
+
+<!-- ============ לובי מארח ============ -->
+<div class="screen" id="lobby">
+  <div class="wrap">
+    <h2 id="lobby-title">החידון</h2>
+    <p class="sub">התלמידים נכנסים לכתובת, מקלידים את הקוד, ומצטרפים.</p>
+    <div>קוד למשחק:</div>
+    <span class="codepill" id="play-code">----</span>
+    <p style="font-size:15px; color:var(--ink-dim);" id="join-addr"></p>
+    <div class="qrbox" id="qrbox" style="background:#fff; padding:14px; border-radius:18px; display:none; margin:10px auto; width:max-content;">
+      <img id="qr" alt="QR להצטרפות" style="display:block; width:190px; height:190px;">
+    </div>
+    <p style="font-size:14px; color:var(--ink-dim);">סרקו את הקוד, או היכנסו לכתובת והקלידו את הקוד 👆</p>
+    <div style="margin:16px 0;">
+      <div style="font-size:15px; color:var(--ink-dim); margin-bottom:8px;">מצטרפים (<b id="joined-n">0</b>):</div>
+      <div id="joined-list" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+    </div>
+    <div class="row">
+      <button class="btn teal" id="go-btn" onclick="hostStart()" disabled>🚀 מתחילים!</button>
+      <button class="btn ghost sm" onclick="backToEditor()">→ חזרה לעריכה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ מארח: שאלה ============ -->
+<div class="screen" id="hq">
+  <div class="qhead">
+    <span class="qnum" id="hq-num"></span>
+    <div class="timerball" id="hq-timer">20</div>
+  </div>
+  <div class="statement" id="hq-text"></div>
+  <p class="answeredline">ענו עד עכשיו: <b id="hq-answered">0</b> מתוך <span id="hq-total">0</span></p>
+  <div class="tbar"><i id="hq-bar"></i></div>
+</div>
+
+<!-- ============ מארח: חשיפה ============ -->
+<div class="screen" id="hr">
+  <p class="correct-line">התשובה הנכונה:</p>
+  <h2 class="winner-name" id="hr-answer"></h2>
+  <div id="hr-bars" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
+  <div id="hr-teams" style="margin-top:18px; font-size:clamp(20px,2.4vw,28px); color:var(--gold); font-weight:700;"></div>
+</div>
+
+<!-- ============ מארח: סיום ============ -->
+<div class="screen" id="hfin">
+  <div class="wrap">
+    <h1>🎉 סיימנו!</h1>
+    <div class="podium" id="podium"></div>
+    <div id="team-final" style="margin:14px 0; font-size:20px; color:var(--gold); font-weight:700;"></div>
+    <div class="row">
+      <button class="btn ghost sm" onclick="backToEditor()">→ חזרה לעריכה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ שחקן: הצטרפות ============ -->
+<div class="screen" id="join">
+  <div class="pwrap">
+    <h2>הצטרפות לחידון</h2>
+    <div class="field">
+      <label>קוד המשחק</label>
+      <input type="text" id="j-code" inputmode="numeric" maxlength="6" placeholder="הקוד מהמסך">
+    </div>
+    <div class="field">
+      <label>השם שלך</label>
+      <input type="text" id="j-name" maxlength="14" placeholder="שם או כינוי">
+    </div>
+    <div id="j-teams" class="field" style="display:none;">
+      <label>בחרו קבוצה</label>
+      <div id="j-team-btns" class="row" style="justify-content:flex-start;"></div>
+    </div>
+    <button class="btn" onclick="joinGame()">כניסה 🚀</button>
+    <p id="j-msg" style="color:var(--coral); min-height:20px; margin-top:10px;"></p>
+  </div>
+</div>
+
+<!-- ============ שחקן: המתנה ============ -->
+<div class="screen" id="pwait">
+  <div class="pwrap">
+    <p class="big-emoji">✅</p>
+    <h2 id="pwait-title">אתם בפנים!</h2>
+    <p class="sub">חכו שהמורה יתחיל. תראו את השאלות כאן.</p>
+  </div>
+</div>
+
+<!-- ============ שחקן: שאלה ============ -->
+<div class="screen" id="pq">
+  <div class="pwrap" style="justify-content:flex-start;">
+    <div class="ptimer"><i id="pq-bar"></i></div>
+    <p class="pstatement" id="pq-text"></p>
+    <p class="phint" id="pq-hint"></p>
+    <div class="grid" id="pq-grid"></div>
+  </div>
+</div>
+
+<!-- ============ שחקן: נשלח ============ -->
+<div class="screen" id="psent">
+  <div class="pwrap">
+    <p class="big-emoji">📨</p>
+    <h2 id="psent-title">התשובה נקלטה!</h2>
+    <p class="sub">תכף נראה אם צדקתם.</p>
+  </div>
+</div>
+
+<!-- ============ שחקן: משוב ============ -->
+<div class="screen" id="pfeed">
+  <div class="pwrap">
+    <p class="big-emoji" id="pfeed-emoji">✅</p>
+    <h2 id="pfeed-title">נכון!</h2>
+    <p class="sub" id="pfeed-sub"></p>
+  </div>
+</div>
+
+<!-- ============ שחקן: סיום ============ -->
+<div class="screen" id="pfin">
+  <div class="pwrap">
+    <p class="big-emoji" id="pfin-emoji">🎓</p>
+    <h2 id="pfin-rank">סיימתם!</h2>
+    <p class="sub" id="pfin-pts"></p>
+  </div>
+</div>
+
+<div class="host-bar" id="host-bar" style="display:none;">
+  <button onclick="hostSkip()">⏭️ הבא</button>
+  <button onclick="hostToggleMusic()" id="music-toggle">🔊 מוזיקה</button>
+  <button onclick="hostJumpFinish()">🏁 סיום</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCImwbGG-lLQTuij-JzNSXcrLQk-i-TQGE",
+  authDomain: "teachers-6e0bb.firebaseapp.com",
+  databaseURL: "https://teachers-6e0bb-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "teachers-6e0bb",
+  storageBucket: "teachers-6e0bb.firebasestorage.app",
+  messagingSenderId: "568740581492",
+  appId: "1:568740581492:web:ae703d6df4efce79ba4121"
+};
+firebase.initializeApp(firebaseConfig);
+const fdb = firebase.database();
+</script>
+<script>
+function $(id){ return document.getElementById(id); }
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
+function setConn(on){ $('conn-dot').classList.toggle('on',on); $('conn-txt').textContent = on?'מחובר':'לא מחובר'; }
+fdb.ref('.info/connected').on('value', s => setConn(s.val()===true));
+
+/* ============================================================
+   חלק 1: בניית החידון (המורה)
+   הנתונים נשמרים תחת quizzes/{editCode}
+   ============================================================ */
+let quiz = null;        // {title, time, teamCount, teamNames[], questions:[{text, answers:[], correct}]}
+let editCode = null;
+let saveTimer = null;
+
+function genCode(){ return String(Math.floor(1000 + Math.random()*9000)); }
+
+function newQuiz(){
+  editCode = genCode();
+  quiz = { title:'', time:20, teamCount:0, teamNames:[], questions:[] };
+  $('edit-code').textContent = editCode;
+  renderEditor();
+  addQuestion();
+  show('editor');
+  saveQuiz();
+}
+
+function openQuiz(){
+  const code = $('open-code').value.trim();
+  if (!/^\d{4}$/.test(code)){ $('home-msg').textContent = 'הקוד הוא 4 ספרות.'; return; }
+  $('home-msg').textContent = 'טוען...';
+  fdb.ref('quizzes/'+code).once('value').then(snap => {
+    const data = snap.val();
+    if (!data){ $('home-msg').textContent = 'לא נמצא חידון עם הקוד הזה.'; return; }
+    editCode = code;
+    quiz = {
+      title: data.title || '',
+      time: data.time || 20,
+      teamCount: data.teamCount || 0,
+      teamNames: data.teamNames || [],
+      questions: data.questions || []
+    };
+    $('edit-code').textContent = editCode;
+    $('home-msg').textContent = '';
+    renderEditor();
+    show('editor');
+  }).catch(() => { $('home-msg').textContent = 'תקלה בטעינה, נסו שוב.'; });
+}
+
+function renderEditor(){
+  $('quiz-title').value = quiz.title;
+  $('quiz-time').value = quiz.time;
+  $('team-count').value = String(quiz.teamCount);
+  renderTeamNames();
+  renderQuestions();
+}
+
+function teamCountChanged(){
+  quiz.teamCount = parseInt($('team-count').value,10);
+  // התאמת מערך השמות
+  quiz.teamNames = quiz.teamNames.slice(0, quiz.teamCount);
+  while (quiz.teamNames.length < quiz.teamCount) quiz.teamNames.push('');
+  renderTeamNames();
+  touch();
+}
+function renderTeamNames(){
+  const box = $('team-names'); box.innerHTML = '';
+  for (let i=0; i<quiz.teamCount; i++){
+    const row = document.createElement('div'); row.className='teamline';
+    const inp = document.createElement('input'); inp.type='text'; inp.maxLength=20;
+    inp.placeholder = 'שם קבוצה ' + (i+1);
+    inp.value = quiz.teamNames[i] || '';
+    inp.oninput = () => { quiz.teamNames[i] = inp.value; touch(); };
+    row.appendChild(inp); box.appendChild(row);
+  }
+}
+
+function addQuestion(){
+  quiz.questions.push({ text:'', answers:['',''], correct:0 });
+  renderQuestions();
+  touch();
+}
+function delQuestion(i){
+  quiz.questions.splice(i,1);
+  renderQuestions(); touch();
+}
+function renderQuestions(){
+  const list = $('q-list'); list.innerHTML = '';
+  quiz.questions.forEach((q, qi) => {
+    const card = document.createElement('div'); card.className='qcard';
+    const top = document.createElement('div'); top.className='qtop';
+    const lbl = document.createElement('span'); lbl.className='qlabel'; lbl.textContent = 'שאלה ' + (qi+1);
+    const del = document.createElement('button'); del.className='del'; del.textContent='🗑 מחיקה'; del.onclick = () => delQuestion(qi);
+    top.appendChild(lbl); top.appendChild(del); card.appendChild(top);
+
+    const qin = document.createElement('input'); qin.type='text'; qin.placeholder='נוסח השאלה'; qin.value=q.text;
+    qin.style.marginBottom='10px';
+    qin.oninput = () => { q.text = qin.value; touch(); };
+    card.appendChild(qin);
+
+    const tip = document.createElement('div');
+    tip.style.cssText = 'font-size:13px; color:var(--teal); font-weight:700; margin-bottom:8px;';
+    tip.textContent = '👇 כתבו את התשובות, וסמנו את הנכונה בעיגול הירוק ✓';
+    card.appendChild(tip);
+    q.answers.forEach((a, ai) => {
+      const row = document.createElement('div'); row.className='ans-row';
+      const pick = document.createElement('button'); pick.className='pick'+(q.correct===ai?' on':''); pick.textContent='✓';
+      pick.title='סימון כתשובה הנכונה';
+      pick.onclick = () => { q.correct = ai; renderQuestions(); touch(); };
+      const ain = document.createElement('input'); ain.type='text'; ain.placeholder='תשובה '+(ai+1); ain.value=a;
+      ain.oninput = () => { q.answers[ai] = ain.value; touch(); };
+      const rem = document.createElement('button'); rem.className='rem'; rem.textContent='✕'; rem.title='הסרת תשובה';
+      rem.onclick = () => {
+        if (q.answers.length <= 2){ return; }
+        q.answers.splice(ai,1);
+        if (q.correct >= q.answers.length) q.correct = 0;
+        renderQuestions(); touch();
+      };
+      row.appendChild(pick); row.appendChild(ain);
+      if (q.answers.length > 2) row.appendChild(rem);
+      card.appendChild(row);
+    });
+
+    if (q.answers.length < 4){
+      const add = document.createElement('button'); add.className='addans'; add.textContent='➕ תשובה';
+      add.onclick = () => { q.answers.push(''); renderQuestions(); touch(); };
+      card.appendChild(add);
+    }
+    list.appendChild(card);
+  });
+}
+
+function touch(){
+  quiz.title = $('quiz-title').value;
+  quiz.time = parseInt($('quiz-time').value,10) || 20;
+  $('save-state').textContent = 'שומר...';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveQuiz, 600);
+}
+function saveQuiz(){
+  if (!editCode || !quiz) return;
+  fdb.ref('quizzes/'+editCode).set(quiz).then(() => {
+    $('save-state').textContent = 'נשמר אוטומטית ✓';
+  }).catch(() => {
+    $('save-state').textContent = 'תקלה בשמירה';
+  });
+}
+
+function backHome(){ show('home'); }
+
+/* validation before play */
+function quizReady(){
+  if (!quiz.questions.length) return 'צריך לפחות שאלה אחת.';
+  for (let i=0;i<quiz.questions.length;i++){
+    const q = quiz.questions[i];
+    if (!q.text.trim()) return 'שאלה ' + (i+1) + ' ריקה.';
+    const filled = q.answers.filter(a => a.trim());
+    if (filled.length < 2) return 'בשאלה ' + (i+1) + ' צריך לפחות 2 תשובות.';
+    if (!q.answers[q.correct] || !q.answers[q.correct].trim()) return 'בשאלה ' + (i+1) + ' לא סומנה תשובה נכונה תקינה.';
+  }
+  if (quiz.teamCount > 0){
+    for (let i=0;i<quiz.teamCount;i++) if (!quiz.teamNames[i] || !quiz.teamNames[i].trim()) return 'מלאו שם לכל הקבוצות.';
+  }
+  return null;
+}
+
+/* ============================================================
+   חלק 2: המשחק החי
+   חדר משחק נשמר תחת games/{playCode}/messages
+   ============================================================ */
+let role = null, myId = Math.random().toString(36).slice(2,10);
+let playCode = null, gameRef = null, topic = null;
+let players = {}, seq = 0, curQ = null, answers = {}, revealed = false, hostTimer = null, qIndex = -1, qShownAt = 0;
+let cleanAnswers = q => (q.answers.map((a,i)=>({a,i})).filter(o=>o.a.trim()));
+
+function goPlay(){
+  const err = quizReady();
+  if (err){ alert(err); return; }
+  saveQuiz();
+  role = 'host';
+  playCode = genCode();
+  $('play-code').textContent = playCode;
+  $('lobby-title').textContent = quiz.title || 'החידון';
+  const baseUrl = location.origin.startsWith('http') ? (location.origin + location.pathname) : '';
+  const dispUrl = baseUrl.replace(/^https?:\/\//,'');
+  $('join-addr').textContent = baseUrl ? ('כתובת: ' + dispUrl) : '';
+  // קוד QR שמוביל ישר למסך ההצטרפות עם קוד המשחק (לאותו קובץ עצמו)
+  if (baseUrl){
+    const joinUrl = baseUrl + '?game=' + playCode;
+    $('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=380x380&margin=2&data=' + encodeURIComponent(joinUrl);
+    $('qrbox').style.display = 'block';
+  } else {
+    $('qrbox').style.display = 'none';
+  }
+  players = {}; $('joined-list').innerHTML=''; $('joined-n').textContent='0'; $('go-btn').disabled=true;
+  // ניקוי חדר קודם אם נשאר, ופרסום מטא של המשחק (שמות קבוצות) כדי שהשחקנים יוכלו לבחור קבוצה
+  fdb.ref('games/'+playCode).remove().catch(()=>{});
+  fdb.ref('games/'+playCode+'/meta').set({ teamCount: quiz.teamCount, teamNames: quiz.teamNames || [], title: quiz.title || '' });
+  listenGame(playCode);
+  show('lobby');
+}
+
+function listenGame(code, onReady){
+  topic = code;
+  gameRef = fdb.ref('games/'+code+'/messages');
+  gameRef.limitToLast(80).on('child_added', snap => {
+    const m = snap.val(); if (!m || m.from === myId) return;
+    if (role === 'host') hostMsg(m); else playerMsg(m);
+  });
+  if (onReady) setTimeout(onReady, 400);
+}
+function send(o){ o.from = myId; o.ts = Date.now(); if (gameRef) gameRef.push(o); }
+
+/* ---- מארח ---- */
+function hostMsg(m){
+  if (m.t === 'join'){
+    if (!players[m.id]){
+      players[m.id] = { name:m.name, team:(m.team!=null?m.team:-1), score:0, streak:0, correct:0 };
+      renderJoined();
+    }
+    send({ t:'welcome', id:m.id });
+  }
+  if (m.t === 'ans' && m.i === seq && !revealed){
+    if (players[m.id] && !answers[m.id]){
+      answers[m.id] = { pick:m.pick, dt:m.dt };
+      $('hq-answered').textContent = Object.keys(answers).length;
+      if (Object.keys(answers).length >= Object.keys(players).length) setTimeout(revealQ, 600);
+    }
+  }
+}
+function renderJoined(){
+  const box = $('joined-list'); box.innerHTML='';
+  Object.values(players).forEach(p => {
+    const chip = document.createElement('span');
+    chip.style.cssText='background:var(--card); border-radius:10px; padding:6px 14px; font-weight:700;';
+    chip.textContent = p.name + (p.team>=0 && quiz.teamCount>0 ? ' ('+quiz.teamNames[p.team]+')' : '');
+    box.appendChild(chip);
+  });
+  $('joined-n').textContent = Object.keys(players).length;
+  $('go-btn').disabled = Object.keys(players).length === 0;
+}
+
+function hostStart(){
+  $('host-bar').style.display = 'flex';
+  playGameMusic();
+  qIndex = -1;
+  nextQ();
+}
+
+/* מוזיקת רקע (בצד המארח, לא נשמרת ב-Firebase) */
+let musicList = [], musicIdx = 0, musicAudio = null, musicMuted = false;
+function musicChosen(files){
+  if (!files || !files.length) return;
+  [...files].forEach(f => musicList.push({ name:f.name, url:URL.createObjectURL(f) }));
+  $('music-input').value = '';
+  renderMusicList();
+}
+function removeMusic(i){ URL.revokeObjectURL(musicList[i].url); musicList.splice(i,1); renderMusicList(); }
+function renderMusicList(){
+  const box = $('music-list'); box.innerHTML='';
+  musicList.forEach((s,i)=>{
+    const row=document.createElement('div'); row.style.cssText='display:flex; align-items:center; gap:10px; justify-content:center;';
+    const t=document.createElement('span'); t.textContent='🎵 '+(i+1)+'. '+s.name;
+    const x=document.createElement('button'); x.textContent='✕'; x.style.cssText='background:none; border:1px solid rgba(255,255,255,.3); color:var(--coral); border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:13px;';
+    x.onclick=()=>removeMusic(i);
+    row.appendChild(t); row.appendChild(x); box.appendChild(row);
+  });
+  $('music-btn').textContent = musicList.length ? '🎵 הוספת שיר רקע' : '🎵 מוזיקת רקע (לא חובה)';
+}
+function playGameMusic(){
+  if (!musicList.length || musicMuted) return;
+  if (musicAudio){ musicAudio.pause(); }
+  musicAudio = new Audio(musicList[musicIdx % musicList.length].url);
+  musicAudio.volume = 0.18;
+  musicAudio.onended = () => { musicIdx++; playGameMusic(); };
+  musicAudio.play().catch(()=>{});
+}
+function stopGameMusic(){ if (musicAudio){ try{ musicAudio.pause(); }catch(e){} } }
+function hostToggleMusic(){
+  musicMuted = !musicMuted;
+  if (musicMuted){ stopGameMusic(); $('music-toggle').textContent='🔇 מוזיקה'; }
+  else { if (musicAudio && musicAudio.paused) musicAudio.play().catch(()=>{}); else playGameMusic(); $('music-toggle').textContent='🔊 מוזיקה'; }
+}
+function nextQ(){
+  revealed = false; answers = {};
+  qIndex++;
+  if (qIndex >= quiz.questions.length){ hostFinish(); return; }
+  seq++;
+  curQ = quiz.questions[qIndex];
+  const opts = cleanAnswers(curQ);
+  $('hq-num').textContent = 'שאלה ' + (qIndex+1) + ' / ' + quiz.questions.length;
+  $('hq-text').textContent = curQ.text;
+  $('hq-answered').textContent = '0';
+  $('hq-total').textContent = Object.keys(players).length;
+  $('hq-timer').textContent = quiz.time;
+  $('hq-timer').classList.remove('low');
+  $('hq-bar').style.transition='none'; $('hq-bar').style.width='100%';
+  requestAnimationFrame(()=>{ $('hq-bar').style.transition='width '+quiz.time+'s linear'; $('hq-bar').style.width='0%'; });
+  show('hq');
+  // שולחים לשחקנים: טקסט + תשובות (מעורבבות לתצוגה אבל עם אינדקס מקורי)
+  send({ t:'q', i:seq, text:curQ.text, dur:quiz.time, options: opts.map(o=>({txt:o.a, idx:o.i})), correct: curQ.correct, total: quiz.questions.length, num: qIndex+1 });
+  let t = quiz.time;
+  clearInterval(hostTimer);
+  hostTimer = setInterval(()=>{
+    t--; $('hq-timer').textContent = Math.max(0,t);
+    if (t<=5) $('hq-timer').classList.add('low');
+    if (t<=0) revealQ();
+  },1000);
+}
+
+function revealQ(){
+  if (revealed) return;
+  revealed = true; clearInterval(hostTimer);
+  const opts = cleanAnswers(curQ);
+  const correctText = curQ.answers[curQ.correct];
+
+  // ספירת בחירות
+  const dist = {}; opts.forEach(o => dist[o.i]=0);
+  let teamCorrect = {};
+  if (quiz.teamCount>0) for (let i=0;i<quiz.teamCount;i++) teamCorrect[i]=0;
+  Object.entries(answers).forEach(([id,a]) => {
+    if (a.pick in dist) dist[a.pick]++;
+    const p = players[id];
+    if (p && a.pick === curQ.correct){
+      // ניקוד: בסיס + בונוס מהירות + בונוס רצף
+      const speed = Math.max(0, 1 - (a.dt/(quiz.time*1000)));
+      const pts = Math.round(500 + 500*speed);
+      p.streak++;
+      const streakBonus = Math.min(p.streak-1,5)*50;
+      p.score += pts + streakBonus;
+      p.correct++;
+      if (p.team>=0) teamCorrect[p.team]++;
+    } else if (p){ p.streak = 0; }
+  });
+
+  $('hr-answer').textContent = correctText;
+  const box = $('hr-bars'); box.innerHTML='';
+  const denom = Math.max(1, ...opts.map(o=>dist[o.i]));
+  opts.forEach(o => {
+    const row = document.createElement('div'); row.className='bar'+(o.i===curQ.correct?' is-correct':'');
+    row.innerHTML = '<span class="name">'+o.a+'</span><span class="track"><span class="fill"></span></span><span class="n">'+dist[o.i]+'</span>';
+    box.appendChild(row);
+    requestAnimationFrame(()=>{ row.querySelector('.fill').style.width = (dist[o.i]/denom*100)+'%'; });
+  });
+
+  // עדכון רצף/תוצאות לשחקנים
+  send({ t:'rev', i:seq, correctIdx: curQ.correct, correctText, scores: scoreboard() });
+  show('hr');
+}
+
+function scoreboard(){
+  return Object.entries(players).map(([id,p]) => ({ id, name:p.name, score:p.score, correct:p.correct, team:p.team }))
+    .sort((a,b)=>b.score-a.score);
+}
+
+function hostFinish(){
+  clearInterval(hostTimer);
+  stopGameMusic();
+  $('host-bar').style.display='none';
+  const board = scoreboard();
+  // פודיום
+  const pod = $('podium'); pod.innerHTML='';
+  const order = [1,0,2]; // שמאל-אמצע-ימין: 2,1,3
+  const top3 = board.slice(0,3);
+  [1,0,2].forEach(pos => {
+    if (!top3[pos]) return;
+    const p = top3[pos];
+    const d = document.createElement('div'); d.className='pod p'+(pos+1);
+    d.innerHTML = '<div class="nm">'+p.name+'</div><div class="pts">'+p.score+'</div>';
+    pod.appendChild(d);
+  });
+  // קבוצות
+  if (quiz.teamCount>0){
+    const tSum = {}; for(let i=0;i<quiz.teamCount;i++) tSum[i]=0;
+    board.forEach(p => { if (p.team>=0) tSum[p.team]+=p.score; });
+    const best = Math.max(...Object.values(tSum));
+    const winners = Object.keys(tSum).filter(k=>tSum[k]===best);
+    let txt = '🏆 קבוצות: ' + Object.keys(tSum).map(k=>quiz.teamNames[k]+' '+tSum[k]).join(' · ');
+    txt += winners.length>1 ? ' · תיקו!' : ' · ' + quiz.teamNames[winners[0]] + ' ניצחו!';
+    $('team-final').textContent = txt;
+  } else $('team-final').textContent='';
+  send({ t:'end', scores: board });
+  show('hfin');
+}
+
+function hostSkip(){ if (!revealed && curQ){ revealQ(); } else { nextQ(); } }
+function hostJumpFinish(){ clearInterval(hostTimer); hostFinish(); }
+function backToEditor(){ clearInterval(hostTimer); stopGameMusic(); $('host-bar').style.display='none'; renderEditor(); show('editor'); }
+
+/* ---- שחקן ---- */
+let myName='', myTeam=-1, joined=false, pTimer=null, sentThisQ=false, lastPick=-1;
+
+(function initJoinFromURL(){
+  const code = new URLSearchParams(location.search).get('game');
+  if (code && /^\d{4}$/.test(code)){
+    $('j-code').value = code;
+    show('join');
+    maybeLoadTeams();
+  }
+})();
+
+// כשמקלידים קוד בהצטרפות, טוענים אם יש קבוצות
+$('j-code').addEventListener('blur', maybeLoadTeams);
+function maybeLoadTeams(){
+  const code = $('j-code').value.trim();
+  if (!/^\d{4}$/.test(code)) return;
+  // נטען את שמות הקבוצות מתוך מטא של המשחק
+  fdb.ref('games/'+code+'/meta').once('value').then(s=>{
+    const meta = s.val();
+    if (meta && meta.teamCount>0){
+      $('j-teams').style.display='block';
+      const box=$('j-team-btns'); box.innerHTML='';
+      meta.teamNames.forEach((nm,i)=>{
+        const b=document.createElement('button'); b.className='pbtn'; b.style.flex='0 0 auto'; b.textContent=nm;
+        b.onclick=()=>{ myTeam=i; [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); };
+        box.appendChild(b);
+      });
+    } else { $('j-teams').style.display='none'; myTeam=-1; }
+  });
+}
+
+function joinGame(){
+  const code = $('j-code').value.trim();
+  myName = $('j-name').value.trim();
+  if (!/^\d{4}$/.test(code)){ $('j-msg').textContent='קוד המשחק הוא 4 ספרות.'; return; }
+  if (!myName){ $('j-msg').textContent='כתבו שם.'; return; }
+  fdb.ref('games/'+code+'/meta').once('value').then(s=>{
+    const meta = s.val();
+    if (!meta){ $('j-msg').textContent='לא נמצא משחק פעיל עם הקוד הזה.'; return; }
+    if (meta.teamCount>0 && myTeam<0){ $('j-msg').textContent='בחרו קבוצה.'; return; }
+    role='player';
+    listenGame(code, () => {
+      send({ t:'join', id:myId, name:myName, team:myTeam });
+      joined=false;
+      let tries=0;
+      const iv=setInterval(()=>{
+        if (joined || tries++>5){ clearInterval(iv); if(!joined) $('j-msg').textContent='לא הצלחנו להתחבר. בדקו את הקוד ושמסך המורה פתוח.'; return; }
+        send({ t:'join', id:myId, name:myName, team:myTeam });
+      },1500);
+    });
+  });
+}
+
+function playerMsg(m){
+  if (m.t==='welcome' && m.id===myId){ joined=true; show('pwait'); }
+  if (m.t==='q'){ showPQ(m); }
+  if (m.t==='rev'){ showFeedback(m); }
+  if (m.t==='end'){ showPFin(m); }
+}
+
+function showPQ(m){
+  curQ = m; sentThisQ=false; qShownAt=Date.now(); lastPick=-1;
+  $('pq-text').textContent = m.text;
+  $('pq-hint').textContent = 'לחיצה אחת = תשובה. מהירות שווה נקודות!';
+  const grid=$('pq-grid'); grid.innerHTML='';
+  m.options.forEach(o => {
+    const b=document.createElement('button'); b.className='pbtn'; b.textContent=o.txt;
+    b.onclick=()=>{
+      if (sentThisQ) return;
+      sentThisQ=true; b.classList.add('sel');
+      lastPick = o.idx;
+      clearTimeout(pTimer);
+      send({ t:'ans', id:myId, i:m.i, pick:o.idx, dt: Date.now()-qShownAt });
+      $('psent-title').textContent='התשובה נקלטה!';
+      show('psent');
+    };
+    grid.appendChild(b);
+  });
+  $('pq-bar').style.transition='none'; $('pq-bar').style.width='100%';
+  requestAnimationFrame(()=>{ $('pq-bar').style.transition='width '+m.dur+'s linear'; $('pq-bar').style.width='0%'; });
+  clearTimeout(pTimer);
+  pTimer=setTimeout(()=>{ if(!sentThisQ){ sentThisQ=true; $('pq-grid').querySelectorAll('button').forEach(b=>b.disabled=true); } }, m.dur*1000);
+  show('pq');
+}
+
+function showFeedback(m){
+  const me = (m.scores||[]).find(s=>s.id===myId);
+  // האם עניתי נכון? נשווה לפי מה ששלחתי
+  // פשטות: נשתמש בניקוד — אם עליתי, צדקתי. נשתמש בדגל מקומי
+  const correct = lastPick === m.correctIdx;
+  $('pfeed-emoji').textContent = correct ? '✅' : '❌';
+  $('pfeed-title').textContent = correct ? 'נכון!' : 'לא נכון';
+  $('pfeed-sub').textContent = 'התשובה: ' + m.correctText + (me ? ' · ' + me.score + ' נקודות' : '');
+  show('pfeed');
+}
+function showPFin(m){
+  const me=(m.scores||[]).find(s=>s.id===myId);
+  if (me){
+    const rank = m.scores.findIndex(s=>s.id===myId)+1;
+    $('pfin-emoji').textContent = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'🎓';
+    $('pfin-rank').textContent = 'סיימתם במקום ' + rank + '!';
+    $('pfin-pts').textContent = me.score + ' נקודות · ' + me.correct + ' תשובות נכונות';
+  } else { $('pfin-rank').textContent='המשחק הסתיים!'; }
+  show('pfin');
+}
+</script>
+</body>
+</html>
