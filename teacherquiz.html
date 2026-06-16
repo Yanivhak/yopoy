@@ -122,7 +122,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v17</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v19</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -255,11 +255,11 @@ input:focus{border-color:var(--gold); outline:none;}
   </div>
 </div>
 
-<!-- ============ מארח: הפסקת ביניים (הסתכלו ללוח) ============ -->
+<!-- ============ מארח: הפסקת ביניים (סטטיסטיקה על הלוח) ============ -->
 <div class="screen" id="hint">
   <div class="wrap">
-    <div style="font-size:60px;">👀</div>
-    <h1 style="color:var(--gold);">הסתכלו ללוח!</h1>
+    <div style="font-size:60px;">📊</div>
+    <h1 style="color:var(--gold);">רגע, מה המצב?</h1>
     <div id="hint-text" style="font-size:clamp(26px,3.6vw,42px); font-weight:800; color:#fff; margin:18px 0; text-shadow:0 2px 12px rgba(0,0,0,.85);"></div>
     <button class="btn teal" onclick="nextQ()" style="margin-top:14px;">ממשיכים ◂</button>
   </div>
@@ -484,10 +484,11 @@ function renderQuizList(all){
                      '<div style="font-size:13px; color:var(--ink-dim);">מספר ' + code + ' · ' + (q.questions? q.questions.length:0) + ' שאלות</div>';
     const btns = document.createElement('div'); btns.style.cssText='display:flex; gap:8px; flex-wrap:wrap;';
     const play = document.createElement('button'); play.className='btn teal sm'; play.textContent='▶️ משחק'; play.onclick=()=>playExisting(code, q);
+    const test = document.createElement('button'); test.className='btn ghost sm'; test.textContent='👁️ בדיקה'; test.onclick=()=>testExisting(code, q);
     const edit = document.createElement('button'); edit.className='btn ghost sm'; edit.textContent='✏️ עריכה'; edit.onclick=()=>openExisting(code, q);
     const del = document.createElement('button'); del.className='btn ghost sm'; del.textContent='🗑'; del.title='מחיקת החידון';
     del.onclick=()=>{ if(confirm('למחוק את החידון "'+(q.title||'')+'"? אי אפשר לבטל.')){ fdb.ref('teachers/'+myEmailKey+'/'+code).remove().then(()=>refreshMyList()); } };
-    btns.appendChild(play); btns.appendChild(edit); btns.appendChild(del);
+    btns.appendChild(play); btns.appendChild(test); btns.appendChild(edit); btns.appendChild(del);
     row.appendChild(info); row.appendChild(btns);
     box.appendChild(row);
   });
@@ -525,6 +526,18 @@ function playExisting(code, data){
   $('edit-code').textContent = editCode;
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
   goPlay();         // אבל עוברים ישר ללובי המשחק
+}
+
+function testExisting(code, data){
+  editCode = code;
+  quiz = {
+    title: data.title || '', time: data.time || 20,
+    teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
+    questions: data.questions || []
+  };
+  $('edit-code').textContent = editCode;
+  renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
+  previewQuiz();    // עוברים ישר לבדיקה (ללא תלמידים)
 }
 
 function renderEditor(){
@@ -733,6 +746,9 @@ function renderJoined(){
 function hostStart(){
   $('host-bar').style.display = 'flex';
   $('ingame-credit').style.display = 'block';
+  if ($('solo-answers')) $('solo-answers').style.display='none';
+  if ($('solo-next')) $('solo-next').style.display='none';
+  solo = false;
   $('bg-toggle').style.display = bgUrl ? 'inline-block' : 'none';
   applyGameBg(true);
   bestMs = Infinity; bestName = ''; maxStreak = 0; streakKing = '';
@@ -1071,47 +1087,125 @@ function saveNow(){
 }
 
 /* מצב בדיקה: המורה עובר על השאלות בעצמו, בלי תלמידים ובלי Firebase */
-let pvIndex = 0;
+/* מצב בדיקה: מריץ משחק סולו אמיתי על מסכי המשחק עצמם, כדי שייראה בדיוק כמו החידון.
+   המורה משחק לבד (בלי Firebase, בלי תלמידים), בוחר תשובות בעצמו ורואה חשיפה כרגיל. */
+let solo = false;
 function previewQuiz(){
   const err = quizReady();
   if (err){ alert(err); return; }
-  pvIndex = 0;
-  showPreviewQ();
+  solo = true;
+  role = 'host';
+  // שחקן מדומה אחד — המורה עצמו
+  players = { _me:{ name:'אתם (בדיקה)', team:(quiz.teamCount>0?0:-1), score:0, streak:0, correct:0 } };
+  bestMs = Infinity; bestName=''; maxStreak=0; streakKing='';
+  intermissionDone = new Set();
+  $('host-bar').style.display='none';
+  $('ingame-credit').style.display='none';
+  applyGameBg(true);
+  qIndex = -1;
+  soloNextQ();
 }
-function showPreviewQ(){
-  if (pvIndex >= quiz.questions.length){
-    $('pv-num').textContent = '';
-    $('pv-text').textContent = '🎉 זהו! עברת על כל השאלות.';
-    $('pv-hint').textContent = 'זו הייתה בדיקה בלבד. כשתרצו לשחק עם הכיתה, חזרו ולחצו "התחלת משחק".';
-    const grid = $('pv-grid'); grid.innerHTML = '';
-    const back = document.createElement('button'); back.className='btn teal'; back.textContent='→ חזרה לעריכה';
-    back.onclick=()=>show('editor'); grid.appendChild(back);
-    return;
+
+function soloNextQ(){
+  revealed = false; answers = {};
+  qIndex++;
+  if (qIndex >= quiz.questions.length){ soloFinish(); return; }
+  seq++;
+  curQ = quiz.questions[qIndex];
+  const opts = cleanAnswers(curQ);
+  $('hq-num').textContent = 'שאלה ' + (qIndex+1) + ' / ' + quiz.questions.length + '  ·  בדיקה';
+  $('hq-text').textContent = curQ.text;
+  $('hq-answered').textContent = '0';
+  $('hq-total').textContent = '1';
+  $('hq-timer').textContent = quiz.time;
+  $('hq-timer').classList.remove('low');
+  $('hq-bar').style.transition='none'; $('hq-bar').style.width='100%';
+  requestAnimationFrame(()=>{ $('hq-bar').style.transition='width '+quiz.time+'s linear'; $('hq-bar').style.width='0%'; });
+
+  // לוח תשובות שאפשר ללחוץ עליו (רק בבדיקה) — מתחת לשאלה, בעיצוב המשחק
+  let panel = $('solo-answers');
+  if (!panel){
+    panel = document.createElement('div'); panel.id='solo-answers';
+    panel.style.cssText='display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin-top:26px; max-width:1000px;';
+    $('hq').appendChild(panel);
   }
-  const q = quiz.questions[pvIndex];
-  const opts = q.answers.map((a,i)=>({a,i})).filter(o=>o.a.trim());
-  $('pv-num').textContent = 'שאלה ' + (pvIndex+1) + ' / ' + quiz.questions.length + ' · בדיקה';
-  $('pv-text').textContent = q.text;
-  $('pv-hint').textContent = 'לחצו על תשובה כדי לראות אם היא נכונה';
-  const grid = $('pv-grid'); grid.innerHTML = '';
+  panel.style.display='flex';
+  panel.innerHTML='';
+  const qShown = Date.now();
   opts.forEach(o => {
-    const b = document.createElement('button'); b.className='pbtn'; b.textContent = o.a;
+    const b = document.createElement('button'); b.className='opt-chip'; b.style.cursor='pointer'; b.style.border='none'; b.textContent=o.a;
     b.onclick = () => {
-      [...grid.children].forEach(c=>{ if(c.tagName==='BUTTON') c.disabled=true; });
-      if (o.i === q.correct){ b.style.background='var(--teal)'; b.style.color='#06231f'; $('pv-hint').textContent='✅ נכון!'; }
-      else {
-        b.style.background='var(--coral)'; b.style.color='#fff';
-        [...grid.children].forEach((c,idx)=>{ if (opts[idx] && opts[idx].i===q.correct){ c.style.background='var(--teal)'; c.style.color='#06231f'; } });
-        $('pv-hint').textContent='❌ לא נכון. הנכונה מסומנת בירוק.';
-      }
-      const next = document.createElement('button'); next.className='btn teal'; next.textContent = (pvIndex+1>=quiz.questions.length?'סיום':'לשאלה הבאה ◂');
-      next.style.marginTop='16px';
-      next.onclick=()=>{ pvIndex++; showPreviewQ(); };
-      grid.appendChild(next);
+      clearInterval(hostTimer);
+      const dt = Date.now()-qShown;
+      answers = { _me:{ pick:o.i, dt } };
+      soloReveal();
     };
-    grid.appendChild(b);
+    panel.appendChild(b);
   });
-  show('preview');
+
+  show('hq');
+  let t = quiz.time;
+  clearInterval(hostTimer);
+  hostTimer = setInterval(()=>{
+    t--; $('hq-timer').textContent = Math.max(0,t);
+    if (t<=5) $('hq-timer').classList.add('low');
+    if (t<=0){ answers = answers._me ? answers : {}; soloReveal(); }
+  },1000);
+}
+
+function soloReveal(){
+  if (revealed) return;
+  revealed = true; clearInterval(hostTimer);
+  if ($('solo-answers')) $('solo-answers').style.display='none';
+  const opts = cleanAnswers(curQ);
+  const correctText = curQ.answers[curQ.correct];
+  const dist = {}; opts.forEach(o => dist[o.i]=0);
+  const a = answers._me;
+  if (a){
+    if (a.pick in dist) dist[a.pick]++;
+    const p = players._me;
+    if (a.pick === curQ.correct){
+      const speed = Math.max(0, 1-(a.dt/(quiz.time*1000)));
+      p.score += Math.round(500+500*speed) + Math.min(p.streak,5)*50;
+      p.streak++; p.correct++;
+      if (a.dt < bestMs){ bestMs=a.dt; bestName=p.name; }
+      if (p.streak>=3 && p.streak>maxStreak){ maxStreak=p.streak; streakKing=p.name; }
+    } else p.streak = 0;
+  }
+  $('hr-banners').innerHTML='';
+  $('hr-answer').textContent = correctText;
+  const box = $('hr-bars'); box.innerHTML='';
+  const denom = Math.max(1, ...opts.map(o=>dist[o.i]));
+  opts.forEach(o => {
+    const row = document.createElement('div'); row.className='bar'+(o.i===curQ.correct?' is-correct':'');
+    row.innerHTML = '<span class="name">'+o.a+'</span><span class="track"><span class="fill"></span></span><span class="n">'+dist[o.i]+'</span>';
+    box.appendChild(row);
+    requestAnimationFrame(()=>{ row.querySelector('.fill').style.width = (dist[o.i]/denom*100)+'%'; });
+  });
+  // האם המורה צדק — הודעה קטנה
+  $('hr-teams').textContent = (a && a.pick===curQ.correct) ? '✅ נכון!' : '❌ לא נכון — הנכונה מסומנת בירוק';
+  // כפתור המשך
+  let nb = $('solo-next');
+  if (!nb){ nb = document.createElement('button'); nb.id='solo-next'; nb.className='btn teal'; nb.style.marginTop='22px'; $('hr').appendChild(nb); }
+  nb.style.display='inline-block';
+  nb.textContent = (qIndex+1>=quiz.questions.length) ? 'לסיום ◂' : 'לשאלה הבאה ◂';
+  nb.onclick = () => { nb.style.display='none'; soloNextQ(); };
+  show('hr');
+}
+
+function soloFinish(){
+  clearInterval(hostTimer);
+  if ($('solo-answers')) $('solo-answers').style.display='none';
+  if ($('solo-next')) $('solo-next').style.display='none';
+  applyGameBg(false);
+  solo = false;
+  // מסך סיום קצר שמסביר שזו הייתה בדיקה
+  $('podium').innerHTML='';
+  $('team-final').innerHTML='<div style="font-size:clamp(20px,3vw,30px);">✅ סיימתם את הבדיקה!</div>';
+  $('fun-cards').innerHTML='<div style="color:var(--ink-dim); max-width:420px;">ככה החידון ייראה לתלמידים. כשתרצו לשחק עם הכיתה, חזרו ולחצו "התחלת משחק עם הכיתה".</div>';
+  // נחליף את כפתורי הסיום הרגילים בכפתור חזרה לעריכה בלבד (זמני)
+  show('hfin');
+  confetti();
 }
 
 /* ---- שחקן ---- */
