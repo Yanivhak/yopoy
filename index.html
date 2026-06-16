@@ -24,13 +24,12 @@ body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 
 h1{font-family:'Secular One'; font-size:clamp(34px,5.5vw,58px); margin:0 0 8px; color:var(--gold);}
 .sub{font-size:18px; color:var(--ink-dim); max-width:520px; margin:0 auto 36px; line-height:1.5;}
 .cards{display:flex; gap:18px; flex-wrap:wrap; justify-content:center;}
-.card{flex:1 1 220px; max-width:260px; background:var(--card); border-radius:22px; padding:30px 22px; cursor:pointer; text-decoration:none; color:var(--ink); transition:transform .15s ease, background .15s ease; border:2px solid transparent;}
-.card:hover{transform:translateY(-4px); background:var(--card-hi); border-color:var(--gold);}
-.card .emoji{font-size:50px; margin-bottom:12px;}
+.card{flex:1 1 220px; max-width:260px; background:var(--card); border-radius:22px; padding:30px 22px; cursor:pointer; text-decoration:none; color:var(--ink); transition:transform .2s cubic-bezier(.2,.8,.2,1), background .2s ease, border-color .2s ease, box-shadow .2s ease; border:2.5px solid rgba(255,255,255,.16);}
+.card:hover{transform:translateY(-8px) scale(1.04); background:var(--card-hi); border-color:var(--gold); box-shadow:0 14px 40px rgba(255,209,102,.28), 0 0 0 1px rgba(255,209,102,.4);}
+.card .emoji{font-size:50px; margin-bottom:12px; transition:transform .2s cubic-bezier(.2,.8,.2,1);}
+.card:hover .emoji{transform:scale(1.12);}
 .card h2{font-family:'Secular One'; font-size:24px; margin:0 0 8px;}
 .card p{font-size:14px; color:var(--ink-dim); margin:0; line-height:1.5;}
-.card.combo{border-color:var(--teal);}
-.card.combo:hover{border-color:var(--gold);}
 .tag{display:inline-block; font-size:12px; font-weight:700; color:var(--teal); margin-bottom:6px;}
 .foot{margin-top:34px; font-size:13px; color:var(--ink-dim); line-height:1.6;}
 .foot a{color:var(--gold);}
@@ -59,6 +58,16 @@ h1{font-family:'Secular One'; font-size:clamp(34px,5.5vw,58px); margin:0 0 8px; 
     </a>
   </div>
   <p class="foot">כל כלי נפתח בלשונית נפרדת.<br>לא בטוחים מאיפה להתחיל? יש <a href="teacher-guide.html" target="_blank" rel="noopener">דף הסבר קצר למורים</a>.</p>
+
+  <div style="margin-top:30px; padding-top:22px; border-top:1px solid rgba(255,255,255,.12);">
+    <div style="font-size:14px; color:var(--ink-dim);">נבנה על ידי</div>
+    <div style="font-family:'Secular One'; font-size:20px; color:var(--gold); margin:4px 0 12px;">ד״ר יניב חכים</div>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; align-items:center;">
+      <a href="mailto:yanivhpro@gmail.com" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">✉️ yanivhpro@gmail.com</a>
+      <a href="https://wa.me/972544617463" target="_blank" rel="noopener" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">💬 וואטסאפ</a>
+      <a href="tel:+972544617463" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">📞 חיוג</a>
+    </div>
+  </div>
 </div>
 </body>
 </html>
