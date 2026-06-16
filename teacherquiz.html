@@ -122,7 +122,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v14</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v17</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -175,10 +175,7 @@ input:focus{border-color:var(--gold); outline:none;}
 <div class="screen" id="editor">
   <div class="wrap">
     <h2>✏️ עריכת החידון</h2>
-    <div style="background:var(--card-hi); border-radius:12px; padding:12px; margin-bottom:18px;">
-      <div style="font-size:14px; color:var(--ink-dim);">מספר העריכה שלכם (שמרו אותו כדי לחזור):</div>
-      <span class="codepill" id="edit-code">----</span>
-    </div>
+    <div style="font-size:13px; color:var(--ink-dim); margin-bottom:16px;">מספר החידון: <span id="edit-code" style="color:var(--gold); font-weight:700;">----</span> · החידון נשמר אוטומטית ברשימה שלכם</div>
 
     <div class="field">
       <label>שם החידון</label>
@@ -225,9 +222,13 @@ input:focus{border-color:var(--gold); outline:none;}
 
     <div class="row" style="margin-top:18px;">
       <button class="btn teal" onclick="goPlay()">▶️ התחלת משחק עם הכיתה</button>
-      <button class="btn ghost sm" onclick="backHome()">→ חזרה</button>
+      <button class="btn" onclick="previewQuiz()" style="background:var(--violet); color:#0b0b2a;">👁️ בדיקה (ללא תלמידים)</button>
     </div>
-    <p class="help">איך זה עובד: מלאו שאלות, ולכל שאלה סמנו את התשובה הנכונה בעיגול הירוק. הכול נשמר אוטומטית לפי מספר העריכה. כשתרצו לשחק, לחצו "התחלת משחק" ותקבלו קוד אחר שאותו נותנים לתלמידים.</p>
+    <div class="row" style="margin-top:10px;">
+      <button class="btn ghost sm" onclick="saveNow()">💾 שמירה</button>
+      <button class="btn ghost sm" onclick="backHome()">→ חזרה לרשימה</button>
+    </div>
+    <p class="help">איך זה עובד: מלאו שאלות, ולכל שאלה סמנו את התשובה הנכונה בעיגול הירוק. הכול נשמר אוטומטית. רוצים לראות איך זה ייראה? לחצו "בדיקה" ותעברו על השאלות בעצמכם, בלי שאף תלמיד צריך להיכנס. כשתרצו לשחק עם הכיתה, לחצו "התחלת משחק" ותקבלו קוד שאותו נותנים לתלמידים.</p>
   </div>
 </div>
 
@@ -273,6 +274,16 @@ input:focus{border-color:var(--gold); outline:none;}
   </div>
 </div>
 
+<!-- ============ מצב בדיקה (המורה) ============ -->
+<div class="screen" id="preview">
+  <div class="pwrap" style="justify-content:flex-start;">
+    <div style="font-size:14px; color:var(--violet); font-weight:800; margin-bottom:8px;" id="pv-num"></div>
+    <p class="pstatement" id="pv-text"></p>
+    <p class="phint" id="pv-hint"></p>
+    <div class="grid" id="pv-grid"></div>
+  </div>
+</div>
+
 <!-- ============ מארח: שאלה ============ -->
 <div class="screen" id="hq">
   <div class="qhead">
@@ -304,6 +315,7 @@ input:focus{border-color:var(--gold); outline:none;}
     <div class="row">
       <button class="btn teal sm" onclick="restartGame()">🔄 התחלה מחדש</button>
       <button class="btn ghost sm" onclick="backToEditor()">→ חזרה לעריכה</button>
+      <button class="btn ghost sm" onclick="finishToList()">📂 החידונים שלי</button>
     </div>
   </div>
 </div>
@@ -470,11 +482,12 @@ function renderQuizList(all){
     const info = document.createElement('div'); info.style.textAlign='right';
     info.innerHTML = '<div style="font-weight:800; font-size:18px;">' + (q.title || 'חידון ללא שם') + '</div>' +
                      '<div style="font-size:13px; color:var(--ink-dim);">מספר ' + code + ' · ' + (q.questions? q.questions.length:0) + ' שאלות</div>';
-    const btns = document.createElement('div'); btns.style.cssText='display:flex; gap:8px;';
-    const open = document.createElement('button'); open.className='btn teal sm'; open.textContent='פתיחה'; open.onclick=()=>openExisting(code, q);
+    const btns = document.createElement('div'); btns.style.cssText='display:flex; gap:8px; flex-wrap:wrap;';
+    const play = document.createElement('button'); play.className='btn teal sm'; play.textContent='▶️ משחק'; play.onclick=()=>playExisting(code, q);
+    const edit = document.createElement('button'); edit.className='btn ghost sm'; edit.textContent='✏️ עריכה'; edit.onclick=()=>openExisting(code, q);
     const del = document.createElement('button'); del.className='btn ghost sm'; del.textContent='🗑'; del.title='מחיקת החידון';
     del.onclick=()=>{ if(confirm('למחוק את החידון "'+(q.title||'')+'"? אי אפשר לבטל.')){ fdb.ref('teachers/'+myEmailKey+'/'+code).remove().then(()=>refreshMyList()); } };
-    btns.appendChild(open); btns.appendChild(del);
+    btns.appendChild(play); btns.appendChild(edit); btns.appendChild(del);
     row.appendChild(info); row.appendChild(btns);
     box.appendChild(row);
   });
@@ -500,6 +513,18 @@ function openExisting(code, data){
   $('edit-code').textContent = editCode;
   renderEditor();
   show('editor');
+}
+
+function playExisting(code, data){
+  editCode = code;
+  quiz = {
+    title: data.title || '', time: data.time || 20,
+    teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
+    questions: data.questions || []
+  };
+  $('edit-code').textContent = editCode;
+  renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
+  goPlay();         // אבל עוברים ישר ללובי המשחק
 }
 
 function renderEditor(){
@@ -916,7 +941,7 @@ function revealQ(){
   if (quiz.teamCount>0){
     const tSum = {}; for(let i=0;i<quiz.teamCount;i++) tSum[i]=0;
     Object.values(players).forEach(p => { if (p.team>=0) tSum[p.team]+=p.score; });
-    $('hr-teams').textContent = '⚔️ ' + Object.keys(tSum).map(k=>quiz.teamNames[k]+' '+tSum[k]).join(' · ');
+    $('hr-teams').innerHTML = Object.keys(tSum).map(k=>'<span style="display:inline-block; margin:0 10px;">'+quiz.teamNames[k]+': <b style="color:#fff;">'+tSum[k]+'</b> נק׳</span>').join('');
   } else $('hr-teams').textContent = '';
   show('hr');
 }
@@ -999,9 +1024,9 @@ function hostFinish(){
     board.forEach(p => { if (p.team>=0) tSum[p.team]+=p.score; });
     const best = Math.max(...Object.values(tSum));
     const winners = Object.keys(tSum).filter(k=>tSum[k]===best);
-    let txt = '🏆 קבוצות: ' + Object.keys(tSum).map(k=>quiz.teamNames[k]+' '+tSum[k]).join(' · ');
-    txt += winners.length>1 ? ' · תיקו!' : ' · ' + quiz.teamNames[winners[0]] + ' ניצחו!';
-    $('team-final').textContent = txt;
+    const scoreLine = Object.keys(tSum).map(k=>'<span style="display:inline-block; margin:0 10px;">'+quiz.teamNames[k]+': <b style="color:#fff;">'+tSum[k]+'</b> נק׳</span>').join('');
+    const winLine = winners.length>1 ? '🤝 תיקו בין הקבוצות!' : '🏆 ' + quiz.teamNames[winners[0]] + ' ניצחו!';
+    $('team-final').innerHTML = '<div style="margin-bottom:8px;">' + scoreLine + '</div><div style="font-size:clamp(22px,3vw,32px);">' + winLine + '</div>';
   } else $('team-final').textContent='';
 
   // כרטיסי כיף: המנצח, הכי מהיר, מלך הרצף, הכי הרבה תשובות נכונות
@@ -1034,6 +1059,60 @@ function hostSkip(){
 function hostJumpFinish(){ clearInterval(hostTimer); hostFinish(); }
 function backToEditor(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('ingame-credit').style.display='none'; renderEditor(); show('editor'); }
 function restartGame(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('ingame-credit').style.display='none'; goPlay(); }
+function finishToList(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('ingame-credit').style.display='none'; refreshMyList(); }
+
+function saveNow(){
+  if (!myEmailKey){ alert('צריך להזין מייל קודם.'); return; }
+  const err = quizReady();
+  if (err){ alert(err); return; }
+  saveQuiz();
+  $('save-state').textContent = 'נשמר ✓';
+  setTimeout(()=>{ $('save-state').textContent = 'נשמר אוטומטית ✓'; }, 1500);
+}
+
+/* מצב בדיקה: המורה עובר על השאלות בעצמו, בלי תלמידים ובלי Firebase */
+let pvIndex = 0;
+function previewQuiz(){
+  const err = quizReady();
+  if (err){ alert(err); return; }
+  pvIndex = 0;
+  showPreviewQ();
+}
+function showPreviewQ(){
+  if (pvIndex >= quiz.questions.length){
+    $('pv-num').textContent = '';
+    $('pv-text').textContent = '🎉 זהו! עברת על כל השאלות.';
+    $('pv-hint').textContent = 'זו הייתה בדיקה בלבד. כשתרצו לשחק עם הכיתה, חזרו ולחצו "התחלת משחק".';
+    const grid = $('pv-grid'); grid.innerHTML = '';
+    const back = document.createElement('button'); back.className='btn teal'; back.textContent='→ חזרה לעריכה';
+    back.onclick=()=>show('editor'); grid.appendChild(back);
+    return;
+  }
+  const q = quiz.questions[pvIndex];
+  const opts = q.answers.map((a,i)=>({a,i})).filter(o=>o.a.trim());
+  $('pv-num').textContent = 'שאלה ' + (pvIndex+1) + ' / ' + quiz.questions.length + ' · בדיקה';
+  $('pv-text').textContent = q.text;
+  $('pv-hint').textContent = 'לחצו על תשובה כדי לראות אם היא נכונה';
+  const grid = $('pv-grid'); grid.innerHTML = '';
+  opts.forEach(o => {
+    const b = document.createElement('button'); b.className='pbtn'; b.textContent = o.a;
+    b.onclick = () => {
+      [...grid.children].forEach(c=>{ if(c.tagName==='BUTTON') c.disabled=true; });
+      if (o.i === q.correct){ b.style.background='var(--teal)'; b.style.color='#06231f'; $('pv-hint').textContent='✅ נכון!'; }
+      else {
+        b.style.background='var(--coral)'; b.style.color='#fff';
+        [...grid.children].forEach((c,idx)=>{ if (opts[idx] && opts[idx].i===q.correct){ c.style.background='var(--teal)'; c.style.color='#06231f'; } });
+        $('pv-hint').textContent='❌ לא נכון. הנכונה מסומנת בירוק.';
+      }
+      const next = document.createElement('button'); next.className='btn teal'; next.textContent = (pvIndex+1>=quiz.questions.length?'סיום':'לשאלה הבאה ◂');
+      next.style.marginTop='16px';
+      next.onclick=()=>{ pvIndex++; showPreviewQ(); };
+      grid.appendChild(next);
+    };
+    grid.appendChild(b);
+  });
+  show('preview');
+}
 
 /* ---- שחקן ---- */
 let myName='', myTeam=-1, joined=false, pTimer=null, sentThisQ=false, lastPick=-1;
