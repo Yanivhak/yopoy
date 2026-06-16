@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>ניהול — חידונים</title>
+<link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Heebo:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{ --bg1:#05080f; --bg2:#0a1020; --ink:#f7f4ec; --ink-dim:#aab4cf; --gold:#ffd166; --teal:#2ec4b6; --card:#22325c; }
+*{box-sizing:border-box;}
+body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, var(--bg2) 45%, var(--bg1) 100%); color:var(--ink); min-height:100vh; padding:30px 18px; line-height:1.6;}
+.wrap{max-width:720px; margin:0 auto;}
+h1{font-family:'Secular One'; font-size:34px; color:var(--gold); text-align:center; margin:0 0 4px;}
+.sub{text-align:center; color:var(--ink-dim); margin:0 0 24px;}
+.stat{display:flex; gap:14px; justify-content:center; margin-bottom:24px; flex-wrap:wrap;}
+.stat .box{background:var(--card); border-radius:14px; padding:16px 26px; text-align:center;}
+.stat .num{font-family:'Secular One'; font-size:34px; color:var(--teal);}
+.stat .lbl{font-size:13px; color:var(--ink-dim);}
+.row{background:var(--card); border-radius:12px; padding:12px 18px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+.row .email{font-weight:700; word-break:break-all;}
+.row .count{color:var(--gold); font-weight:800; white-space:nowrap;}
+#msg{text-align:center; color:var(--ink-dim); margin:20px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📊 ניהול</h1>
+  <p class="sub">מספר החידונים והמורים במערכת</p>
+  <div class="stat">
+    <div class="box"><div class="num" id="n-teachers">–</div><div class="lbl">מורים</div></div>
+    <div class="box"><div class="num" id="n-quizzes">–</div><div class="lbl">חידונים</div></div>
+  </div>
+  <div id="list"></div>
+  <p id="msg">טוען...</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCImwbGG-lLQTuij-JzNSXcrLQk-i-TQGE",
+  authDomain: "teachers-6e0bb.firebaseapp.com",
+  databaseURL: "https://teachers-6e0bb-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "teachers-6e0bb",
+  storageBucket: "teachers-6e0bb.firebasestorage.app",
+  messagingSenderId: "568740581492",
+  appId: "1:568740581492:web:ae703d6df4efce79ba4121"
+};
+firebase.initializeApp(firebaseConfig);
+const fdb = firebase.database();
+
+fdb.ref('teachers').once('value').then(snap => {
+  const data = snap.val() || {};
+  const keys = Object.keys(data);
+  let totalQuizzes = 0;
+  const rows = keys.map(k => {
+    const quizzes = data[k] || {};
+    const n = Object.keys(quizzes).length;
+    totalQuizzes += n;
+    // ניקח את המייל מתוך אחד החידונים (שמור כ-ownerEmail) או מהמפתח
+    let email = k;
+    const first = Object.values(quizzes)[0];
+    if (first && first.ownerEmail) email = first.ownerEmail;
+    return { email, n };
+  }).sort((a,b)=>b.n-a.n);
+
+  document.getElementById('n-teachers').textContent = keys.length;
+  document.getElementById('n-quizzes').textContent = totalQuizzes;
+
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  rows.forEach(r => {
+    const d = document.createElement('div'); d.className='row';
+    d.innerHTML = '<span class="email">'+r.email+'</span><span class="count">'+r.n+' חידונים</span>';
+    list.appendChild(d);
+  });
+  document.getElementById('msg').textContent = keys.length ? '' : 'עדיין אין מורים במערכת.';
+}).catch(e => {
+  document.getElementById('msg').textContent = 'תקלה בטעינה: ' + e.message;
+});
+</script>
+</body>
+</html>
