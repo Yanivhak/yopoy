@@ -122,7 +122,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v19</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v20</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -302,7 +302,7 @@ input:focus{border-color:var(--gold); outline:none;}
   <h2 class="winner-name" id="hr-answer"></h2>
   <div id="hr-bars" style="width:100%; display:flex; flex-direction:column; align-items:center;"></div>
   <div id="hr-teams" style="margin-top:18px; font-size:clamp(20px,2.4vw,28px); color:var(--gold); font-weight:700;"></div>
-  <button class="btn teal" onclick="nextQ()" style="margin-top:22px;">ממשיכים ◂</button>
+  <button class="btn teal" id="hr-next" onclick="nextQ()" style="margin-top:22px;">ממשיכים ◂</button>
 </div>
 
 <!-- ============ מארח: סיום ============ -->
@@ -901,6 +901,8 @@ function showIntermission(){
 function revealQ(){
   if (revealed) return;
   revealed = true; clearInterval(hostTimer);
+  if ($('hr-next')) $('hr-next').style.display='inline-block';
+  if ($('solo-next')) $('solo-next').style.display='none';
   const opts = cleanAnswers(curQ);
   const correctText = curQ.answers[curQ.correct];
 
@@ -1157,6 +1159,7 @@ function soloReveal(){
   if (revealed) return;
   revealed = true; clearInterval(hostTimer);
   if ($('solo-answers')) $('solo-answers').style.display='none';
+  if ($('hr-next')) $('hr-next').style.display='none';
   const opts = cleanAnswers(curQ);
   const correctText = curQ.answers[curQ.correct];
   const dist = {}; opts.forEach(o => dist[o.i]=0);
