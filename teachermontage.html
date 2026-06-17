@@ -67,7 +67,7 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
 @keyframes kenburns{0%{transform:scale(1) translate(0,0);}100%{transform:scale(1.12) translate(-2%,-1%);}}
 .monwrap.motion img.vis{animation:kenburns 7s ease-out forwards;}
 .trans-btn.on, .motion-btn.on{background:var(--gold); color:#1a2342; border-color:var(--gold);}
-.moncap{position:fixed; bottom:42px; left:0; right:0; text-align:center; z-index:4; font-family:'Secular One'; font-size:clamp(28px,4vw,52px); color:var(--gold); text-shadow:0 2px 14px rgba(0,0,0,.9);}
+.moncap{position:fixed; bottom:42px; left:0; right:0; text-align:center; z-index:4; font-family:'Secular One'; font-size:clamp(28px,4vw,52px); color:var(--gold); text-shadow:0 2px 14px rgba(0,0,0,.9); transition:opacity .7s ease; opacity:0;}
 #mon-progress{position:fixed; bottom:0; left:0; right:0; height:14px; background:rgba(0,0,0,.55); z-index:5;}
 #mon-progress i{display:block; height:100%; width:0; background:linear-gradient(90deg, var(--gold), #ffe9a8); transition:width .5s linear; box-shadow:0 0 12px var(--gold);}
 #mon-controls{position:fixed; top:16px; right:16px; z-index:6; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; max-width:60vw;}
@@ -89,6 +89,7 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
   <div class="row">
     <button class="btn ghost" id="pics-btn" onclick="$('pics-input').click()">📷 בחירת תמונות</button>
     <button class="btn ghost" id="music-btn" onclick="$('music-input').click()">🎵 בחירת מוזיקה</button>
+    <button class="btn ghost" id="music-gallery-btn" onclick="openMusicGallery()">🎼 מוזיקה מהגלריה</button>
     <button class="btn ghost" id="cap-btn" onclick="toggleCap()">✏️ הוספת כיתוב</button>
     <span class="info-i" onclick="showInfo(event, 'התמונות והמוזיקה נטענות מהמחשב ולא נשמרות, אז צריך לבחור אותן מחדש בכל פעם. בזמן ההצגה אפשר לעצור, להשתיק מוזיקה, ולשנות אפקטים — הכול תוך כדי.')">i</span>
   </div>
@@ -97,7 +98,9 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
   <input type="file" id="music-input" accept="audio/*" multiple style="display:none" onchange="musicChosen(this.files)">
 
   <div class="capbox" id="capbox">
-    <input type="text" id="cap-text" maxlength="60" placeholder="כיתוב שיופיע על המצגת (לא חובה)">
+    <div style="font-size:13px; color:var(--ink-dim); margin-bottom:8px;">כתבו שורת כיתוב. אפשר להוסיף עוד שורות עם הכפתור + <span class="info-i" onclick="showInfo(event, 'אפשר להוסיף כמה שורות כיתוב. במצגת הן יתחלפו ביניהן באקראי בדהייה רכה, כל כמה שניות. אם תכתבו שורה אחת בלבד, היא תופיע קבוע.')">i</span></div>
+    <div id="cap-lines"></div>
+    <button class="btn ghost sm" onclick="addCapLine()" style="margin-top:8px;">➕ הוספת שורת כיתוב</button>
   </div>
 
   <div class="row" style="margin:16px 0;">
@@ -177,6 +180,44 @@ function picsChosen(files){
 
 /* ---------- בחירת מוזיקה ---------- */
 let playlist = [], playIdx = 0, audio = null;
+
+/* גלריית מוזיקה מובנית (11.mp3 עד 22.mp3 למצגת) */
+const MUSIC_GALLERY = [
+  { name:'מוזיקה 1', url:'11.mp3' },
+  { name:'מוזיקה 2', url:'12.mp3' },
+  { name:'מוזיקה 3', url:'13.mp3' },
+  { name:'מוזיקה 4', url:'14.mp3' },
+  { name:'מוזיקה 5', url:'15.mp3' },
+  { name:'מוזיקה 6', url:'16.mp3' },
+  { name:'מוזיקה 7', url:'17.mp3' },
+  { name:'מוזיקה 8', url:'18.mp3' },
+  { name:'מוזיקה 9', url:'19.mp3' },
+  { name:'מוזיקה 10', url:'20.mp3' },
+  { name:'מוזיקה 11', url:'21.mp3' },
+  { name:'מוזיקה 12', url:'22.mp3' },
+];
+function openMusicGallery(){
+  let ov = $('music-gallery-overlay');
+  if (ov){ ov.remove(); return; }
+  ov = document.createElement('div'); ov.id='music-gallery-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:center; justify-content:center; padding:20px; overflow:auto;';
+  ov.onclick=(e)=>{ if(e.target===ov) ov.remove(); };
+  const box=document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:460px; width:100%; margin:auto; text-align:right;';
+  box.innerHTML='<div style="font-family:\'Secular One\'; font-size:22px; color:var(--gold); margin-bottom:14px;">בחירת מוזיקה מהגלריה</div>';
+  const grid=document.createElement('div'); grid.style.cssText='display:flex; flex-direction:column; gap:8px;';
+  MUSIC_GALLERY.forEach(m=>{
+    const b=document.createElement('button'); b.className='btn ghost sm'; b.style.width='100%'; b.textContent='🎵 '+m.name;
+    b.onclick=()=>{ playlist.push({ name:m.name, url:m.url, gallery:true }); renderMusicList(); ov.remove(); };
+    grid.appendChild(b);
+  });
+  box.appendChild(grid);
+  const close=document.createElement('button'); close.className='btn ghost sm'; close.textContent='✓ סגירה'; close.style.cssText='margin-top:16px; width:100%;';
+  close.onclick=()=>ov.remove();
+  box.appendChild(close);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+
 function musicChosen(files){
   if (!files || !files.length) return;
   [...files].forEach(f => playlist.push({ name: f.name, url: URL.createObjectURL(f) }));
@@ -184,7 +225,7 @@ function musicChosen(files){
   renderMusicList();
 }
 function removeSong(i){
-  URL.revokeObjectURL(playlist[i].url);
+  if (playlist[i] && !playlist[i].gallery) URL.revokeObjectURL(playlist[i].url);
   playlist.splice(i, 1);
   renderMusicList();
 }
@@ -208,7 +249,26 @@ function renderMusicList(){
 /* ---------- כיתוב ---------- */
 function toggleCap(){
   $('capbox').classList.toggle('on');
-  if ($('capbox').classList.contains('on')) $('cap-text').focus();
+  if ($('capbox').classList.contains('on')){
+    if (!$('cap-lines').children.length) addCapLine();
+    const first = $('cap-lines').querySelector('input');
+    if (first) first.focus();
+  }
+}
+function addCapLine(){
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:center;';
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.maxLength = 60; inp.placeholder = 'שורת כיתוב';
+  inp.style.cssText = "flex:1; font-family:'Heebo'; font-size:17px; padding:10px 14px; border-radius:12px; border:2px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--ink); text-align:center;";
+  const del = document.createElement('button');
+  del.className = 'btn ghost sm'; del.textContent = '✕'; del.title = 'הסרת השורה';
+  del.onclick = () => { wrap.remove(); };
+  wrap.appendChild(inp); wrap.appendChild(del);
+  $('cap-lines').appendChild(wrap);
+}
+function getCaptions(){
+  return [...$('cap-lines').querySelectorAll('input')].map(i=>i.value.trim()).filter(v=>v);
 }
 
 function refreshStart(){
@@ -232,11 +292,34 @@ function playMusic(){
 /* ---------- המצגת ---------- */
 let monIv = null, paused = false, stepFn = null, intervalMs = 4500;
 let monOrder = [], monImgA = null, monImgB = null, monFlip = false, monMusicMuted = false;
+let capList = [], capIdx = 0, capTimer = null;
+
+function startCaptions(caps){
+  capList = caps || [];
+  capIdx = 0;
+  if (capTimer){ clearInterval(capTimer); capTimer = null; }
+  const el = $('moncap');
+  if (!capList.length){ el.textContent = ''; el.style.opacity = '0'; return; }
+  // שורה ראשונה
+  el.textContent = capList[0];
+  el.style.opacity = '1';
+  if (capList.length === 1) return; // שורה אחת = קבוע
+  // התחלפות בדהייה כל ~6.5 שניות
+  capTimer = setInterval(() => {
+    if (paused) return;
+    el.style.opacity = '0';
+    setTimeout(() => {
+      capIdx = (capIdx + 1) % capList.length;
+      el.textContent = capList[capIdx];
+      el.style.opacity = '1';
+    }, 700);
+  }, 6500);
+}
 
 function startShow(){
   if (!pics.length) return;
-  const cap = $('cap-text').value.trim();
-  $('moncap').textContent = cap;
+  const caps = getCaptions();
+  startCaptions(caps);
   show('show');
   playIdx = 0;
   monMusicMuted = false;
@@ -333,6 +416,7 @@ function toggleMontageMusic(){
 /* חזרה לעריכה: למסך ההגדרות */
 function backToSetup(){
   clearInterval(monIv);
+  if (capTimer){ clearInterval(capTimer); capTimer = null; }
   if (audio){ try{ audio.pause(); }catch(e){} }
   stopFx();
   show('setup');

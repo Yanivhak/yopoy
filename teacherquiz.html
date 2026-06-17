@@ -125,7 +125,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v27</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v28</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -1142,13 +1142,18 @@ function openBgGallery(){
 /* מוזיקת רקע (בצד המארח, לא נשמרת ב-Firebase) */
 let musicList = [], musicIdx = 0, musicAudio = null, musicMuted = false;
 
-/* גלריית מוזיקה מובנית — קבצים שיושבים בתוך הפרויקט (תיקיית music/).
-   כדי להוסיף שירים: הורידו קובצי MP3 חינמיים (Pixabay/Mixkit), העלו אותם לתיקייה music/ ברפו,
-   והוסיפו כאן שורה לכל שיר. הקטגוריה היא לתצוגה בלבד. */
+/* גלריית מוזיקה מובנית — קבצים שיושבים בתוך הפרויקט (1.mp3 עד 10.mp3 לחידון). */
 const MUSIC_GALLERY = [
-  // דוגמה (הסירו את הסולמית והעלו קובץ אמיתי בשם הזה):
-  // { name:'רקע רגוע', cat:'רגוע', url:'music/calm1.mp3' },
-  // { name:'חגיגי', cat:'חגיגי', url:'music/celebrate1.mp3' },
+  { name:'מוזיקה 1', url:'1.mp3' },
+  { name:'מוזיקה 2', url:'2.mp3' },
+  { name:'מוזיקה 3', url:'3.mp3' },
+  { name:'מוזיקה 4', url:'4.mp3' },
+  { name:'מוזיקה 5', url:'5.mp3' },
+  { name:'מוזיקה 6', url:'6.mp3' },
+  { name:'מוזיקה 7', url:'7.mp3' },
+  { name:'מוזיקה 8', url:'8.mp3' },
+  { name:'מוזיקה 9', url:'9.mp3' },
+  { name:'מוזיקה 10', url:'10.mp3' },
 ];
 function openMusicGallery(){
   let ov = $('music-gallery-overlay');
@@ -1164,7 +1169,7 @@ function openMusicGallery(){
   } else {
     const grid=document.createElement('div'); grid.style.cssText='display:flex; flex-direction:column; gap:8px;';
     MUSIC_GALLERY.forEach(m=>{
-      const b=document.createElement('button'); b.className='btn ghost sm'; b.style.width='100%'; b.textContent='🎵 '+m.name+' · '+m.cat;
+      const b=document.createElement('button'); b.className='btn ghost sm'; b.style.width='100%'; b.textContent='🎵 '+m.name;
       b.onclick=()=>{ musicList.push({ name:m.name, url:m.url }); renderMusicList(); if($('pg-music-list')){ $('pg-music-list').textContent='נבחרו '+musicList.length+' שירים'; } ov.remove(); };
       grid.appendChild(b);
     });
