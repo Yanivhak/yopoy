@@ -125,7 +125,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v31</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v32</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -141,16 +141,22 @@ input:focus{border-color:var(--gold); outline:none;}
         <button class="btn" onclick="signInGoogle()" style="width:100%; background:#fff; color:#1a2342; display:flex; align-items:center; justify-content:center; gap:10px;">
           <span style="font-weight:800; color:#4285F4;">G</span> התחברות עם Google
         </button>
-        <div style="font-size:13px; color:var(--ink-dim); margin-top:8px;">לא חובה. התחברות שומרת את החידונים בענן ומאפשרת גישה מכל מחשב. אפשר גם להמשיך בלי, עם מייל.</div>
+        <button class="btn ghost" onclick="enterGuest()" style="width:100%; margin-top:10px;">
+          👤 כניסה כאורח <span class="info-i" onclick="event.stopPropagation(); showInfo(event, 'כאורח אפשר לבנות חידון, לערוך, לשחק ולהשתמש בכל האפשרויות — אבל בלי יכולת לשמור או לשתף את החידון. כדי לשמור ולשתף, יש להתחבר עם Google. בסוף משחק של אורח תהיה הזדמנות להתחבר ולשמור.')">i</span>
+        </button>
       </div>
       <div id="auth-in" style="display:none; background:var(--card); border-radius:12px; padding:12px 16px;">
         <div style="font-size:14px;">מחוברים כ־<b id="auth-name" style="color:var(--gold);"></b></div>
         <div style="font-size:13px; color:var(--ink-dim); word-break:break-all;" id="auth-email"></div>
         <button class="btn ghost sm" onclick="signOutGoogle()" style="margin-top:10px;">התנתקות</button>
       </div>
+      <div id="guest-badge" style="display:none; background:var(--card); border-radius:12px; padding:12px 16px;">
+        <div style="font-size:14px;">מצב אורח 👤 <span style="color:var(--ink-dim); font-size:13px;">(החידונים לא נשמרים)</span></div>
+        <button class="btn ghost sm" onclick="signInGoogle()" style="margin-top:10px;">התחברות עם Google לשמירה</button>
+      </div>
     </div>
 
-    <div id="email-block">
+    <div id="email-block" style="display:none;">
     <div class="field" style="max-width:380px; margin:0 auto 6px;">
       <label>המייל שלכם</label>
       <input type="email" id="email-input" placeholder="name@example.com" inputmode="email">
@@ -377,6 +383,12 @@ input:focus{border-color:var(--gold); outline:none;}
       <button class="btn ghost sm" onclick="backToEditor()">→ חזרה לעריכה</button>
       <button class="btn ghost sm" onclick="finishToList()">📂 החידונים שלי</button>
     </div>
+    <div id="guest-save-box" style="display:none; margin-top:20px; background:var(--card); border-radius:14px; padding:16px 20px; max-width:420px; margin-inline:auto;">
+      <div style="font-size:15px; margin-bottom:10px;">בנית את החידון כאורח, אז הוא לא נשמר. רוצה לשמור אותו? התחבר עם Google והחידון יישמר לחשבון שלך.</div>
+      <button class="btn" onclick="guestSaveWithGoogle()" style="background:#fff; color:#1a2342; display:flex; align-items:center; justify-content:center; gap:10px; width:100%;">
+        <span style="font-weight:800; color:#4285F4;">G</span> התחברות ושמירה
+      </button>
+    </div>
   </div>
 </div>
 
@@ -507,10 +519,20 @@ let editCode = null;
 let saveTimer = null;
 let myEmail = '', myEmailKey = '';
 let myUid = null, myAuthName = '';
+let isGuest = false;
 
 function genCode(){ return String(Math.floor(1000 + Math.random()*9000)); }
 function emailToKey(e){ return e.trim().toLowerCase().replace(/[.#$\[\]\/@]/g, '_'); }
 function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+function enterGuest(){
+  isGuest = true;
+  myUid = null; myEmail = ''; myEmailKey = '';
+  if ($('auth-out')) $('auth-out').style.display = 'none';
+  if ($('guest-badge')) $('guest-badge').style.display = 'block';
+  $('home-msg').textContent = '';
+  newQuiz();
+}
 
 /* ===== התחברות Google (לא חובה) ===== */
 function signInGoogle(){
@@ -533,54 +555,92 @@ function signInGoogle(){
 function signOutGoogle(){
   fauth.signOut();
 }
+
+// אורח שמסיים משחק ורוצה לשמור — מתחבר ואז שומר את החידון הנוכחי
+function guestSaveWithGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fauth.signInWithPopup(provider).then((res) => {
+    const user = res.user;
+    myUid = user.uid;
+    myAuthName = user.displayName || '';
+    myEmail = (user.email || '').toLowerCase();
+    myEmailKey = myEmail ? emailToKey(myEmail) : ('uid_' + myUid);
+    isGuest = false;
+    // שומרים את החידון שנבנה כאורח
+    if (editCode && quiz){
+      const payload = Object.assign({}, quiz, { updated: Date.now(), ownerEmail: myEmail });
+      Promise.all([
+        fdb.ref('teachers/'+myEmailKey+'/'+editCode).set(payload),
+        fdb.ref('shared/'+editCode).set(payload),
+        fdb.ref('teacher_emails/'+myEmailKey).set({ email: myEmail, name: myAuthName, uid: myUid, last: Date.now() })
+      ]).then(()=>{
+        $('guest-save-box').innerHTML = '<div style="font-size:15px; color:var(--teal);">✅ החידון נשמר לחשבון שלך! מעכשיו הוא יופיע ברשימת החידונים שלך.</div>';
+      }).catch(()=>{
+        $('guest-save-box').innerHTML = '<div style="font-size:15px; color:var(--coral);">תקלה בשמירה. נסו שוב מאוחר יותר.</div>';
+      });
+    }
+  }).catch(()=>{
+    // אם נחסם חלון קופץ — ננסה הפניה (אך אז ייתכן שהחידון לא יישמר אוטומטית)
+    alert('כדי לשמור צריך להתחבר. אם ההתחברות נחסמה, נסו שוב.');
+  });
+}
 // אם חזרנו מהתחברות בהפניה — נטפל בתוצאה
 fauth.getRedirectResult().catch(()=>{});
 // מאזין למצב ההתחברות — שומר זהות גם אחרי רענון
 fauth.onAuthStateChanged(user => {
   if (user){
+    isGuest = false;
     myUid = user.uid;
     myAuthName = user.displayName || '';
     myEmail = (user.email || '').toLowerCase();
     myEmailKey = myEmail ? emailToKey(myEmail) : ('uid_' + myUid);
     // תצוגה: מחובר
     if ($('auth-out')) $('auth-out').style.display = 'none';
+    if ($('guest-badge')) $('guest-badge').style.display = 'none';
     if ($('auth-in')){ $('auth-in').style.display = 'block'; $('auth-name').textContent = myAuthName || myEmail; $('auth-email').textContent = myEmail; }
-    if ($('email-block')) $('email-block').style.display = 'none';
     // רושמים את המורה
     fdb.ref('teacher_emails/'+myEmailKey).set({ email: myEmail, name: myAuthName, uid: myUid, last: Date.now() }).catch(()=>{});
   } else {
-    myUid = null; myAuthName = '';
-    // לא מאפסים myEmail אם המשתמש בחר להשתמש במייל ידני
-    if ($('auth-out')) $('auth-out').style.display = 'block';
-    if ($('auth-in')) $('auth-in').style.display = 'none';
-    if ($('email-block')) $('email-block').style.display = 'block';
+    myUid = null; myAuthName = ''; myEmail = ''; myEmailKey = '';
+    if (!isGuest){
+      if ($('auth-out')) $('auth-out').style.display = 'block';
+      if ($('auth-in')) $('auth-in').style.display = 'none';
+      if ($('guest-badge')) $('guest-badge').style.display = 'none';
+    }
   }
 });
 
 function ensureEmail(){
-  // אם מחובר עם Google — הזהות כבר מוכנה
+  // מחובר עם Google — הזהות מוכנה
   if (myUid && myEmailKey){ return true; }
-  const e = $('email-input').value.trim();
-  if (!validEmail(e)){ $('home-msg').textContent = 'נא להזין כתובת מייל תקינה, או להתחבר עם Google.'; return false; }
-  myEmail = e.toLowerCase(); myEmailKey = emailToKey(e);
-  fdb.ref('teacher_emails/'+myEmailKey).set({ email: myEmail, last: Date.now() }).catch(()=>{});
-  return true;
+  // אורח — מותר (בלי שמירה)
+  if (isGuest){ return true; }
+  return false;
 }
 
 function goShowList(){
-  if (!ensureEmail()) return;
-  $('home-msg').textContent = 'טוען...';
-  fdb.ref('teachers/'+myEmailKey).once('value').then(snap => {
-    $('home-msg').textContent = '';
-    renderQuizList(snap.val() || {});
-    show('mylist');
-  }).catch(()=>{ $('home-msg').textContent = 'תקלה בטעינה, נסו שוב.'; });
+  if (myUid && myEmailKey){
+    $('home-msg').textContent = 'טוען...';
+    fdb.ref('teachers/'+myEmailKey).once('value').then(snap => {
+      $('home-msg').textContent = '';
+      renderQuizList(snap.val() || {});
+      show('mylist');
+    }).catch(()=>{ $('home-msg').textContent = 'תקלה בטעינה, נסו שוב.'; });
+  } else {
+    $('home-msg').textContent = 'יש להתחבר עם Google כדי לראות את החידונים שלך.';
+  }
 }
 
 function goNewQuiz(){
-  if (!ensureEmail()) return;
-  $('home-msg').textContent = '';
-  newQuiz();
+  if (myUid && myEmailKey){
+    $('home-msg').textContent = '';
+    newQuiz();
+  } else if (isGuest){
+    $('home-msg').textContent = '';
+    newQuiz();
+  } else {
+    $('home-msg').textContent = 'יש להתחבר עם Google כדי לשמור, או לבחור מצב אורח.';
+  }
 }
 
 function loginEmail(){
@@ -962,6 +1022,7 @@ function renderQuestions(){
 function touch(){
   quiz.title = $('quiz-title').value;
   quiz.time = parseInt($('quiz-time').value,10) || 20;
+  if (isGuest){ $('save-state').textContent = 'מצב אורח — לא נשמר. התחברו עם Google כדי לשמור.'; return; }
   $('save-state').textContent = 'שומר...';
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveQuiz, 600);
@@ -1543,6 +1604,7 @@ function hostFinish(){
   if (byCorrect && byCorrect.correct>0) funCard(fc, '🎯', 'הכי הרבה תשובות נכונות', byCorrect.name, byCorrect.correct + ' תשובות');
 
   send({ t:'end', scores: board });
+  $('guest-save-box').style.display = isGuest ? 'block' : 'none';
   show('hfin');
   confetti();
 }
@@ -1694,6 +1756,7 @@ function soloFinish(){
   $('team-final').innerHTML='<div style="font-size:clamp(20px,3vw,30px);">✅ סיימתם את הבדיקה!</div>';
   $('fun-cards').innerHTML='<div style="color:var(--ink-dim); max-width:420px;">ככה החידון ייראה לתלמידים. כשתרצו לשחק עם הכיתה, חזרו ולחצו "התחלת משחק עם הכיתה".</div>';
   // נחליף את כפתורי הסיום הרגילים בכפתור חזרה לעריכה בלבד (זמני)
+  $('guest-save-box').style.display = 'none';
   show('hfin');
   confetti();
 }
