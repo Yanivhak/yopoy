@@ -125,7 +125,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v29</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v30</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -135,10 +135,27 @@ input:focus{border-color:var(--gold); outline:none;}
     <h1>🧠 בונה חידונים</h1>
     <p class="sub">בנו חידון טריוויה משלכם, והתלמידים משחקים מהטלפון. בלי התקנה.</p>
 
+    <!-- התחברות Google (לא חובה) -->
+    <div id="auth-box" style="max-width:380px; margin:0 auto 18px;">
+      <div id="auth-out">
+        <button class="btn" onclick="signInGoogle()" style="width:100%; background:#fff; color:#1a2342; display:flex; align-items:center; justify-content:center; gap:10px;">
+          <span style="font-weight:800; color:#4285F4;">G</span> התחברות עם Google
+        </button>
+        <div style="font-size:13px; color:var(--ink-dim); margin-top:8px;">לא חובה. התחברות שומרת את החידונים בענן ומאפשרת גישה מכל מחשב. אפשר גם להמשיך בלי, עם מייל.</div>
+      </div>
+      <div id="auth-in" style="display:none; background:var(--card); border-radius:12px; padding:12px 16px;">
+        <div style="font-size:14px;">מחוברים כ־<b id="auth-name" style="color:var(--gold);"></b></div>
+        <div style="font-size:13px; color:var(--ink-dim); word-break:break-all;" id="auth-email"></div>
+        <button class="btn ghost sm" onclick="signOutGoogle()" style="margin-top:10px;">התנתקות</button>
+      </div>
+    </div>
+
+    <div id="email-block">
     <div class="field" style="max-width:380px; margin:0 auto 6px;">
       <label>המייל שלכם</label>
       <input type="email" id="email-input" placeholder="name@example.com" inputmode="email">
       <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">המייל משמש רק לזיהוי ולשמירת החידונים שלכם. לא נשלח אליו דואר.</div>
+    </div>
     </div>
     <div class="row" style="margin:14px 0 4px;">
       <button class="btn" onclick="goShowList()">📂 הצגת החידונים שלי</button>
@@ -440,6 +457,7 @@ input:focus{border-color:var(--gold); outline:none;}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCImwbGG-lLQTuij-JzNSXcrLQk-i-TQGE",
@@ -452,6 +470,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const fdb = firebase.database();
+const fauth = firebase.auth();
 </script>
 <script>
 function $(id){ return document.getElementById(id); }
@@ -487,14 +506,49 @@ let quiz = null;        // {title, time, teamCount, teamNames[], questions:[...]
 let editCode = null;
 let saveTimer = null;
 let myEmail = '', myEmailKey = '';
+let myUid = null, myAuthName = '';
 
 function genCode(){ return String(Math.floor(1000 + Math.random()*9000)); }
 function emailToKey(e){ return e.trim().toLowerCase().replace(/[.#$\[\]\/@]/g, '_'); }
 function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
+/* ===== התחברות Google (לא חובה) ===== */
+function signInGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fauth.signInWithPopup(provider).catch(err => {
+    $('home-msg').textContent = 'ההתחברות נכשלה או בוטלה. אפשר לנסות שוב, או להמשיך עם מייל.';
+  });
+}
+function signOutGoogle(){
+  fauth.signOut();
+}
+// מאזין למצב ההתחברות — שומר זהות גם אחרי רענון
+fauth.onAuthStateChanged(user => {
+  if (user){
+    myUid = user.uid;
+    myAuthName = user.displayName || '';
+    myEmail = (user.email || '').toLowerCase();
+    myEmailKey = myEmail ? emailToKey(myEmail) : ('uid_' + myUid);
+    // תצוגה: מחובר
+    if ($('auth-out')) $('auth-out').style.display = 'none';
+    if ($('auth-in')){ $('auth-in').style.display = 'block'; $('auth-name').textContent = myAuthName || myEmail; $('auth-email').textContent = myEmail; }
+    if ($('email-block')) $('email-block').style.display = 'none';
+    // רושמים את המורה
+    fdb.ref('teacher_emails/'+myEmailKey).set({ email: myEmail, name: myAuthName, uid: myUid, last: Date.now() }).catch(()=>{});
+  } else {
+    myUid = null; myAuthName = '';
+    // לא מאפסים myEmail אם המשתמש בחר להשתמש במייל ידני
+    if ($('auth-out')) $('auth-out').style.display = 'block';
+    if ($('auth-in')) $('auth-in').style.display = 'none';
+    if ($('email-block')) $('email-block').style.display = 'block';
+  }
+});
+
 function ensureEmail(){
+  // אם מחובר עם Google — הזהות כבר מוכנה
+  if (myUid && myEmailKey){ return true; }
   const e = $('email-input').value.trim();
-  if (!validEmail(e)){ $('home-msg').textContent = 'נא להזין כתובת מייל תקינה.'; return false; }
+  if (!validEmail(e)){ $('home-msg').textContent = 'נא להזין כתובת מייל תקינה, או להתחבר עם Google.'; return false; }
   myEmail = e.toLowerCase(); myEmailKey = emailToKey(e);
   fdb.ref('teacher_emails/'+myEmailKey).set({ email: myEmail, last: Date.now() }).catch(()=>{});
   return true;

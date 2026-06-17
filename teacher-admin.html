@@ -27,16 +27,28 @@ h1{font-family:'Secular One'; font-size:34px; color:var(--gold); text-align:cent
 <div class="wrap">
   <h1>📊 ניהול</h1>
   <p class="sub">מספר החידונים והמורים במערכת</p>
-  <div class="stat">
-    <div class="box"><div class="num" id="n-teachers">–</div><div class="lbl">מורים</div></div>
-    <div class="box"><div class="num" id="n-quizzes">–</div><div class="lbl">חידונים</div></div>
+
+  <div id="gate" style="text-align:center; margin:30px 0;">
+    <button onclick="adminSignIn()" style="background:#fff; color:#1a2342; border:none; border-radius:10px; padding:12px 22px; cursor:pointer; font-family:Heebo; font-size:16px; font-weight:700;">התחברות עם Google</button>
+    <p id="gate-msg" style="color:var(--ink-dim); margin-top:14px;">העמוד הזה פתוח רק לניהול. התחברו כדי להמשיך.</p>
   </div>
-  <div id="list"></div>
-  <p id="msg">טוען...</p>
+
+  <div id="panel" style="display:none;">
+    <div style="text-align:center; margin-bottom:16px; font-size:14px; color:var(--ink-dim);">
+      מחובר כ־<b id="who" style="color:var(--gold);"></b> · <button onclick="firebase.auth().signOut()" style="background:none; border:none; color:var(--ink-dim); text-decoration:underline; cursor:pointer; font-family:Heebo;">התנתקות</button>
+    </div>
+    <div class="stat">
+      <div class="box"><div class="num" id="n-teachers">–</div><div class="lbl">מורים</div></div>
+      <div class="box"><div class="num" id="n-quizzes">–</div><div class="lbl">חידונים</div></div>
+    </div>
+    <div id="list"></div>
+    <p id="msg">טוען...</p>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCImwbGG-lLQTuij-JzNSXcrLQk-i-TQGE",
@@ -49,7 +61,38 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const fdb = firebase.database();
+const fauth = firebase.auth();
 
+const ADMIN_EMAIL = 'yaniv.hakim@mail.huji.ac.il';
+let adminLoaded = false;
+
+function adminSignIn(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fauth.signInWithPopup(provider).catch(err => {
+    document.getElementById('gate-msg').textContent = 'ההתחברות נכשלה או בוטלה. נסו שוב.';
+  });
+}
+
+fauth.onAuthStateChanged(user => {
+  const email = user && user.email ? user.email.toLowerCase() : '';
+  if (user && email === ADMIN_EMAIL){
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('panel').style.display = 'block';
+    document.getElementById('who').textContent = email;
+    if (!adminLoaded){ adminLoaded = true; loadAdmin(); }
+  } else if (user){
+    // מחובר אבל לא המנהל
+    document.getElementById('gate').style.display = 'block';
+    document.getElementById('panel').style.display = 'none';
+    document.getElementById('gate-msg').textContent = 'אין הרשאה לחשבון הזה. התחברו עם חשבון הניהול.';
+  } else {
+    document.getElementById('gate').style.display = 'block';
+    document.getElementById('panel').style.display = 'none';
+    document.getElementById('gate-msg').textContent = 'העמוד הזה פתוח רק לניהול. התחברו כדי להמשיך.';
+  }
+});
+
+function loadAdmin(){
 fdb.ref('teachers').once('value').then(snap => {
   const data = snap.val() || {};
   const keys = Object.keys(data);
@@ -94,6 +137,7 @@ fdb.ref('teachers').once('value').then(snap => {
 }).catch(e => {
   document.getElementById('msg').textContent = 'תקלה בטעינה: ' + e.message;
 });
+}
 </script>
 </body>
 </html>
