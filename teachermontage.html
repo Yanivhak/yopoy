@@ -54,6 +54,15 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
 /* מעבר התקרבות */
 .monwrap.t-zoom img{transform:scale(1.12);}
 .monwrap.t-zoom img.vis{transform:scale(1);}
+/* מעבר התרחקות */
+.monwrap.t-zoomout img{transform:scale(0.9);}
+.monwrap.t-zoomout img.vis{transform:scale(1);}
+/* החלקה מלמעלה */
+.monwrap.t-slideup img{transform:translateY(-8%);}
+.monwrap.t-slideup img.vis{transform:translateY(0);}
+/* החלקה מלמטה */
+.monwrap.t-slidedown img{transform:translateY(8%);}
+.monwrap.t-slidedown img.vis{transform:translateY(0);}
 /* תנועה עדינה על התמונה (קן ברנס) */
 @keyframes kenburns{0%{transform:scale(1) translate(0,0);}100%{transform:scale(1.12) translate(-2%,-1%);}}
 .monwrap.motion img.vis{animation:kenburns 7s ease-out forwards;}
@@ -65,6 +74,9 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
 #mon-controls button{font-family:'Heebo'; font-size:15px; font-weight:700; color:var(--ink); background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.3); border-radius:10px; padding:9px 16px; cursor:pointer;}
 #mon-controls button:active{transform:translateY(1px);}
 .fx-btn.on{background:var(--gold); color:#1a2342; border-color:var(--gold);}
+.info-i{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.16); color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; margin-inline-start:6px; vertical-align:middle; user-select:none;}
+.info-i:hover{background:var(--gold); color:#1a2342;}
+.info-pop{position:fixed; z-index:50; max-width:280px; background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);}
 </style>
 </head>
 <body>
@@ -78,6 +90,7 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
     <button class="btn ghost" id="pics-btn" onclick="$('pics-input').click()">📷 בחירת תמונות</button>
     <button class="btn ghost" id="music-btn" onclick="$('music-input').click()">🎵 בחירת מוזיקה</button>
     <button class="btn ghost" id="cap-btn" onclick="toggleCap()">✏️ הוספת כיתוב</button>
+    <span class="info-i" onclick="showInfo(event, 'התמונות והמוזיקה נטענות מהמחשב ולא נשמרות, אז צריך לבחור אותן מחדש בכל פעם. בזמן ההצגה אפשר לעצור, להשתיק מוזיקה, ולשנות אפקטים — הכול תוך כדי.')">i</span>
   </div>
 
   <input type="file" id="pics-input" accept="image/*" multiple style="display:none" onchange="picsChosen(this.files)">
@@ -122,6 +135,25 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
 
 <script>
 function $(id){ return document.getElementById(id); }
+
+/* סימן מידע (i) שנפתח בלחיצה ונסגר כשלוחצים במקום אחר */
+function showInfo(ev, text){
+  ev.stopPropagation();
+  closeInfo();
+  const pop = document.createElement('div');
+  pop.className = 'info-pop'; pop.id = 'active-info';
+  pop.textContent = text;
+  document.body.appendChild(pop);
+  const r = ev.currentTarget.getBoundingClientRect();
+  let top = r.bottom + 8, left = r.left - 130;
+  if (left < 10) left = 10;
+  if (left + 280 > window.innerWidth) left = window.innerWidth - 290;
+  if (top + 120 > window.innerHeight) top = r.top - 130;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+}
+function closeInfo(){ const p = $('active-info'); if (p) p.remove(); }
+document.addEventListener('click', closeInfo);
 function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); $(id).classList.add('on'); }
 
 // בתוך הקומבו (embed=1) מסתירים את הקישור לתפריט הראשי, כי יש סרגל למעלה
@@ -307,12 +339,12 @@ function backToSetup(){
 }
 
 /* ===== אפקטים: שלג, גשם, זיקוקים, לבבות ===== */
-const fxActive = { snow:false, rain:false, fireworks:false, hearts:false };
+const fxActive = { snow:false, rain:false, fireworks:false, hearts:false, bubbles:false, leaves:false, stars:false, sparkles:false, confetti:false };
 let fxRAF = null, fxParticles = [], fxCanvas = null, fxCtx = null, fxFwTimer = null;
 let fxSwitchTimer = 0, fxShownIdx = 0;
 
 /* בחירת מעבר ותנועה (הבחירה נעשית בחלון האפקטים). אפשר לבחור כמה מעברים — והם יתחלפו. */
-let transSel = { fade:true, slide:false, zoom:false };
+let transSel = { fade:true, slide:false, zoom:false, zoomout:false, slideup:false, slidedown:false };
 let motionOn = false;
 let transCycle = 0;
 function selectedTransitions(){ return Object.keys(transSel).filter(k=>transSel[k]); }
@@ -322,9 +354,12 @@ function applyMonwrapClasses(){
 }
 function setTransitionClass(t){
   const w = $('monwrap'); if (!w) return;
-  w.classList.remove('t-slide','t-zoom');
+  w.classList.remove('t-slide','t-zoom','t-zoomout','t-slideup','t-slidedown');
   if (t==='slide') w.classList.add('t-slide');
   if (t==='zoom') w.classList.add('t-zoom');
+  if (t==='zoomout') w.classList.add('t-zoomout');
+  if (t==='slideup') w.classList.add('t-slideup');
+  if (t==='slidedown') w.classList.add('t-slidedown');
   w.classList.toggle('motion', motionOn);
 }
 
@@ -378,6 +413,11 @@ function fxLoop(){
     fxFwTimer--;
     if (fxFwTimer<=0){ spawnFirework(W,H); fxFwTimer = 40+Math.random()*50; }
   }
+  if (shown.bubbles && Math.random()<0.15) fxParticles.push({type:'bubble', x:Math.random()*W, y:H+10, r:6+Math.random()*18, sp:1+Math.random()*1.6, sway:Math.random()*1.5});
+  if (shown.leaves && Math.random()<0.12) fxParticles.push({type:'leaf', x:Math.random()*W, y:-10, sp:1+Math.random()*1.4, sz:16+Math.random()*14, sway:1+Math.random()*2, rot:Math.random()*6.28, vr:(Math.random()-0.5)*0.1, emoji: Math.random()<0.5?'🍂':'🍁'});
+  if (shown.stars && Math.random()<0.18) fxParticles.push({type:'star', x:Math.random()*W, y:Math.random()*H, life:60+Math.random()*40, max:100, r:1+Math.random()*2.5});
+  if (shown.sparkles && Math.random()<0.25) fxParticles.push({type:'sparkle', x:Math.random()*W, y:Math.random()*H, life:30+Math.random()*30, max:60, sz:8+Math.random()*10});
+  if (shown.confetti && Math.random()<0.4) for(let i=0;i<2;i++) fxParticles.push({type:'confetti', x:Math.random()*W, y:-10, sp:2+Math.random()*2.5, sway:1+Math.random()*2, rot:Math.random()*6.28, vr:(Math.random()-0.5)*0.3, w:6+Math.random()*5, h:9+Math.random()*6, color:['#ffd166','#2ec4b6','#ff6b6b','#8d8df2','#ff9f1c','#06d6a0'][Math.floor(Math.random()*6)]});
 
   for (let i=fxParticles.length-1;i>=0;i--){
     const p = fxParticles[i];
@@ -400,6 +440,35 @@ function fxLoop(){
       fxCtx.globalAlpha=Math.max(0,p.life/p.max); fxCtx.fillStyle=p.color;
       fxCtx.beginPath(); fxCtx.arc(p.x,p.y,2.4,0,7); fxCtx.fill();
       if (p.life<=0) fxParticles.splice(i,1);
+    } else if (p.type==='bubble'){
+      p.y-=p.sp; p.x+=Math.sin(p.y/35)*p.sway;
+      fxCtx.globalAlpha=0.4; fxCtx.strokeStyle='#bfe3ff'; fxCtx.lineWidth=2;
+      fxCtx.beginPath(); fxCtx.arc(p.x,p.y,p.r,0,7); fxCtx.stroke();
+      fxCtx.globalAlpha=0.25; fxCtx.fillStyle='#dff1ff';
+      fxCtx.beginPath(); fxCtx.arc(p.x-p.r*0.3,p.y-p.r*0.3,p.r*0.25,0,7); fxCtx.fill();
+      if (p.y<-30) fxParticles.splice(i,1);
+    } else if (p.type==='leaf'){
+      p.y+=p.sp; p.x+=Math.sin(p.y/40)*p.sway; p.rot+=p.vr;
+      fxCtx.globalAlpha=0.9; fxCtx.save(); fxCtx.translate(p.x,p.y); fxCtx.rotate(p.rot);
+      fxCtx.font=p.sz+'px serif'; fxCtx.fillText(p.emoji,0,0); fxCtx.restore();
+      if (p.y>H+20) fxParticles.splice(i,1);
+    } else if (p.type==='star'){
+      p.life--;
+      const a = Math.sin((p.life/p.max)*Math.PI); // נדלק וכבה
+      fxCtx.globalAlpha=Math.max(0,a)*0.9; fxCtx.fillStyle='#fff';
+      fxCtx.beginPath(); fxCtx.arc(p.x,p.y,p.r,0,7); fxCtx.fill();
+      if (p.life<=0) fxParticles.splice(i,1);
+    } else if (p.type==='sparkle'){
+      p.life--;
+      const a = Math.sin((p.life/p.max)*Math.PI);
+      fxCtx.globalAlpha=Math.max(0,a); fxCtx.fillStyle='#fff7d6';
+      fxCtx.font=p.sz+'px serif'; fxCtx.fillText('✦', p.x, p.y);
+      if (p.life<=0) fxParticles.splice(i,1);
+    } else if (p.type==='confetti'){
+      p.y+=p.sp; p.x+=Math.sin(p.y/30)*p.sway; p.rot+=p.vr;
+      fxCtx.globalAlpha=0.9; fxCtx.save(); fxCtx.translate(p.x,p.y); fxCtx.rotate(p.rot);
+      fxCtx.fillStyle=p.color; fxCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h); fxCtx.restore();
+      if (p.y>H+20) fxParticles.splice(i,1);
     }
   }
   fxCtx.globalAlpha=1;
@@ -426,13 +495,13 @@ function openFxPanel(){
   const box = document.createElement('div');
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:440px; width:100%; max-height:86vh; overflow:auto; text-align:right;';
   box.innerHTML = '<div style="font-family:\'Secular One\'; font-size:24px; color:var(--gold); margin-bottom:4px;">אפקטים ומעברים</div>'+
-    '<div style="font-size:13px; color:var(--ink-dim); margin-bottom:16px;">בחרו מה שתרצו. ברירת המחדל: דהייה רכה, בלי תנועה ובלי אפקטים.</div>';
+    '<div style="font-size:13px; color:var(--ink-dim); margin-bottom:16px;">בחרו מה שתרצו. אם בוחרים כמה — הם מתחלפים. אפשר לפתוח את החלון הזה גם תוך כדי ההצגה ולשנות. ברירת המחדל: דהייה רכה, בלי תנועה ובלי אפקטים.</div>';
 
   function group(title){ const d=document.createElement('div'); d.style.margin='14px 0'; d.innerHTML='<div style="font-size:14px; color:var(--ink-dim); margin-bottom:8px; font-weight:700;">'+title+'</div>'; const r=document.createElement('div'); r.style.cssText='display:flex; flex-wrap:wrap; gap:8px;'; d.appendChild(r); box.appendChild(d); return r; }
 
   // מעבר בין תמונות (אפשר לבחור כמה — מתחלפים)
   const tRow = group('מעבר בין תמונות (אפשר כמה — יתחלפו)');
-  [['fade','🌫️ דהייה'],['slide','➡️ החלקה'],['zoom','🔍 התקרבות']].forEach(([t,label])=>{
+  [['fade','🌫️ דהייה'],['slide','➡️ החלקה'],['zoom','🔍 התקרבות'],['zoomout','🔭 התרחקות'],['slideup','⬆️ מלמעלה'],['slidedown','⬇️ מלמטה']].forEach(([t,label])=>{
     const b=document.createElement('button'); b.className='btn ghost sm'; b.textContent=label;
     if(transSel[t]){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
     b.onclick=()=>{
@@ -457,7 +526,7 @@ function openFxPanel(){
 
   // אפקטים מרחפים
   const fRow = group('אפקטים על המסך (אפשר כמה)');
-  [['snow','❄️ שלג'],['rain','🌧️ גשם'],['fireworks','🎆 זיקוקים'],['hearts','💛 לבבות']].forEach(([fx,label])=>{
+  [['snow','❄️ שלג'],['rain','🌧️ גשם'],['fireworks','🎆 זיקוקים'],['hearts','💛 לבבות'],['bubbles','🫧 בועות'],['leaves','🍂 עלים'],['stars','⭐ כוכבים'],['sparkles','✨ נצנוצים'],['confetti','🎉 קונפטי']].forEach(([fx,label])=>{
     const b=document.createElement('button'); b.className='btn ghost sm'+(fxActive[fx]?' on':''); b.textContent=label;
     if(fxActive[fx]){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
     b.onclick=()=>{ fxActive[fx]=!fxActive[fx]; if(fxActive[fx]){b.style.background='var(--gold)';b.style.color='#1a2342';}else{b.style.background='';b.style.color='';} };

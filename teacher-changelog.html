@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>מה חדש</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Heebo:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{ --bg1:#05080f; --bg2:#0a1020; --ink:#f7f4ec; --ink-dim:#aab4cf; --gold:#ffd166; --teal:#2ec4b6; --card:#22325c; }
+*{box-sizing:border-box;}
+html,body{margin:0; padding:0;}
+body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, var(--bg2) 45%, var(--bg1) 100%); color:var(--ink); min-height:100vh; padding:32px 20px; line-height:1.7;}
+.wrap{max-width:720px; margin:0 auto;}
+h1{font-family:'Secular One'; font-size:clamp(30px,5vw,44px); color:var(--gold); margin:0 0 6px; text-align:center;}
+.lead{text-align:center; color:var(--ink-dim); font-size:17px; margin:0 0 34px;}
+.ver{background:var(--card); border-radius:16px; padding:20px 24px; margin:18px 0;}
+.ver h2{font-family:'Secular One'; font-size:22px; color:var(--teal); margin:0 0 4px;}
+.ver .date{font-size:13px; color:var(--ink-dim); margin-bottom:12px;}
+.ver.first{border:1px solid rgba(255,209,102,.3);}
+.ver.first h2{color:var(--gold);}
+ul{margin:8px 0; padding-inline-start:22px;}
+li{margin-bottom:8px;}
+b{color:var(--gold);}
+.section-title{font-weight:700; color:var(--ink); margin:14px 0 4px;}
+.back{display:inline-block; margin-top:30px; color:var(--ink-dim); text-decoration:none; font-size:15px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🆕 מה חדש</h1>
+  <p class="lead">כאן תוכלו לראות מה התווסף ומה השתפר לאורך הזמן. החדש ביותר למעלה.</p>
+
+  <div class="ver">
+    <h2>גרסה 1.0.1</h2>
+    <ul>
+      <li>נוספה גלריית רקעים מוכנים לחידון (ים, חלל, טבע, מסיבה ועוד) — בחירה בלחיצה, בלי צורך להעלות תמונה. אפשר עדיין להעלות תמונה מהמחשב.</li>
+      <li>נוסף ייבוא חידון מ-ChatGPT: בוחרים נושאים, שכבת גיל, מאפייני הלומדים ומטרת החידון, מעתיקים טקסט מוכן ומותאם, מבקשים מ-ChatGPT חידון, ומדביקים בחזרה — והמערכת ממלאה את השאלות לבד. בלי עלות ובלי הרשמה.</li>
+      <li>נוספו סימני מידע קטנים (האות i) במסכי הבנייה, שמסבירים בקצרה אפשרויות שאולי לא ברורות מעצמן.</li>
+      <li>כשמתחילים משחק מתוך רשימת החידונים, מופיע עכשיו מסך קצר שמאפשר לבחור מוזיקה ותמונת רקע לפני המשחק (כי הן אינן נשמרות עם החידון).</li>
+      <li>במצגת נוספו אפקטים חדשים (בועות, עלים, כוכבים, נצנוצים, קונפטי) ומעברים חדשים (התרחקות, החלקה מלמעלה, החלקה מלמטה).</li>
+      <li>נוסף דף "מה חדש" (הדף הזה).</li>
+    </ul>
+  </div>
+
+  <div class="ver first">
+    <h2>גרסה 1.0.0 — הגרסה הראשונה</h2>
+    <p>השקה של ערכת הכלים למורים. שלושה כלים, שעובדים ישירות מהדפדפן בלי שום התקנה, ומיועדים להצגה על מקרן בכיתה.</p>
+
+    <div class="section-title">🧠 חידון טריוויה</div>
+    <ul>
+      <li>בונים חידון משלכם — כותבים שאלות ותשובות, ומסמנים את התשובה הנכונה.</li>
+      <li>התלמידים מצטרפים מהטלפון בסריקת ברקוד, ועונים בזמן אמת.</li>
+      <li>אפשר לשחק כל אחד לעצמו, או לחלק לקבוצות ולנהל תחרות.</li>
+      <li>ניקוד לפי מהירות התשובה, בונוס על רצף תשובות נכונות, וטבלת מובילים.</li>
+      <li>תוך כדי המשחק קופצים שיאים ורגעי סטטיסטיקה ("מי מוביל") שמחזירים את העיניים אל הלוח.</li>
+      <li>אפשר להוסיף מוזיקת רקע ותמונת רקע משלכם.</li>
+      <li>אפשר לבדוק חידון לבד, בלי תלמידים, לפני השיעור.</li>
+      <li>אפשר לשתף חידון עם מורה אחר בעזרת מספר — והוא מקבל עותק משלו, בלי לפגוע במקור.</li>
+    </ul>
+
+    <div class="section-title">🎬 מצגת תמונות</div>
+    <ul>
+      <li>בוחרים תמונות ומוזיקה מהמחשב, ומציגים על המסך מצגת עם פס קול.</li>
+      <li>אפקטים לבחירה: שלג, גשם, זיקוקים, לבבות.</li>
+      <li>מעברים לבחירה בין התמונות: דהייה, החלקה, התקרבות. אם בוחרים כמה — הם מתחלפים.</li>
+      <li>אפשר לשנות הכול גם תוך כדי ההצגה.</li>
+    </ul>
+
+    <div class="section-title">🎬🧠 מצגת + חידון</div>
+    <ul>
+      <li>שני הכלים יחד בדף אחד, עם מעבר חלק ביניהם בלי לאבד את מה שהוכן.</li>
+    </ul>
+
+    <div class="section-title">כללי</div>
+    <ul>
+      <li>החידונים נשמרים אוטומטית לפי כתובת מייל — נכנסים בכל פעם ורואים את כל מה שבניתם.</li>
+      <li>התמונות והמוזיקה נטענות מהמחשב ואינן נשמרות בשום מקום.</li>
+    </ul>
+  </div>
+
+  <div style="text-align:center;">
+    <a class="back" href="index.html">→ חזרה לבחירת הכלים</a>
+  </div>
+</div>
+</body>
+</html>

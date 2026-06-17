@@ -41,6 +41,9 @@ input:focus{border-color:var(--gold); outline:none;}
 .dot{width:9px; height:9px; border-radius:50%; background:var(--coral);}
 .dot.on{background:var(--teal);}
 .codepill{display:inline-block; font-family:'Secular One'; font-size:30px; letter-spacing:.12em; background:var(--card); color:var(--gold); border-radius:12px; padding:8px 22px; margin:6px 0;}
+.info-i{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.16); color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; margin-inline-start:6px; vertical-align:middle; user-select:none;}
+.info-i:hover{background:var(--teal); color:#06231f;}
+.info-pop{position:fixed; z-index:50; max-width:280px; background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);}
 
 /* עורך השאלות */
 .qcard{background:var(--card); border-radius:16px; padding:18px; margin-bottom:16px; text-align:right;}
@@ -122,7 +125,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v22</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v27</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -183,9 +186,8 @@ input:focus{border-color:var(--gold); outline:none;}
   <div class="wrap">
     <h2>✏️ עריכת החידון</h2>
     <div style="background:var(--card-hi); border-radius:12px; padding:14px; margin-bottom:18px; text-align:center;">
-      <div style="font-size:14px; color:var(--ink-dim);">מספר החידון:</div>
+      <div style="font-size:14px; color:var(--ink-dim);">מספר החידון לשיתוף <span class="info-i" onclick="showInfo(event, 'אפשר להעביר את המספר הזה למורה אחר. הוא יקבל עותק משלו לעריכה ולמשחק — והחידון המקורי שלכם יישאר אצלכם, ללא שינוי. החידון נשמר אוטומטית.')">i</span></div>
       <span class="codepill" id="edit-code">----</span>
-      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">אפשר להעביר את המספר הזה למורה אחר. הוא יקבל <b style="color:var(--gold);">עותק משלו</b> לעריכה — והחידון המקורי שלכם יישאר אצלכם, ללא שינוי. החידון נשמר אוטומטית.</div>
     </div>
 
     <div class="field">
@@ -210,22 +212,23 @@ input:focus{border-color:var(--gold); outline:none;}
     </div>
 
     <div class="field">
-      <label>רקע למסך החידון (לא חובה)</label>
-      <button class="btn ghost sm" onclick="$('bg-input').click()" id="bg-btn" style="width:100%;">🖼️ בחירת תמונת רקע מהמחשב</button>
+      <label>רקע למסך החידון (לא חובה) <span class="info-i" onclick="showInfo(event, 'אפשר לבחור רקע מוכן מהגלריה (נטען מיד), או להעלות תמונה מהמחשב (לא נשמרת, צריך לבחור מחדש בכל פעם). בזמן המשחק יש כפתור רקע שמאפשר להוריד את הרקע אם הוא מפריע לקריאה.')">i</span></label>
+      <button class="btn ghost sm" onclick="openBgGallery()" id="bg-gallery-btn" style="width:100%;">🎨 בחירת רקע מהגלריה</button>
+      <button class="btn ghost sm" onclick="$('bg-input').click()" id="bg-btn" style="width:100%; margin-top:8px;">🖼️ בחירת תמונת רקע מהמחשב</button>
       <input type="file" id="bg-input" accept="image/*" style="display:none" onchange="bgChosen(this.files)">
       <button class="btn ghost sm" onclick="clearBg()" id="bg-clear" style="width:100%; margin-top:8px; display:none;">↩️ חזרה לרקע הכחול</button>
-      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">אם תבחרו תמונה, נחשיך אותה מעט כדי שהטקסט יישאר קריא. נטענת מהמחשב ולא נשמרת, אז צריך לבחור מחדש בכל פעם.</div>
     </div>
 
     <div class="field">
-      <label>מוזיקת רקע (לא חובה)</label>
-      <button class="btn ghost sm" onclick="$('music-input').click()" id="music-btn" style="width:100%;">🎵 בחירת מוזיקה מהמחשב</button>
+      <label>מוזיקת רקע (לא חובה) <span class="info-i" onclick="showInfo(event, 'אפשר לבחור מוזיקה מהגלריה המובנית, או להעלות קובץ מהמחשב (לא נשמר, צריך לבחור מחדש בכל פעם). המוזיקה מתנגנת בשקט בזמן החידון, ויש כפתור להשתקה בזמן המשחק.')">i</span></label>
+      <button class="btn ghost sm" onclick="openMusicGallery()" style="width:100%;">🎼 בחירת מוזיקה מהגלריה</button>
+      <button class="btn ghost sm" onclick="$('music-input').click()" id="music-btn" style="width:100%; margin-top:8px;">🎵 בחירת מוזיקה מהמחשב</button>
       <input type="file" id="music-input" accept="audio/*" multiple style="display:none" onchange="musicChosen(this.files)">
       <div id="music-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px; font-size:14px;"></div>
-      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">המוזיקה תתנגן בשקט בזמן החידון. נטענת מהמחשב הזה ולא נשמרת, אז צריך לבחור אותה מחדש בכל פעם שפותחים את החידון.</div>
     </div>
 
-    <h2 style="margin-top:24px;">השאלות</h2>
+    <h2 style="margin-top:24px;">השאלות <span class="info-i" onclick="showInfo(event, 'לכל שאלה כתבו 2 עד 4 תשובות, וסמנו את התשובה הנכונה בלחיצה על העיגול הירוק שלצידה. רק תשובה אחת יכולה להיות מסומנת כנכונה.')">i</span></h2>
+    <button class="btn ghost" onclick="openImport()" style="margin-bottom:12px; background:rgba(141,141,242,.18);">🤖 ייבוא חידון מ-ChatGPT</button>
     <div id="q-list"></div>
     <button class="btn ghost" onclick="addQuestion()" style="margin-top:6px;">➕ הוספת שאלה</button>
 
@@ -244,6 +247,35 @@ input:focus{border-color:var(--gold); outline:none;}
 </div>
 
 <!-- ============ לובי מארח ============ -->
+<!-- ============ הכנה לפני משחק (מוזיקה ורקע) ============ -->
+<div class="screen" id="pregame">
+  <div class="wrap">
+    <h2 id="pregame-title">לפני שמתחילים</h2>
+    <p class="sub">המוזיקה ותמונת הרקע לא נשמרות עם החידון, אז אפשר לבחור אותן עכשיו (לא חובה).</p>
+
+    <div class="field">
+      <label>תמונת רקע (לא חובה)</label>
+      <button class="btn ghost sm" onclick="openBgGallery()" style="width:100%;">🎨 בחירת רקע מהגלריה</button>
+      <button class="btn ghost sm" onclick="$('bg-input').click()" id="pg-bg-btn" style="width:100%; margin-top:8px;">🖼️ בחירת תמונת רקע מהמחשב</button>
+      <button class="btn ghost sm" onclick="clearBg(); $('pg-bg-btn').textContent='🖼️ בחירת תמונת רקע מהמחשב';" style="width:100%; margin-top:8px;">↩️ בלי תמונת רקע</button>
+    </div>
+
+    <div class="field">
+      <label>מוזיקת רקע (לא חובה)</label>
+      <button class="btn ghost sm" onclick="openMusicGallery()" style="width:100%;">🎼 בחירת מוזיקה מהגלריה</button>
+      <button class="btn ghost sm" onclick="$('music-input').click()" id="pg-music-btn" style="width:100%; margin-top:8px;">🎵 בחירת מוזיקה מהמחשב</button>
+      <div id="pg-music-list" style="font-size:14px; color:var(--ink-dim); margin-top:8px;"></div>
+    </div>
+
+    <div class="row" style="margin-top:20px;">
+      <button class="btn teal" onclick="goPlay()">▶️ המשך — קוד וברקוד למשחק</button>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button class="btn ghost sm" onclick="refreshMyList()">→ חזרה לרשימה</button>
+    </div>
+  </div>
+</div>
+
 <div class="screen" id="lobby">
   <div class="wrap">
     <h2 id="lobby-title">החידון</h2>
@@ -423,6 +455,25 @@ const fdb = firebase.database();
 </script>
 <script>
 function $(id){ return document.getElementById(id); }
+
+/* סימן מידע (i) שנפתח בלחיצה ונסגר כשלוחצים במקום אחר */
+function showInfo(ev, text){
+  ev.stopPropagation();
+  closeInfo();
+  const pop = document.createElement('div');
+  pop.className = 'info-pop'; pop.id = 'active-info';
+  pop.textContent = text;
+  document.body.appendChild(pop);
+  const r = ev.currentTarget.getBoundingClientRect();
+  let top = r.bottom + 8, left = r.left - 130;
+  if (left < 10) left = 10;
+  if (left + 280 > window.innerWidth) left = window.innerWidth - 290;
+  if (top + 120 > window.innerHeight) top = r.top - 130;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+}
+function closeInfo(){ const p = $('active-info'); if (p) p.remove(); }
+document.addEventListener('click', closeInfo);
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
 function setConn(on){ $('conn-dot').classList.toggle('on',on); $('conn-txt').textContent = on?'מחובר':'לא מחובר'; }
 fdb.ref('.info/connected').on('value', s => setConn(s.val()===true));
@@ -536,7 +587,16 @@ function playExisting(code, data){
   };
   $('edit-code').textContent = editCode;
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
-  goPlay();         // אבל עוברים ישר ללובי המשחק
+  prePlay();        // עוברים למסך הכנה (מוזיקה ורקע) לפני הלובי
+}
+
+function prePlay(){
+  $('pregame-title').textContent = quiz.title || 'לפני שמתחילים';
+  // עדכון תצוגת כפתורים לפי מה שכבר נבחר
+  $('pg-bg-btn').textContent = bgUrl ? '🖼️ תמונת רקע נבחרה ✓ (לחיצה מחליפה)' : '🖼️ בחירת תמונת רקע מהמחשב';
+  $('pg-music-list').textContent = musicList.length ? ('נבחרו ' + musicList.length + ' שירים') : '';
+  $('pg-music-btn').textContent = musicList.length ? '🎵 הוספת שיר' : '🎵 בחירת מוזיקה מהמחשב';
+  show('pregame');
 }
 
 function testExisting(code, data){
@@ -583,6 +643,204 @@ function addQuestion(){
   quiz.questions.push({ text:'', answers:['',''], correct:0 });
   renderQuestions();
   touch();
+}
+
+/* ===== ייבוא חידון מ-ChatGPT ===== */
+let impQCount = 10, impACount = 4;
+let impTopics = new Set(), impGoals = new Set();
+let impAge = '', impTraits = new Set();
+function buildImportPrompt(){
+  const topics = [...impTopics];
+  const free = ($('imp-topic-free') ? $('imp-topic-free').value.trim() : '');
+  if (free) topics.push(free);
+  const ageFree = ($('imp-age-free') ? $('imp-age-free').value.trim() : '');
+  const age = ageFree || impAge;
+  const traits = [...impTraits];
+  const traitFree = ($('imp-trait-free') ? $('imp-trait-free').value.trim() : '');
+  if (traitFree) traits.push(traitFree);
+  const goals = [...impGoals];
+  const goalFree = ($('imp-goal-free') ? $('imp-goal-free').value.trim() : '');
+  if (goalFree) goals.push(goalFree);
+
+  let p = 'צור חידון טריוויה בעברית';
+  p += topics.length ? ' בנושא: ' + topics.join(', ') : ' בנושא שאבחר';
+  p += '. ' + impQCount + ' שאלות, ולכל שאלה ' + impACount + ' תשובות.';
+  if (age) p += ' קהל היעד: ' + age + '.';
+  if (traits.length) p += ' מאפייני הלומדים: ' + traits.join(', ') + '. התאם את רמת השאלות, אורך הניסוח ומורכבות התשובות בהתאם.';
+  if (goals.length) p += ' מטרת החידון: ' + goals.join(', ') + '. התאם את אופי החידון למטרה.';
+  p += '\n\nהחזר אך ורק טקסט בפורמט הבא, בלי שום הסבר נוסף, בלי מספור, ובלי כותרות:\n\n' +
+    'שאלה: <נוסח השאלה>\n' +
+    'נכונה: <התשובה הנכונה>\n' +
+    'תשובה: <תשובה שגויה>\n' +
+    'תשובה: <תשובה שגויה>\n' +
+    '(וכך הלאה ' + impACount + ' תשובות בסך הכול לכל שאלה — אחת בשורת "נכונה" והשאר בשורות "תשובה")\n\n' +
+    'הפרד בין שאלות בשורה ריקה.';
+  if (!topics.length) p += ' כתוב את הנושא של החידון במקום שבחרתי.';
+  return p;
+}
+
+function impChipRow(parent, items, set, refresh){
+  const row = document.createElement('div'); row.style.cssText='display:flex; flex-wrap:wrap; gap:6px;';
+  items.forEach(label=>{
+    const b=document.createElement('button'); b.className='btn ghost sm'; b.textContent=label;
+    if(set.has(label)){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
+    b.onclick=()=>{ if(set.has(label)){set.delete(label); b.style.background='';b.style.color='';} else {set.add(label); b.style.background='var(--gold)'; b.style.color='#1a2342';} refresh(); };
+    row.appendChild(b);
+  });
+  parent.appendChild(row);
+}
+function impGroupTitle(parent, text, info){
+  const d = document.createElement('div'); d.style.cssText='font-size:14px; color:var(--ink); font-weight:700; margin:14px 0 6px;';
+  d.innerHTML = text + (info ? ' <span class="info-i" onclick="showInfo(event, \'' + info.replace(/'/g,"\\'") + '\')">i</span>' : '');
+  parent.appendChild(d);
+}
+function impFreeInput(parent, id, placeholder){
+  const inp = document.createElement('input'); inp.type='text'; inp.id=id; inp.placeholder=placeholder;
+  inp.style.cssText='width:100%; margin-top:8px; padding:9px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:14px;';
+  inp.oninput = ()=>{ $('imp-prompt').value = buildImportPrompt(); };
+  parent.appendChild(inp);
+}
+
+function openImport(){
+  let ov = $('imp-overlay');
+  if (ov){ ov.remove(); return; }
+  ov = document.createElement('div'); ov.id='imp-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;';
+  ov.onclick = (e)=>{ if (e.target===ov) ov.remove(); };
+
+  const box = document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:580px; width:100%; text-align:right; margin:auto;';
+  box.innerHTML =
+    '<div style="font-family:\'Secular One\'; font-size:24px; color:var(--gold); margin-bottom:6px;">🤖 ייבוא חידון מ-ChatGPT</div>' +
+    '<div style="font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:8px;">' +
+    'בחרו את הפרטים למטה, העתיקו את הטקסט המוכן, והדביקו אותו ב-ChatGPT (או בקלוד). העתיקו את התשובה שתקבלו, הדביקו כאן למטה, ולחצו "ייבוא".' +
+    '</div>';
+
+  const refresh = ()=>{ $('imp-prompt').value = buildImportPrompt(); };
+
+  // נושאים
+  impGroupTitle(box, '📚 נושאים — מקצועות לימוד', 'בחרו נושא אחד או כמה, או הקלידו נושא משלכם. ChatGPT ייצור שאלות על הנושאים שתבחרו.');
+  impChipRow(box, ['תנ"ך','היסטוריה','גאוגרפיה','אזרחות','ספרות','לשון','אנגלית','מתמטיקה','מדעים','ביולוגיה','כימיה','פיזיקה','מחשבים'], impTopics, refresh);
+  impGroupTitle(box, '🎉 נושאים — העשרה ופעילות חברתית', '');
+  impChipRow(box, ['ידע כללי','ספורט','מוזיקה','קולנוע','ישראל','חגים ומועדים','סוף שנה','היכרות וגיבוש','בטיחות ברשת','תזונה ובריאות'], impTopics, refresh);
+  impFreeInput(box, 'imp-topic-free', 'נושא מותאם אישית (לא חובה)');
+
+  // שכבת גיל
+  impGroupTitle(box, '🎒 שכבת גיל', 'בחירת שכבת הגיל עוזרת ל-ChatGPT להתאים את רמת השאלות ואת אורך הניסוח לגיל הלומדים.');
+  const ageRow = document.createElement('div'); ageRow.style.cssText='display:flex; flex-wrap:wrap; gap:6px;';
+  ['יסודי (א׳-ו׳)','חטיבת ביניים (ז׳-ט׳)','תיכון (י׳-י״ב)','בוגרים'].forEach(label=>{
+    const b=document.createElement('button'); b.className='btn ghost sm'; b.textContent=label;
+    b.onclick=()=>{ impAge = (impAge===label?'':label); [...ageRow.children].forEach(c=>{c.style.background='';c.style.color='';}); if(impAge){ b.style.background='var(--gold)'; b.style.color='#1a2342'; } refresh(); };
+    ageRow.appendChild(b);
+  });
+  box.appendChild(ageRow);
+  impFreeInput(box, 'imp-age-free', 'אחר (לדוגמה: סטודנטים, הכשרת עובדים)');
+
+  // מאפייני הלומדים
+  impGroupTitle(box, '👥 מאפייני הלומדים', 'מידע זה מסייע להתאים את רמת השאלות, אורך הניסוח, מורכבות התשובות ואופי החידון לקבוצת הלומדים.');
+  impChipRow(box, ['כיתה רגילה','כיתת תקשורת','חינוך מיוחד','תלמידים מתקשים','תלמידים חזקים','מחוננים','עולים חדשים','רב-לשוני','כיתה הטרוגנית'], impTraits, refresh);
+  impFreeInput(box, 'imp-trait-free', 'מידע נוסף על הלומדים (לא חובה)');
+
+  // מטרת החידון
+  impGroupTitle(box, '🎯 מטרת החידון (אפשר כמה)', 'מטרת החידון משנה את אופיו: חידון לחזרה למבחן יהיה רציני ומעמיק, וחידון למסיבת סיום יהיה קליל ומהנה.');
+  impChipRow(box, ['חזרה למבחן','פתיחת שיעור','סיכום נושא','פעילות חברתית','מסיבת סיום','יום שיא','גיבוש כיתה'], impGoals, refresh);
+  impFreeInput(box, 'imp-goal-free', 'מטרה אחרת (לא חובה)');
+
+  // כמות שאלות ותשובות
+  const sel = document.createElement('div'); sel.style.cssText='display:flex; gap:18px; flex-wrap:wrap; margin:16px 0 6px;';
+  sel.innerHTML =
+    '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">כמה שאלות?</div><div id="imp-q-row" style="display:flex; gap:6px;"></div></div>' +
+    '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">כמה תשובות?</div><div id="imp-a-row" style="display:flex; gap:6px;"></div></div>';
+  box.appendChild(sel);
+
+  // טקסט מוכן
+  const hr1 = document.createElement('div'); hr1.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:16px 0;'; box.appendChild(hr1);
+  const promptLabel = document.createElement('div'); promptLabel.style.cssText='font-size:14px; color:var(--gold); font-weight:700; margin-bottom:6px;'; promptLabel.textContent='1. העתיקו את הטקסט הזה ל-ChatGPT:';
+  box.appendChild(promptLabel);
+  const promptBox = document.createElement('textarea'); promptBox.id='imp-prompt'; promptBox.readOnly=true;
+  promptBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
+  box.appendChild(promptBox);
+  const copyBtn = document.createElement('button'); copyBtn.className='btn ghost sm'; copyBtn.textContent='📋 העתקת הטקסט'; copyBtn.style.cssText='margin:8px 0 16px;';
+  copyBtn.onclick = ()=>{ promptBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='הועתק ✓'; setTimeout(()=>copyBtn.textContent='📋 העתקת הטקסט',1500); };
+  box.appendChild(copyBtn);
+
+  // הדבקת תשובה
+  const pasteLabel = document.createElement('div'); pasteLabel.style.cssText='font-size:14px; color:var(--gold); font-weight:700; margin-bottom:6px;'; pasteLabel.textContent='2. הדביקו כאן את התשובה מ-ChatGPT:';
+  box.appendChild(pasteLabel);
+  const pasteBox = document.createElement('textarea'); pasteBox.id='imp-paste';
+  pasteBox.style.cssText='width:100%; height:140px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
+  box.appendChild(pasteBox);
+  const msg = document.createElement('div'); msg.id='imp-msg'; msg.style.cssText='color:var(--coral); font-size:14px; min-height:20px; margin-top:8px;';
+  box.appendChild(msg);
+
+  const actions = document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:8px;';
+  const doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent='✓ ייבוא';
+  doBtn.onclick = ()=>parseImport();
+  const closeBtn = document.createElement('button'); closeBtn.className='btn ghost sm'; closeBtn.textContent='ביטול';
+  closeBtn.onclick = ()=>ov.remove();
+  actions.appendChild(doBtn); actions.appendChild(closeBtn);
+  box.appendChild(actions);
+
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+
+  // מילוי כפתורי הכמות
+  const qRow = $('imp-q-row');
+  [5,10,15,20].forEach(n=>{
+    const b=document.createElement('button'); b.className='btn ghost sm'; b.textContent=n;
+    if(n===impQCount){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
+    b.onclick=()=>{ impQCount=n; [...qRow.children].forEach(c=>{c.style.background='';c.style.color='';}); b.style.background='var(--gold)'; b.style.color='#1a2342'; refresh(); };
+    qRow.appendChild(b);
+  });
+  const aRow = $('imp-a-row');
+  [2,3,4].forEach(n=>{
+    const b=document.createElement('button'); b.className='btn ghost sm'; b.textContent=n;
+    if(n===impACount){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
+    b.onclick=()=>{ impACount=n; [...aRow.children].forEach(c=>{c.style.background='';c.style.color='';}); b.style.background='var(--gold)'; b.style.color='#1a2342'; refresh(); };
+    aRow.appendChild(b);
+  });
+  refresh();
+}
+
+function parseImport(){
+  const raw = $('imp-paste').value.trim();
+  if (!raw){ $('imp-msg').textContent='נא להדביק את הטקסט מ-ChatGPT.'; return; }
+  const lines = raw.split('\n').map(l=>l.trim()).filter(l=>l);
+  const parsed = [];
+  let cur = null;
+  const stripPrefix = (s)=> s.replace(/^[\s\-\*\d\.\):]+/, '').trim();
+  lines.forEach(line => {
+    // מזהה "שאלה:", "נכונה:", "תשובה:" (גם עם וריאציות)
+    if (/^שאל[הת]\s*[:\-]/.test(line)){
+      if (cur && cur.answers.length>=2) parsed.push(cur);
+      cur = { text: line.replace(/^שאל[הת]\s*[:\-]\s*/, '').trim(), answers: [], correct: 0 };
+    } else if (/^נכונ[הת]\s*[:\-]/.test(line)){
+      if (!cur) cur = { text:'', answers:[], correct:0 };
+      const ans = line.replace(/^נכונ[הת]\s*[:\-]\s*/, '').trim();
+      cur.correct = cur.answers.length;
+      cur.answers.push(ans);
+    } else if (/^תשוב[הת]\s*[:\-]/.test(line)){
+      if (!cur) cur = { text:'', answers:[], correct:0 };
+      cur.answers.push(line.replace(/^תשוב[הת]\s*[:\-]\s*/, '').trim());
+    }
+  });
+  if (cur && cur.answers.length>=2) parsed.push(cur);
+
+  // ניקוי: רק שאלות עם נוסח ולפחות 2 תשובות
+  const valid = parsed.filter(q => q.text && q.answers.filter(a=>a).length>=2)
+                      .map(q => ({ text:q.text, answers:q.answers.slice(0,4), correct: Math.min(q.correct, q.answers.length-1) }));
+
+  if (!valid.length){
+    $('imp-msg').textContent = 'לא הצלחתי לקרוא את הטקסט. ודאו שהוא בפורמט שמופיע למעלה (שאלה / נכונה / תשובה).';
+    return;
+  }
+  // מוסיפים לחידון (מחליפים שאלות ריקות קיימות)
+  const hadContent = quiz.questions.some(q=>q.text || q.answers.some(a=>a));
+  if (!hadContent) quiz.questions = [];
+  valid.forEach(q => quiz.questions.push(q));
+  renderQuestions(); touch(); saveQuiz();
+  const ov = $('imp-overlay'); if (ov) ov.remove();
+  alert('יובאו ' + valid.length + ' שאלות בהצלחה! אפשר לערוך אותן כרגיל.');
 }
 function delQuestion(i){
   quiz.questions.splice(i,1);
@@ -805,14 +1063,29 @@ function bgChosen(files){
   if (!files || !files.length) return;
   if (bgUrl) URL.revokeObjectURL(bgUrl);
   bgUrl = URL.createObjectURL(files[0]);
+  $('game-bg').style.background = '';
   $('game-bg').style.backgroundImage = 'url(' + bgUrl + ')';
+  $('game-bg').style.backgroundSize = 'cover';
+  $('game-bg').style.backgroundPosition = 'center';
   $('bg-btn').textContent = '🖼️ תמונת רקע נבחרה ✓ (לחיצה מחליפה)';
   $('bg-clear').style.display = 'block';
+  if ($('pg-bg-btn')) $('pg-bg-btn').textContent = '🖼️ תמונת רקע נבחרה ✓ (לחיצה מחליפה)';
   $('bg-input').value = '';
 }
-function clearBg(){
+function setGalleryBg(css){
   if (bgUrl){ URL.revokeObjectURL(bgUrl); bgUrl = null; }
+  bgUrl = 'gallery'; // סימון שיש רקע פעיל
   $('game-bg').style.backgroundImage = '';
+  $('game-bg').style.background = css;
+  $('bg-btn').textContent = '🖼️ נבחר רקע מהגלריה (לחיצה מחליפה)';
+  $('bg-clear').style.display = 'block';
+  if ($('pg-bg-btn')) $('pg-bg-btn').textContent = '🖼️ נבחר רקע מהגלריה';
+}
+function clearBg(){
+  if (bgUrl && bgUrl !== 'gallery'){ URL.revokeObjectURL(bgUrl); }
+  bgUrl = null;
+  $('game-bg').style.backgroundImage = '';
+  $('game-bg').style.background = '';
   $('game-bg').classList.remove('on');
   $('bg-btn').textContent = '🖼️ בחירת תמונת רקע מהמחשב';
   $('bg-clear').style.display = 'none';
@@ -827,13 +1100,91 @@ function hostToggleBg(){
   else if (bgUrl) $('game-bg').classList.add('on');
 }
 
+/* גלריית רקעים מצוירים (CSS) — נטענים מיד, לא נשברים, לא תלויים באינטרנט */
+const BG_GALLERY = [
+  { name:'🌊 ים', css:'linear-gradient(180deg, #2b6cb0 0%, #2c9fd6 45%, #63cde8 100%)' },
+  { name:'🌌 חלל', css:'radial-gradient(circle at 30% 20%, #3b2f6b 0%, #1a1640 45%, #06030f 100%)' },
+  { name:'🌲 טבע', css:'linear-gradient(180deg, #2f855a 0%, #48bb78 55%, #9ae6b4 100%)' },
+  { name:'🌅 שקיעה', css:'linear-gradient(180deg, #ff7e5f 0%, #feb47b 50%, #ffd56b 100%)' },
+  { name:'🎉 מסיבה', css:'linear-gradient(135deg, #8d3df2 0%, #e84393 50%, #ffd166 100%)' },
+  { name:'🏫 בית ספר', css:'linear-gradient(180deg, #4a5568 0%, #718096 60%, #cbd5e0 100%)' },
+  { name:'⚽ ספורט', css:'linear-gradient(135deg, #1a8f3c 0%, #38c172 50%, #d6f5dd 100%)' },
+  { name:'🔮 מופשט', css:'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)' },
+  { name:'❄️ חורף', css:'linear-gradient(180deg, #5b7fa6 0%, #a8c5dd 55%, #e8f1f8 100%)' },
+  { name:'🏜️ מדבר', css:'linear-gradient(180deg, #c79a5b 0%, #e8c07d 55%, #f6e3b4 100%)' },
+  { name:'🌃 לילה', css:'linear-gradient(180deg, #0f2027 0%, #203a43 55%, #2c5364 100%)' },
+  { name:'🍭 מתוק', css:'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #fbc2eb 100%)' }
+];
+function openBgGallery(){
+  let ov = $('bg-gallery-overlay');
+  if (ov){ ov.remove(); return; }
+  ov = document.createElement('div'); ov.id='bg-gallery-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:center; justify-content:center; padding:20px; overflow:auto;';
+  ov.onclick=(e)=>{ if(e.target===ov) ov.remove(); };
+  const box=document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:520px; width:100%; margin:auto;';
+  box.innerHTML='<div style="font-family:\'Secular One\'; font-size:22px; color:var(--gold); margin-bottom:14px;">בחירת רקע מהגלריה</div>';
+  const grid=document.createElement('div'); grid.style.cssText='display:grid; grid-template-columns:repeat(3,1fr); gap:10px;';
+  BG_GALLERY.forEach(bg=>{
+    const cell=document.createElement('button');
+    cell.style.cssText='border:2px solid rgba(255,255,255,.15); border-radius:12px; height:80px; cursor:pointer; color:#fff; font-size:14px; font-weight:700; text-shadow:0 1px 4px rgba(0,0,0,.6); background:'+bg.css;
+    cell.textContent=bg.name;
+    cell.onclick=()=>{ setGalleryBg(bg.css); ov.remove(); };
+    grid.appendChild(cell);
+  });
+  box.appendChild(grid);
+  const close=document.createElement('button'); close.className='btn ghost sm'; close.textContent='✓ סגירה'; close.style.cssText='margin-top:16px; width:100%;';
+  close.onclick=()=>ov.remove();
+  box.appendChild(close);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+
 /* מוזיקת רקע (בצד המארח, לא נשמרת ב-Firebase) */
 let musicList = [], musicIdx = 0, musicAudio = null, musicMuted = false;
+
+/* גלריית מוזיקה מובנית — קבצים שיושבים בתוך הפרויקט (תיקיית music/).
+   כדי להוסיף שירים: הורידו קובצי MP3 חינמיים (Pixabay/Mixkit), העלו אותם לתיקייה music/ ברפו,
+   והוסיפו כאן שורה לכל שיר. הקטגוריה היא לתצוגה בלבד. */
+const MUSIC_GALLERY = [
+  // דוגמה (הסירו את הסולמית והעלו קובץ אמיתי בשם הזה):
+  // { name:'רקע רגוע', cat:'רגוע', url:'music/calm1.mp3' },
+  // { name:'חגיגי', cat:'חגיגי', url:'music/celebrate1.mp3' },
+];
+function openMusicGallery(){
+  let ov = $('music-gallery-overlay');
+  if (ov){ ov.remove(); return; }
+  ov = document.createElement('div'); ov.id='music-gallery-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:center; justify-content:center; padding:20px; overflow:auto;';
+  ov.onclick=(e)=>{ if(e.target===ov) ov.remove(); };
+  const box=document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:480px; width:100%; margin:auto; text-align:right;';
+  box.innerHTML='<div style="font-family:\'Secular One\'; font-size:22px; color:var(--gold); margin-bottom:14px;">בחירת מוזיקה מהגלריה</div>';
+  if (!MUSIC_GALLERY.length){
+    box.innerHTML += '<div style="font-size:14px; color:var(--ink-dim); line-height:1.6;">הגלריה עדיין ריקה. בקרוב יתווספו כאן קטעי מוזיקה מוכנים.<br>בינתיים אפשר להעלות מוזיקה מהמחשב.</div>';
+  } else {
+    const grid=document.createElement('div'); grid.style.cssText='display:flex; flex-direction:column; gap:8px;';
+    MUSIC_GALLERY.forEach(m=>{
+      const b=document.createElement('button'); b.className='btn ghost sm'; b.style.width='100%'; b.textContent='🎵 '+m.name+' · '+m.cat;
+      b.onclick=()=>{ musicList.push({ name:m.name, url:m.url }); renderMusicList(); if($('pg-music-list')){ $('pg-music-list').textContent='נבחרו '+musicList.length+' שירים'; } ov.remove(); };
+      grid.appendChild(b);
+    });
+    box.appendChild(grid);
+  }
+  const close=document.createElement('button'); close.className='btn ghost sm'; close.textContent='✓ סגירה'; close.style.cssText='margin-top:16px; width:100%;';
+  close.onclick=()=>ov.remove();
+  box.appendChild(close);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+
 function musicChosen(files){
   if (!files || !files.length) return;
   [...files].forEach(f => musicList.push({ name:f.name, url:URL.createObjectURL(f) }));
   $('music-input').value = '';
   renderMusicList();
+  if ($('pg-music-list')){
+    $('pg-music-list').textContent = musicList.length ? ('נבחרו ' + musicList.length + ' שירים') : '';
+    $('pg-music-btn').textContent = musicList.length ? '🎵 הוספת שיר' : '🎵 בחירת מוזיקה מהמחשב';
+  }
 }
 function removeMusic(i){ URL.revokeObjectURL(musicList[i].url); musicList.splice(i,1); renderMusicList(); }
 function renderMusicList(){
