@@ -62,7 +62,7 @@ fdb.ref('teachers').once('value').then(snap => {
     let email = k;
     const first = Object.values(quizzes)[0];
     if (first && first.ownerEmail) email = first.ownerEmail;
-    return { email, n };
+    return { email, n, key: k };
   }).sort((a,b)=>b.n-a.n);
 
   document.getElementById('n-teachers').textContent = keys.length;
@@ -72,7 +72,22 @@ fdb.ref('teachers').once('value').then(snap => {
   list.innerHTML = '';
   rows.forEach(r => {
     const d = document.createElement('div'); d.className='row';
-    d.innerHTML = '<span class="email">'+r.email+'</span><span class="count">'+r.n+' חידונים</span>';
+    const left = document.createElement('span'); left.className='email'; left.textContent = r.email;
+    const right = document.createElement('span'); right.style.cssText='display:flex; gap:10px; align-items:center; white-space:nowrap;';
+    const cnt = document.createElement('span'); cnt.className='count'; cnt.textContent = r.n + ' חידונים';
+    const del = document.createElement('button');
+    del.textContent = '🗑 מחיקה';
+    del.style.cssText = 'background:#c0392b; color:#fff; border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-family:Heebo; font-size:13px;';
+    del.onclick = () => {
+      if (confirm('למחוק את כל החידונים של ' + r.email + '? פעולה זו אינה הפיכה.')){
+        Promise.all([
+          fdb.ref('teachers/'+r.key).remove(),
+          fdb.ref('teacher_emails/'+r.key).remove()
+        ]).then(()=>{ d.remove(); }).catch(e=>alert('תקלה: '+e.message));
+      }
+    };
+    right.appendChild(cnt); right.appendChild(del);
+    d.appendChild(left); d.appendChild(right);
     list.appendChild(d);
   });
   document.getElementById('msg').textContent = keys.length ? '' : 'עדיין אין מורים במערכת.';

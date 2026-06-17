@@ -183,18 +183,18 @@ let playlist = [], playIdx = 0, audio = null;
 
 /* גלריית מוזיקה מובנית (11.mp3 עד 22.mp3 למצגת) */
 const MUSIC_GALLERY = [
-  { name:'מוזיקה 1', url:'11.mp3' },
-  { name:'מוזיקה 2', url:'12.mp3' },
-  { name:'מוזיקה 3', url:'13.mp3' },
-  { name:'מוזיקה 4', url:'14.mp3' },
-  { name:'מוזיקה 5', url:'15.mp3' },
-  { name:'מוזיקה 6', url:'16.mp3' },
-  { name:'מוזיקה 7', url:'17.mp3' },
-  { name:'מוזיקה 8', url:'18.mp3' },
-  { name:'מוזיקה 9', url:'19.mp3' },
-  { name:'מוזיקה 10', url:'20.mp3' },
-  { name:'מוזיקה 11', url:'21.mp3' },
-  { name:'מוזיקה 12', url:'22.mp3' },
+  { name:'מוזיקת רקע 1', url:'11.mp3' },
+  { name:'מוזיקת רקע 2', url:'12.mp3' },
+  { name:'מוזיקת רקע 3', url:'13.mp3' },
+  { name:'מוזיקת רקע 4', url:'14.mp3' },
+  { name:'מוזיקת רקע 5', url:'15.mp3' },
+  { name:'מוזיקת רקע 6', url:'16.mp3' },
+  { name:'מוזיקת רקע 7', url:'17.mp3' },
+  { name:'מוזיקת רקע 8', url:'18.mp3' },
+  { name:'מוזיקת רקע 9', url:'19.mp3' },
+  { name:'מוזיקת רקע 10', url:'20.mp3' },
+  { name:'מוזיקת רקע 11', url:'21.mp3' },
+  { name:'מוזיקת רקע 12', url:'22.mp3' },
 ];
 function openMusicGallery(){
   let ov = $('music-gallery-overlay');
@@ -207,15 +207,35 @@ function openMusicGallery(){
   box.innerHTML='<div style="font-family:\'Secular One\'; font-size:22px; color:var(--gold); margin-bottom:14px;">בחירת מוזיקה מהגלריה</div>';
   const grid=document.createElement('div'); grid.style.cssText='display:flex; flex-direction:column; gap:8px;';
   MUSIC_GALLERY.forEach(m=>{
-    const b=document.createElement('button'); b.className='btn ghost sm'; b.style.width='100%'; b.textContent='🎵 '+m.name;
-    b.onclick=()=>{ playlist.push({ name:m.name, url:m.url, gallery:true }); renderMusicList(); ov.remove(); };
-    grid.appendChild(b);
+    const row=document.createElement('div'); row.style.cssText='display:flex; gap:8px; align-items:center;';
+    const b=document.createElement('button'); b.className='btn ghost sm'; b.style.flex='1'; b.style.textAlign='right'; b.textContent='🎵 '+m.name;
+    b.onclick=()=>{ stopPreviewAudio(); playlist.push({ name:m.name, url:m.url, gallery:true }); renderMusicList(); ov.remove(); };
+    const play=document.createElement('button'); play.className='btn ghost sm'; play.textContent='▶️'; play.title='האזנה';
+    play.onclick=(e)=>{ e.stopPropagation(); togglePreviewAudio(m.url, play); };
+    row.appendChild(b); row.appendChild(play);
+    grid.appendChild(row);
   });
   box.appendChild(grid);
   const close=document.createElement('button'); close.className='btn ghost sm'; close.textContent='✓ סגירה'; close.style.cssText='margin-top:16px; width:100%;';
-  close.onclick=()=>ov.remove();
+  close.onclick=()=>{ stopPreviewAudio(); ov.remove(); };
   box.appendChild(close);
   ov.appendChild(box); document.body.appendChild(ov);
+  ov.addEventListener('click', (e)=>{ if(e.target===ov) stopPreviewAudio(); });
+}
+
+/* האזנה לדוגמה למוזיקה בגלריה */
+let previewAudio = null, previewBtn = null;
+function togglePreviewAudio(url, btn){
+  if (previewAudio && previewBtn === btn){ stopPreviewAudio(); return; }
+  stopPreviewAudio();
+  previewAudio = new Audio(url); previewBtn = btn;
+  btn.textContent = '⏸️';
+  previewAudio.play().catch(()=>{ btn.textContent = '▶️'; });
+  previewAudio.onended = () => stopPreviewAudio();
+}
+function stopPreviewAudio(){
+  if (previewAudio){ try{ previewAudio.pause(); }catch(e){} previewAudio = null; }
+  if (previewBtn){ previewBtn.textContent = '▶️'; previewBtn = null; }
 }
 
 function musicChosen(files){
