@@ -132,7 +132,7 @@ function loadMyVotes(){
 // טוענים את כל הספרייה ומאזינים לשינויים
 fdb.ref('library').on('value', snap => {
   const data = snap.val() || {};
-  library = Object.keys(data).map(k => data[k]);
+  library = Object.keys(data).map(k => Object.assign({}, data[k], { _key: k }));
   $('msg').textContent = library.length ? '' : 'הספרייה עדיין ריקה. כשמורים יפרסמו חידונים, הם יופיעו כאן.';
   renderList();
 }, err => { $('msg').textContent = 'תקלה בטעינה.'; });
@@ -161,7 +161,8 @@ function renderList(){
 
   items.forEach(q => {
     const card = document.createElement('div'); card.className='qz';
-    const myVote = myVotes[q.quizId];
+    const key = q._key;
+    const myVote = myVotes[key];
     card.innerHTML =
       '<h3></h3>' +
       '<div class="meta"></div>' +
@@ -185,15 +186,15 @@ function renderList(){
     actions.appendChild(copy);
 
     const like = document.createElement('button'); like.className='like'+(myVote==='like'?' on':''); like.textContent='👍 שימושי';
-    like.onclick = () => vote(q.quizId, 'like');
+    like.onclick = () => vote(key, 'like');
     actions.appendChild(like);
 
     const dislike = document.createElement('button'); dislike.className='dislike'+(myVote==='dislike'?' on':''); dislike.textContent='👎 לא שימושי';
-    dislike.onclick = () => vote(q.quizId, 'dislike');
+    dislike.onclick = () => vote(key, 'dislike');
     actions.appendChild(dislike);
 
-    const report = document.createElement('button'); report.textContent = myReports[q.quizId] ? '🚩 דווח' : '🚩 דיווח';
-    report.onclick = () => reportQuiz(q.quizId);
+    const report = document.createElement('button'); report.textContent = myReports[key] ? '🚩 דווח' : '🚩 דיווח';
+    report.onclick = () => reportQuiz(key);
     actions.appendChild(report);
 
     card.appendChild(actions);
@@ -203,8 +204,7 @@ function renderList(){
 
 function copyToMine(q){
   if (!myUid){ toast('צריך להתחבר עם Google כדי להעתיק.'); return; }
-  const myKey = myEmail ? emailToKey(myEmail) : ('uid_'+myUid);
-  // מספר חדש כדי לא להתנגש
+  const myKey = myUid;  // שמירה לפי UID
   const newCode = String(Math.floor(1000 + Math.random()*9000));
   const src = q.quiz || {};
   const copy = {
@@ -214,14 +214,14 @@ function copyToMine(q){
     teamNames: src.teamNames || [],
     questions: src.questions || [],
     updated: Date.now(),
-    ownerEmail: myEmail
+    ownerEmail: myEmail,
+    share: { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null },
+    copiedFrom: { ownerUid: q.ownerUid || null, shareId: q.shareId || null, libraryId: q._key, originalQuizCode: q.quizId || null }
   };
   fdb.ref('teachers/'+myKey+'/'+newCode).set(copy).then(()=>{
-    // גם עותק שיתוף לפי מספר
-    fdb.ref('shared/'+newCode).set(copy).catch(()=>{});
     // מונה הורדות +1
-    fdb.ref('library/'+q.quizId+'/downloads').transaction(d => (d||0)+1).catch(()=>{});
-    toast('✅ הועתק! החידון נמצא עכשיו ברשימת החידונים שלך (מספר '+newCode+').');
+    fdb.ref('library/'+q._key+'/downloads').transaction(d => (d||0)+1).catch(()=>{});
+    toast('✅ הועתק! החידון נמצא עכשיו ברשימת החידונים שלך.');
   }).catch(()=>{ toast('תקלה בהעתקה. נסו שוב.'); });
 }
 

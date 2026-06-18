@@ -125,7 +125,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v34</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v36</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -170,9 +170,9 @@ input:focus{border-color:var(--gold); outline:none;}
     <p id="home-msg" style="color:var(--coral); min-height:20px; margin-top:12px;"></p>
 
     <div class="field" style="max-width:380px; margin:18px auto 6px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
-      <label>קיבלתם מספר של חידון ממורה אחר?</label>
-      <input type="text" id="share-input" inputmode="numeric" maxlength="6" placeholder="הקלידו את המספר כאן">
-      <button class="btn ghost sm" onclick="importShared()" style="margin-top:10px; width:100%;">📥 פתיחת חידון משותף</button>
+      <label>קיבלתם קישור או קוד שיתוף ממורה אחר?</label>
+      <input type="text" id="share-input" placeholder="הדביקו כאן את הקישור או הקוד">
+      <button class="btn ghost sm" onclick="openSharedByInput()" style="margin-top:10px; width:100%;">📥 פתיחת חידון משותף</button>
       <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">תקבלו עותק משלכם לרשימה, שאפשר לערוך ולשחק בלי לפגוע במקור.</div>
     </div>
     <div style="margin-top:14px;">
@@ -223,9 +223,12 @@ input:focus{border-color:var(--gold); outline:none;}
       <button class="btn teal" onclick="openImport()" style="font-size:16px;">🤖 יצירת חידון באמצעות בינה מלאכותית</button>
       <div style="font-size:13px; color:var(--ink-dim); margin-top:12px;">או בנו את החידון בעצמכם בהמשך העמוד.</div>
     </div>
-    <div style="background:var(--card-hi); border-radius:12px; padding:14px; margin-bottom:18px; text-align:center;">
-      <div style="font-size:14px; color:var(--ink-dim);">מספר החידון לשיתוף <span class="info-i" onclick="showInfo(event, 'אפשר להעביר את המספר הזה למורה אחר. הוא יקבל עותק משלו לעריכה ולמשחק — והחידון המקורי שלכם יישאר אצלכם, ללא שינוי. החידון נשמר אוטומטית.')">i</span></div>
-      <span class="codepill" id="edit-code">----</span>
+    <div style="background:var(--card-hi); border-radius:12px; padding:14px; margin-bottom:18px;">
+      <div style="text-align:center; font-size:14px; color:var(--ink-dim); margin-bottom:10px;">קוד החידון (לזיהוי בלבד) <span class="codepill" id="edit-code" style="font-size:18px; margin-inline-start:6px;">----</span></div>
+      <div style="border-top:1px solid rgba(255,255,255,.12); padding-top:12px;">
+        <div style="font-size:14px; font-weight:700; color:var(--ink); margin-bottom:10px; text-align:center;">🔗 שיתוף החידון <span class="info-i" onclick="showInfo(event, 'אפשר לשתף את החידון עם מורים אחרים. בשיתוף ספציפי — רק מי שתכניסו את המייל שלו יוכל לפתוח. בשיתוף לכולם — כל מי שיש לו את הקישור. מי שפותח מקבל עותק משלו לעריכה, והמקור שלכם לא משתנה.')">i</span></div>
+        <div id="share-panel"></div>
+      </div>
     </div>
 
     <div class="field">
@@ -282,23 +285,6 @@ input:focus{border-color:var(--gold); outline:none;}
       <button class="btn ghost sm" onclick="backHome()">→ חזרה לרשימה</button>
     </div>
 
-    <div id="publish-box" style="margin-top:20px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
-      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; justify-content:center;">
-        <input type="checkbox" id="pub-check" onchange="togglePublishFields()" style="width:18px; height:18px;">
-        <span>📚 פרסום החידון בספרייה הציבורית</span>
-        <span class="info-i" onclick="event.preventDefault(); showInfo(event, 'פרסום משתף את החידון עם כל המורים בספרייה. הם יוכלו להעתיק אותו לעצמם. צריך להיות מחובר עם Google כדי לפרסם. אפשר להסיר את הפרסום בכל עת.')">i</span>
-      </label>
-      <div id="pub-fields" style="display:none; max-width:420px; margin:14px auto 0;">
-        <div class="field">
-          <label>תיאור קצר לחידון (חובה, לפחות 30 תווים)</label>
-          <textarea id="pub-desc" maxlength="300" rows="3" oninput="updatePubCount()" placeholder="כתבו במשפט או שניים על מה החידון, לאיזה גיל הוא מתאים, ולמה הוא טוב." style="width:100%; font-family:Heebo; font-size:15px; padding:10px 12px; border-radius:10px; border:2px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--ink); resize:vertical;"></textarea>
-          <div style="font-size:13px; color:var(--ink-dim); margin-top:4px;" id="pub-desc-count">0 תווים</div>
-        </div>
-        <button class="btn teal sm" onclick="publishToLibrary()" style="width:100%;">📤 פרסום בספרייה</button>
-        <button class="btn ghost sm" onclick="unpublishFromLibrary()" id="unpub-btn" style="width:100%; margin-top:8px; display:none;">הסרת הפרסום מהספרייה</button>
-        <div id="pub-msg" style="font-size:14px; min-height:20px; margin-top:8px; text-align:center;"></div>
-      </div>
-    </div>
     <p class="help">איך זה עובד: מלאו שאלות, ולכל שאלה סמנו את התשובה הנכונה בעיגול הירוק. הכול נשמר אוטומטית. רוצים לראות איך זה ייראה? לחצו "בדיקה" ותעברו על השאלות בעצמכם, בלי שאף תלמיד צריך להיכנס. כשתרצו לשחק עם הכיתה, לחצו "התחלת משחק" ותקבלו קוד שאותו נותנים לתלמידים.</p>
   </div>
 </div>
@@ -672,12 +658,11 @@ function guestSaveWithGoogle(){
     myEmailKey = myEmail ? emailToKey(myEmail) : '';
     myStoreKey = myUid;
     isGuest = false;
-    // שומרים את החידון שנבנה כאורח (לפי UID)
+    // שומרים את החידון שנבנה כאורח (לפי UID). נשאר פרטי — לא משתפים אוטומטית.
     if (editCode && quiz){
       const payload = Object.assign({}, quiz, { updated: Date.now(), ownerEmail: myEmail });
       Promise.all([
         fdb.ref('teachers/'+myStoreKey+'/'+editCode).set(payload),
-        fdb.ref('shared/'+editCode).set(payload),
         fdb.ref('teacher_emails/'+myStoreKey).set({ email: myEmail, name: myAuthName, uid: myUid, last: Date.now() })
       ]).then(()=>{
         if ($('guest-editor-banner')) $('guest-editor-banner').style.display = 'none';
@@ -710,6 +695,8 @@ fauth.onAuthStateChanged(user => {
     fdb.ref('teacher_emails/'+myStoreKey).set({ email: myEmail, name: myAuthName, uid: myUid, last: Date.now() }).catch(()=>{});
     // הגירה חד-פעמית: אם אין עדיין חידונים תחת ה-UID אבל יש ישנים תחת המייל — מעבירים אותם
     migrateOldQuizzes();
+    // אם נכנסו דרך קישור שיתוף — מטפלים בו עכשיו
+    handlePendingShare();
   } else {
     myUid = null; myAuthName = ''; myEmail = ''; myEmailKey = ''; myStoreKey = '';
     if (!isGuest){
@@ -814,7 +801,7 @@ function renderQuizList(all){
 
 async function newQuiz(){
   editCode = await genUniqueCode();
-  quiz = { title:'', time:20, teamCount:0, teamNames:[], questions:[] };
+  quiz = { title:'', time:20, teamCount:0, teamNames:[], questions:[], share:{ mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null } };
   aiCardDismissed = false;   // חידון חדש — הכרטיס יוצג שוב
   quiz.questions.push({ text:'', answers:['',''], correct:0 });  // שאלה ריקה ראשונה — לפני הרינדור, כדי לרנדר פעם אחת בלבד
   $('edit-code').textContent = editCode;
@@ -828,8 +815,10 @@ function openExisting(code, data){
   quiz = {
     title: data.title || '', time: data.time || 20,
     teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
-    questions: data.questions || []
+    questions: data.questions || [],
+    share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
+  if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
   aiCardDismissed = false;   // פתיחת חידון — מאפסים; אם יש בו תוכן הכרטיס ממילא לא יוצג
   $('edit-code').textContent = editCode;
   renderEditor();
@@ -841,8 +830,10 @@ function playExisting(code, data){
   quiz = {
     title: data.title || '', time: data.time || 20,
     teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
-    questions: data.questions || []
+    questions: data.questions || [],
+    share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
+  if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
   $('edit-code').textContent = editCode;
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
   prePlay();        // עוברים למסך הכנה (מוזיקה ורקע) לפני הלובי
@@ -862,8 +853,10 @@ function testExisting(code, data){
   quiz = {
     title: data.title || '', time: data.time || 20,
     teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
-    questions: data.questions || []
+    questions: data.questions || [],
+    share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
+  if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
   $('edit-code').textContent = editCode;
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
   previewQuiz();    // עוברים ישר לבדיקה (ללא תלמידים)
@@ -901,25 +894,8 @@ function renderEditor(){
   // פס אזהרת מצב אורח — מוצג רק לאורח
   if ($('guest-editor-banner')) $('guest-editor-banner').style.display = (isGuest ? 'block' : 'none');
   updateAiCard();
-  // אזור הפרסום — מוסתר לאורח, מאופס למחוברים
-  if ($('publish-box')) $('publish-box').style.display = (myUid ? 'block' : 'none');
-  if ($('pub-check')){ $('pub-check').checked = false; }
-  if ($('pub-fields')) $('pub-fields').style.display = 'none';
-  if ($('pub-msg')) $('pub-msg').textContent = '';
-  if ($('unpub-btn')) $('unpub-btn').style.display = 'none';
-  // בדיקה אם החידון כבר מפורסם
-  if (myUid && editCode){
-    fdb.ref('library/'+editCode).once('value').then(s=>{
-      if (s.exists()){
-        const d = s.val();
-        $('pub-check').checked = true;
-        $('pub-fields').style.display = 'block';
-        $('pub-desc').value = d.description || '';
-        updatePubCount();
-        $('unpub-btn').style.display = 'block';
-      }
-    }).catch(()=>{});
-  }
+  // פאנל השיתוף
+  renderSharePanel();
 }
 
 function teamCountChanged(){
@@ -1325,108 +1301,307 @@ function touch(){
 }
 function saveQuiz(){
   if (!editCode || !quiz || !myStoreKey) return;
+  // teachers/ הוא מקור האמת היחיד
   const payload = Object.assign({}, quiz, { updated: Date.now(), ownerEmail: myEmail });
   fdb.ref('teachers/'+myStoreKey+'/'+editCode).set(payload).then(() => {
     $('save-state').textContent = 'נשמר אוטומטית ✓';
   }).catch(() => {
     $('save-state').textContent = 'תקלה בשמירה';
   });
-  // עותק לשיתוף לפי מספר (כדי שמורה אחר יוכל לפתוח עם המספר)
-  fdb.ref('shared/'+editCode).set(payload).catch(()=>{});
+  // סנכרון עותקים נגזרים — רק אם החידון משותף
+  syncShareCopies();
 }
 
-/* ===== ספריית חידונים ציבורית — פרסום ===== */
-function togglePublishFields(){
-  const on = $('pub-check').checked;
-  if (on && !myUid){
-    $('pub-check').checked = false;
-    $('pub-msg').style.color = 'var(--coral)';
-    $('pub-msg').textContent = 'צריך להתחבר עם Google כדי לפרסם בספרייה.';
-    $('pub-fields').style.display = 'block';
+// מסנכרן את shared/ ו-library/ עם המקור, רק אם החידון משותף.
+// לא נוגע בהם בכלל אם אין שיתוף.
+function syncShareCopies(){
+  const sh = quiz.share;
+  if (!sh || sh.mode === 'none' || !sh.shareId) return;
+  const quizData = {
+    title: quiz.title || '', time: quiz.time || 20,
+    teamCount: quiz.teamCount || 0, teamNames: quiz.teamNames || [],
+    questions: quiz.questions || []
+  };
+  // עדכון רשומת השיתוף
+  const sharedRec = {
+    ownerUid: myUid, quizCode: editCode, updated: Date.now(),
+    mode: sh.mode,
+    allowedEmails: sh.mode === 'specific' ? (sh.emails || []) : [],
+    quiz: quizData,
+    ownerName: myAuthName || myEmail || 'מורה'
+  };
+  fdb.ref('shared/'+sh.shareId).set(sharedRec).catch(()=>{});
+  // עדכון הספרייה אם החידון בה — כתיבה אחת אטומית (כדי שלא יישאר מצב חלקי)
+  if (sh.mode === 'public' && sh.inLibrary && sh.libraryId){
+    fdb.ref('library/'+sh.libraryId).update({
+      quiz: quizData,
+      questionCount: quizData.questions.length,
+      title: quizData.title,
+      updated: Date.now()
+    }).catch(()=>{});
+  }
+}
+
+/* ===== מזהה שיתוף ===== */
+/* ===== מזהה שיתוף — מובטח ייחודי (בדיקה מול Firebase) ===== */
+function randomShareChars(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // בלי תווים מבלבלים
+  let s = '';
+  for (let i=0;i<6;i++) s += chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+async function genShareId(){
+  for (let attempt=0; attempt<25; attempt++){
+    const id = 'sh_' + randomShareChars();
+    try {
+      const snap = await fdb.ref('shared/'+id).once('value');
+      if (!snap.exists()) return id;
+    } catch(e){
+      return id; // אם הבדיקה נכשלה (רשת) — לא תוקעים את המורה
+    }
+  }
+  return 'sh_' + randomShareChars() + Date.now().toString(36);
+}
+async function genLibId(){
+  for (let attempt=0; attempt<25; attempt++){
+    const id = 'lib_' + randomShareChars();
+    try {
+      const snap = await fdb.ref('library/'+id).once('value');
+      if (!snap.exists()) return id;
+    } catch(e){
+      return id;
+    }
+  }
+  return 'lib_' + randomShareChars() + Date.now().toString(36);
+}
+function shareLinkFor(shareId){
+  const base = location.origin.startsWith('http') ? (location.origin + location.pathname) : '';
+  return base ? (base + '?share=' + shareId) : shareId;
+}
+
+/* ===== פאנל השיתוף בעורך ===== */
+function ensureShareObj(){
+  if (!quiz.share) quiz.share = { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null };
+  return quiz.share;
+}
+
+function renderSharePanel(){
+  const panel = $('share-panel');
+  if (!panel) return;
+  if (!myUid){
+    panel.innerHTML = '<div style="font-size:13px; color:var(--ink-dim); text-align:center;">התחברו עם Google כדי לשתף חידונים.</div>';
     return;
   }
-  $('pub-fields').style.display = on ? 'block' : 'none';
-  $('pub-msg').textContent = '';
-}
-function updatePubCount(){
-  const n = ($('pub-desc').value || '').trim().length;
-  $('pub-desc-count').textContent = n + ' תווים';
-}
-function publishToLibrary(){
-  if (!myUid){ $('pub-msg').style.color='var(--coral)'; $('pub-msg').textContent='צריך להתחבר עם Google כדי לפרסם.'; return; }
-  if (!editCode || !quiz){ return; }
-  const desc = ($('pub-desc').value || '').trim();
-  if (desc.length < 30){ $('pub-msg').style.color='var(--coral)'; $('pub-msg').textContent='התיאור חייב להכיל לפחות 30 תווים.'; return; }
-  const title = (quiz.title || '').trim();
-  if (!title){ $('pub-msg').style.color='var(--coral)'; $('pub-msg').textContent='תנו שם לחידון לפני הפרסום.'; return; }
-  if (!quiz.questions || !quiz.questions.length){ $('pub-msg').style.color='var(--coral)'; $('pub-msg').textContent='אי אפשר לפרסם חידון בלי שאלות.'; return; }
+  const sh = ensureShareObj();
+  panel.innerHTML = '';
 
+  // --- מצב נוכחי ---
+  if (sh.mode === 'specific'){
+    panel.appendChild(shareStatusBox('🔒 משותף עם אנשים ספציפיים', sh));
+  } else if (sh.mode === 'public'){
+    panel.appendChild(shareStatusBox('🌍 משותף לכולם', sh));
+  } else {
+    // לא משותף — מציגים שני כפתורי בחירה
+    const row = document.createElement('div'); row.style.cssText='display:flex; flex-direction:column; gap:8px;';
+    const b1 = document.createElement('button'); b1.className='btn ghost sm'; b1.textContent='🔒 שיתוף עם אנשים ספציפיים'; b1.onclick=startSpecificShare;
+    const b2 = document.createElement('button'); b2.className='btn ghost sm'; b2.textContent='🌍 שיתוף לכולם (קישור)'; b2.onclick=shareToEveryone;
+    row.appendChild(b1); row.appendChild(b2);
+    panel.appendChild(row);
+  }
+}
+
+function shareStatusBox(titleText, sh){
+  const box = document.createElement('div');
+  box.style.cssText='background:rgba(255,255,255,.05); border-radius:10px; padding:12px;';
+  const head = document.createElement('div'); head.style.cssText='display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;';
+  const t = document.createElement('span'); t.style.cssText='font-size:14px; font-weight:700; color:var(--teal);'; t.textContent=titleText;
+  const xAll = document.createElement('button'); xAll.textContent='✕ ביטול שיתוף'; xAll.style.cssText='background:none; border:1px solid rgba(255,255,255,.3); color:var(--coral); border-radius:8px; padding:4px 10px; cursor:pointer; font-family:Heebo; font-size:12px;';
+  xAll.onclick = sh.mode === 'specific' ? unshareSpecificAll : unshareEveryone;
+  head.appendChild(t); head.appendChild(xAll);
+  box.appendChild(head);
+
+  if (sh.mode === 'specific'){
+    // רשימת מיילים + הוספה
+    const list = document.createElement('div'); list.style.cssText='display:flex; flex-direction:column; gap:6px; margin-bottom:10px;';
+    (sh.emails||[]).forEach(em=>{
+      const r = document.createElement('div'); r.style.cssText='display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,.05); border-radius:8px; padding:6px 10px; font-size:13px;';
+      const e = document.createElement('span'); e.textContent='📧 '+em;
+      const x = document.createElement('button'); x.textContent='✕'; x.style.cssText='background:none; border:none; color:var(--coral); cursor:pointer; font-size:14px;';
+      x.onclick=()=>removeShareEmail(em);
+      r.appendChild(e); r.appendChild(x); list.appendChild(r);
+    });
+    box.appendChild(list);
+    const addRow = document.createElement('div'); addRow.style.cssText='display:flex; gap:6px;';
+    const inp = document.createElement('input'); inp.type='email'; inp.id='share-email-input'; inp.placeholder='מייל להוספה'; inp.style.cssText='flex:1; padding:7px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:13px;';
+    inp.onkeydown=(e)=>{ if(e.key==='Enter') addShareEmail(); };
+    const addBtn = document.createElement('button'); addBtn.className='btn ghost sm'; addBtn.textContent='הוספה'; addBtn.onclick=addShareEmail;
+    addRow.appendChild(inp); addRow.appendChild(addBtn);
+    box.appendChild(addRow);
+  }
+
+  // קישור השיתוף (משותף לשני המצבים)
+  if (sh.shareId){
+    const linkRow = document.createElement('div'); linkRow.style.cssText='margin-top:10px; display:flex; gap:6px;';
+    const copyBtn = document.createElement('button'); copyBtn.className='btn teal sm'; copyBtn.textContent='🔗 העתקת קישור שיתוף'; copyBtn.style.flex='1';
+    copyBtn.onclick=()=>copyShareLink(copyBtn, sh.shareId);
+    linkRow.appendChild(copyBtn);
+    box.appendChild(linkRow);
+  }
+
+  // תת-אפשרות ספרייה (רק ב"לכולם")
+  if (sh.mode === 'public'){
+    const libBox = document.createElement('div'); libBox.style.cssText='margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.1);';
+    if (sh.inLibrary){
+      const r = document.createElement('div'); r.style.cssText='display:flex; justify-content:space-between; align-items:center;';
+      const s = document.createElement('span'); s.style.cssText='font-size:13px; color:var(--teal);'; s.textContent='📚 מופיע בספרייה הציבורית';
+      const x = document.createElement('button'); x.textContent='✕ הסרה מהספרייה'; x.style.cssText='background:none; border:1px solid rgba(255,255,255,.3); color:var(--coral); border-radius:8px; padding:4px 10px; cursor:pointer; font-family:Heebo; font-size:12px;';
+      x.onclick=removeFromLibrary;
+      r.appendChild(s); r.appendChild(x); libBox.appendChild(r);
+    } else {
+      const addLibBtn = document.createElement('button'); addLibBtn.className='btn ghost sm'; addLibBtn.textContent='📚 הוספה לספרייה הציבורית'; addLibBtn.style.width='100%';
+      addLibBtn.onclick=openLibraryPublish;
+      libBox.appendChild(addLibBtn);
+    }
+    box.appendChild(libBox);
+  }
+  return box;
+}
+
+// --- פעולות שיתוף ספציפי ---
+async function startSpecificShare(){
+  if (!myUid){ alert('צריך להתחבר עם Google כדי לשתף.'); return; }
+  const sh = ensureShareObj();
+  sh.mode = 'specific'; sh.emails = []; sh.inLibrary = false;
+  if (!sh.shareId) sh.shareId = await genShareId();
+  saveQuiz(); renderSharePanel();
+}
+function addShareEmail(){
+  const inp = $('share-email-input'); if (!inp) return;
+  const em = (inp.value||'').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ alert('נא להזין כתובת מייל תקינה.'); return; }
+  const sh = ensureShareObj();
+  if (!sh.emails) sh.emails = [];
+  if (sh.emails.indexOf(em) === -1) sh.emails.push(em);
+  saveQuiz(); renderSharePanel();
+}
+function removeShareEmail(em){
+  const sh = ensureShareObj();
+  sh.emails = (sh.emails||[]).filter(e=>e!==em);
+  saveQuiz(); renderSharePanel();
+}
+function unshareSpecificAll(){
+  if (!confirm('לבטל את השיתוף? המורים שקיבלו עותק ישמרו אותו, אבל הקישור יפסיק לעבוד.')) return;
+  const sh = ensureShareObj();
+  if (sh.shareId) fdb.ref('shared/'+sh.shareId).remove().catch(()=>{});
+  sh.mode = 'none'; sh.emails = []; sh.shareId = null;
+  saveQuiz(); renderSharePanel();
+}
+
+// --- פעולות שיתוף לכולם ---
+async function shareToEveryone(){
+  if (!myUid){ alert('צריך להתחבר עם Google כדי לשתף.'); return; }
+  const sh = ensureShareObj();
+  sh.mode = 'public'; sh.emails = []; sh.inLibrary = false;
+  if (!sh.shareId) sh.shareId = await genShareId();
+  saveQuiz(); renderSharePanel();
+}
+function unshareEveryone(){
+  if (!confirm('לבטל את השיתוף לכולם? (אם החידון בספרייה — הוא יוסר גם משם)')) return;
+  const sh = ensureShareObj();
+  if (sh.shareId) fdb.ref('shared/'+sh.shareId).remove().catch(()=>{});
+  if (sh.libraryId) fdb.ref('library/'+sh.libraryId).remove().catch(()=>{});
+  sh.mode = 'none'; sh.inLibrary = false; sh.shareId = null; sh.libraryId = null;
+  saveQuiz(); renderSharePanel();
+}
+
+// --- ספרייה ---
+async function openLibraryPublish(){
+  if (!quiz.title || !quiz.title.trim()){ alert('תנו שם לחידון לפני ההוספה לספרייה.'); return; }
+  if (!quiz.questions || !quiz.questions.length){ alert('אי אפשר להוסיף לספרייה חידון בלי שאלות.'); return; }
+  const desc = prompt('כתבו תיאור קצר לחידון (לפחות 30 תווים) — על מה הוא, לאיזה גיל, ולמה הוא טוב:');
+  if (desc === null) return;
+  if (desc.trim().length < 30){ alert('התיאור חייב להכיל לפחות 30 תווים.'); return; }
+  const sh = ensureShareObj();
+  sh.libraryId = await genLibId();
+  sh.inLibrary = true;
   const entry = {
-    quizId: editCode,
-    ownerUid: myUid,
-    ownerName: myAuthName || myEmail || 'מורה',
-    title: title,
-    description: desc,
+    libId: sh.libraryId, quizId: editCode, shareId: sh.shareId,
+    ownerUid: myUid, ownerName: myAuthName || myEmail || 'מורה',
+    title: quiz.title, description: desc.trim(),
     questionCount: quiz.questions.length,
-    publishDate: Date.now(),
-    downloads: 0,
-    likes: 0,
-    dislikes: 0,
-    reports: 0,
+    publishDate: Date.now(), updated: Date.now(),
+    downloads: 0, likes: 0, dislikes: 0, reports: 0,
     quiz: {
       title: quiz.title || '', time: quiz.time || 20,
       teamCount: quiz.teamCount || 0, teamNames: quiz.teamNames || [],
       questions: quiz.questions || []
     }
   };
-  $('pub-msg').style.color = 'var(--ink-dim)';
-  $('pub-msg').textContent = 'מפרסם...';
-  fdb.ref('library/'+editCode).set(entry).then(()=>{
-    $('pub-msg').style.color = 'var(--teal)';
-    $('pub-msg').textContent = '✅ החידון פורסם בספרייה! תודה ששיתפת.';
-    $('unpub-btn').style.display = 'block';
-  }).catch(()=>{
-    $('pub-msg').style.color = 'var(--coral)';
-    $('pub-msg').textContent = 'תקלה בפרסום. נסו שוב.';
-  });
+  fdb.ref('library/'+sh.libraryId).set(entry).then(()=>{
+    saveQuiz(); renderSharePanel();
+  }).catch(()=>{ alert('תקלה בהוספה לספרייה. נסו שוב.'); });
 }
-function unpublishFromLibrary(){
-  if (!editCode) return;
-  if (!confirm('להסיר את החידון מהספרייה הציבורית? (החידון עצמו יישאר אצלך)')) return;
-  fdb.ref('library/'+editCode).remove().then(()=>{
-    $('pub-msg').style.color = 'var(--ink-dim)';
-    $('pub-msg').textContent = 'הפרסום הוסר.';
-    $('unpub-btn').style.display = 'none';
-    $('pub-check').checked = false;
-    $('pub-fields').style.display = 'none';
-  }).catch(()=>{ $('pub-msg').textContent = 'תקלה בהסרה.'; });
+function removeFromLibrary(){
+  if (!confirm('להסיר את החידון מהספרייה הציבורית? (השיתוף לכולם יישאר פעיל)')) return;
+  const sh = ensureShareObj();
+  if (sh.libraryId) fdb.ref('library/'+sh.libraryId).remove().catch(()=>{});
+  sh.inLibrary = false; sh.libraryId = null;
+  saveQuiz(); renderSharePanel();
 }
 
-async function importShared(){
-  if (!myUid || !myStoreKey){ $('home-msg').textContent = 'יש להתחבר עם Google כדי לפתוח חידון משותף ולשמור אותו אצלך.'; return; }
-  const code = $('share-input').value.trim();
-  if (!/^\d{4}$/.test(code)){ $('home-msg').textContent = 'מספר החידון הוא 4 ספרות.'; return; }
+// --- העתקת קישור ---
+function copyShareLink(btn, shareId){
+  const link = shareLinkFor(shareId);
+  const ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+  const orig = btn.textContent;
+  btn.textContent = '✓ הקישור הועתק!';
+  setTimeout(()=>{ btn.textContent = orig; }, 1600);
+}
+
+/* ===== פתיחת חידון משותף (אצל המקבל) ===== */
+function openSharedByInput(){
+  if (!myUid || !myStoreKey){ $('home-msg').textContent = 'יש להתחבר עם Google כדי לפתוח חידון משותף ולשמור אותו אצלכם.'; return; }
+  let val = ($('share-input').value || '').trim();
+  if (!val){ $('home-msg').textContent = 'הדביקו קישור או קוד שיתוף.'; return; }
+  // אם הדביקו קישור מלא — נחלץ את ה-share
+  const m = val.match(/[?&]share=([A-Za-z0-9_]+)/);
+  const shareId = m ? m[1] : val;
+  openSharedById(shareId);
+}
+function openSharedById(shareId){
   $('home-msg').textContent = 'מחפש...';
-  fdb.ref('shared/'+code).once('value').then(async snap => {
+  fdb.ref('shared/'+shareId).once('value').then(async snap => {
     const data = snap.val();
-    if (!data){ $('home-msg').textContent = 'לא נמצא חידון עם המספר הזה.'; return; }
-    // יוצרים עותק חדש תחת החשבון שלי, עם מספר חדש ופנוי (כדי לא להתנגש)
+    if (!data){ $('home-msg').textContent = 'לא נמצא חידון משותף עם הקוד הזה (ייתכן שהשיתוף בוטל).'; return; }
+    // בדיקת הרשאה לשיתוף ספציפי (בצד הלקוח)
+    if (data.mode === 'specific'){
+      const allowed = (data.allowedEmails || []).map(e=>(e||'').toLowerCase());
+      if (allowed.indexOf((myEmail||'').toLowerCase()) === -1){
+        $('home-msg').textContent = 'החידון הזה משותף רק עם משתמשים מורשים. בקשו מהמורה לשתף עם המייל שלכם.';
+        return;
+      }
+    }
+    const src = data.quiz || {};
     const newCode = await genUniqueCode();
     const copy = {
-      title: (data.title || 'חידון') + ' (עותק)',
-      time: data.time || 20,
-      teamCount: data.teamCount || 0,
-      teamNames: data.teamNames || [],
-      questions: data.questions || [],
+      title: (src.title || data.title || 'חידון') + ' (עותק)',
+      time: src.time || 20,
+      teamCount: src.teamCount || 0,
+      teamNames: src.teamNames || [],
+      questions: src.questions || [],
       updated: Date.now(),
-      ownerEmail: myEmail
+      ownerEmail: myEmail,
+      share: { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null },
+      copiedFrom: { ownerUid: data.ownerUid || null, shareId: shareId, originalQuizCode: data.quizCode || null }
     };
     fdb.ref('teachers/'+myStoreKey+'/'+newCode).set(copy).then(()=>{
-      fdb.ref('shared/'+newCode).set(copy).catch(()=>{});
+      // מונה הורדות אם החידון בספרייה
       $('home-msg').textContent = '';
       $('share-input').value = '';
       refreshMyList();
-    });
+    }).catch(()=>{ $('home-msg').textContent = 'תקלה בשמירת העותק. נסו שוב.'; });
   }).catch(()=>{ $('home-msg').textContent = 'תקלה, נסו שוב.'; });
 }
 
@@ -2180,7 +2355,26 @@ let myName='', myTeam=-1, joined=false, pTimer=null, sentThisQ=false, lastPick=-
     show('join');
     maybeLoadTeams();
   }
+  // קישור שיתוף — שומרים את המזהה ומטפלים בו אחרי התחברות
+  const shareParam = params.get('share');
+  if (shareParam && /^[A-Za-z0-9_]+$/.test(shareParam)){
+    pendingShareId = shareParam;
+  }
 })();
+
+// אם נכנסו דרך קישור שיתוף — מטפלים בו ברגע שיש משתמש מחובר
+let pendingShareId = null;
+function handlePendingShare(){
+  if (!pendingShareId) return;
+  if (!myUid || !myStoreKey){
+    // מבקשים התחברות; הטיפול יקרה כשהמשתמש יתחבר
+    $('home-msg').textContent = 'התחברו עם Google כדי לקבל את החידון ששותף איתכם.';
+    return;
+  }
+  const sid = pendingShareId; pendingShareId = null;
+  $('share-input').value = sid;
+  openSharedById(sid);
+}
 
 // כשמקלידים קוד בהצטרפות, טוענים אם יש קבוצות
 $('j-code').addEventListener('blur', maybeLoadTeams);
