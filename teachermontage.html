@@ -114,6 +114,11 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
   </div>
   <p class="note" id="start-hint" style="color:var(--gold);">כדי להתחיל, בחרו קודם תמונות (חובה). מוזיקה היא רשות.</p>
 
+  <div class="row" style="margin-top:10px;">
+    <button class="btn ghost" id="export-btn" onclick="exportMontage()" style="width:100%;">💾 הורדת המצגת למחשב</button>
+  </div>
+  <p class="note">שומר קובץ אחד שמכיל את כל התמונות, המוזיקה והאפקטים — אפשר לפתוח אותו בכל מחשב, גם בלי אינטרנט. מומלץ 1–3 שירים ולא יותר מדי תמונות, כדי שהקובץ יישאר קל להעברה.</p>
+
   <p class="note">📷 התמונות והשירים נטענים מהמחשב הזה בלבד ואינם עולים לרשת.</p>
   <p class="note">טיפ: שיר אחד באורך 3-4 דקות מספיק — הוא יתנגן בלולאה. אפשר להוסיף עוד שירים.</p>
   <div style="margin-top:14px;">
@@ -644,6 +649,345 @@ function openFxPanel(){
   ov.appendChild(box);
   document.body.appendChild(ov);
 }
+
+/* ===== ייצוא מצגת לקובץ HTML עצמאי ===== */
+/* ============================================================
+   STANDALONE_TEMPLATE — נגן מצגת עצמאי מלא.
+   __TITLE__ ו-__DATA__ מוחלפים בזמן הייצוא.
+   ============================================================ */
+const STANDALONE_TEMPLATE = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITLE__</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Secular+One&display=swap');
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%; background:#000; overflow:hidden; font-family:'Heebo',sans-serif;}
+.monwrap{position:fixed; inset:0; background:#000; z-index:3;}
+.monwrap img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity 1.8s ease, transform 1.8s ease;}
+.monwrap img.vis{opacity:1;}
+.monwrap.t-slide img{transform:translateX(8%);}
+.monwrap.t-slide img.vis{transform:translateX(0);}
+.monwrap.t-zoom img{transform:scale(1.12);}
+.monwrap.t-zoom img.vis{transform:scale(1);}
+.monwrap.t-zoomout img{transform:scale(0.9);}
+.monwrap.t-zoomout img.vis{transform:scale(1);}
+.monwrap.t-slideup img{transform:translateY(-8%);}
+.monwrap.t-slideup img.vis{transform:translateY(0);}
+.monwrap.t-slidedown img{transform:translateY(8%);}
+.monwrap.t-slidedown img.vis{transform:translateY(0);}
+#fxc{position:fixed; inset:0; z-index:4; pointer-events:none;}
+.moncap{position:fixed; bottom:42px; left:0; right:0; text-align:center; z-index:5; font-family:'Secular One'; font-size:clamp(28px,4vw,52px); color:#ffd166; text-shadow:0 2px 14px rgba(0,0,0,.9); transition:opacity .7s ease; opacity:0; padding:0 20px;}
+.moncap.vis{opacity:1;}
+#bar{position:fixed; bottom:0; left:0; right:0; height:12px; background:rgba(0,0,0,.55); z-index:6;}
+#barfill{height:100%; width:0; background:#ffd166; transition:width .6s linear;}
+#ctrls{position:fixed; top:14px; left:14px; z-index:8; display:flex; gap:8px;}
+#ctrls button{font-family:'Heebo'; font-weight:700; font-size:14px; border:none; border-radius:10px; padding:8px 14px; cursor:pointer; background:rgba(20,30,60,.8); color:#f7f4ec;}
+#start{position:fixed; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, #0a1020 45%, #05080f 100%); color:#f7f4ec; text-align:center; padding:30px;}
+#start h1{font-family:'Secular One'; font-size:clamp(30px,5vw,52px); color:#ffd166; margin-bottom:10px;}
+#start p{color:#aab4cf; font-size:18px; margin-bottom:30px;}
+#start button{font-family:'Secular One'; font-size:22px; border:none; border-radius:16px; padding:16px 40px; cursor:pointer; background:#2ec4b6; color:#06231f;}
+</style>
+</head>
+<body>
+<div id="start">
+  <h1>__TITLE__</h1>
+  <p>לחצו כדי להתחיל את המצגת</p>
+  <button onclick="startShow()">▶️ התחלה</button>
+</div>
+<div class="monwrap" id="monwrap" style="display:none;"></div>
+<canvas id="fxc"></canvas>
+<div class="moncap" id="cap"></div>
+<div id="bar" style="display:none;"><div id="barfill"></div></div>
+<div id="ctrls" style="display:none;">
+  <button onclick="togglePause()" id="pauseBtn">⏸️ עצירה</button>
+  <button onclick="toggleMute()" id="muteBtn">🔊 מוזיקה</button>
+</div>
+<script>
+const DATA = __DATA__;
+let imgA, imgB, flip=false, idx=0, order=[], iv=null, paused=false, transCycle=0;
+let audio=null, playIdx=0, muted=false;
+let capList=DATA.captions||[], capIdx=0, capTimer=null;
+const SLIDE_MS=4500;
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} }
+function selTrans(){ return (DATA.transitions&&DATA.transitions.length)?DATA.transitions:['fade']; }
+function setTrans(t){ const w=document.getElementById('monwrap'); w.className='monwrap'; if(t!=='fade') w.classList.add('t-'+t); }
+
+function startShow(){
+  document.getElementById('start').style.display='none';
+  const w=document.getElementById('monwrap'); w.style.display='block';
+  document.getElementById('bar').style.display='block';
+  document.getElementById('ctrls').style.display='flex';
+  w.innerHTML='';
+  imgA=document.createElement('img'); imgB=document.createElement('img');
+  w.appendChild(imgA); w.appendChild(imgB); flip=false;
+  order=DATA.images.slice(); shuffle(order);
+  startMusic(); startCaptions(); startFx();
+  step(); clearInterval(iv); iv=setInterval(step, SLIDE_MS);
+}
+function step(){
+  if(paused) return;
+  if(idx>=order.length){ idx=0; shuffle(order); }
+  const sel=selTrans(); const t=sel[transCycle%sel.length]; transCycle++;
+  setTrans(t);
+  const cur=flip?imgB:imgA, prev=flip?imgA:imgB;
+  cur.src=order[idx]; cur.classList.add('vis'); prev.classList.remove('vis');
+  flip=!flip; idx++;
+  document.getElementById('barfill').style.width=Math.round((idx/order.length)*100)+'%';
+}
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pauseBtn').textContent = paused?'▶️ המשך':'⏸️ עצירה';
+  if(audio){ if(paused) audio.pause(); else if(!muted) audio.play().catch(()=>{}); }
+}
+
+/* ---- מוזיקה ---- */
+function startMusic(){
+  if(!DATA.music||!DATA.music.length) return;
+  playIdx=0; playTrack();
+}
+function playTrack(){
+  if(audio){ try{audio.pause();}catch(e){} }
+  audio=new Audio(DATA.music[playIdx]);
+  audio.onended=()=>{ playIdx=(playIdx+1)%DATA.music.length; playTrack(); };
+  if(!muted) audio.play().catch(()=>{});
+}
+function toggleMute(){
+  muted=!muted;
+  document.getElementById('muteBtn').textContent = muted?'🔇 מוזיקה':'🔊 מוזיקה';
+  if(audio){ if(muted) audio.pause(); else audio.play().catch(()=>{}); }
+}
+
+/* ---- כיתובים ---- */
+function startCaptions(){
+  const cap=document.getElementById('cap');
+  if(!capList.length){ return; }
+  if(capList.length===1){ cap.textContent=capList[0]; cap.classList.add('vis'); return; }
+  capIdx=0;
+  function show(){
+    cap.classList.remove('vis');
+    setTimeout(()=>{ cap.textContent=capList[capIdx%capList.length]; cap.classList.add('vis'); capIdx++; }, 700);
+  }
+  show();
+  capTimer=setInterval(()=>{ if(!paused) show(); }, 6000);
+}
+
+/* ---- אפקטים (fx) ---- */
+let fxc, fxx, fxRAF, parts=[], fxSwitch=0, fxShown=0, fwTimer=0;
+const FX=DATA.effects||[];
+function startFx(){
+  if(!FX.length) return;
+  fxc=document.getElementById('fxc'); fxx=fxc.getContext('2d');
+  resizeFx(); window.addEventListener('resize', resizeFx);
+  fxLoop();
+}
+function resizeFx(){ if(fxc){ fxc.width=innerWidth; fxc.height=innerHeight; } }
+function fxLoop(){
+  fxRAF=requestAnimationFrame(fxLoop);
+  if(paused) return;
+  const W=fxc.width,H=fxc.height; fxx.clearRect(0,0,W,H);
+  let shown={};
+  if(FX.length<=1){ FX.forEach(k=>shown[k]=true); }
+  else { fxSwitch++; if(fxSwitch>12*60){fxSwitch=0;fxShown=(fxShown+1)%FX.length;} shown[FX[fxShown%FX.length]]=true; }
+  if(shown.snow&&Math.random()<0.4) parts.push({type:'snow',x:Math.random()*W,y:-10,r:2+Math.random()*4,sp:1+Math.random()*1.5,sw:Math.random()*1});
+  if(shown.rain&&Math.random()<0.9) for(let i=0;i<2;i++) parts.push({type:'rain',x:Math.random()*W,y:-10,len:12+Math.random()*16,sp:9+Math.random()*6});
+  if(shown.hearts&&Math.random()<0.08) parts.push({type:'heart',x:Math.random()*W,y:H+10,sp:1+Math.random()*1.5,sz:14+Math.random()*16,sway:Math.random()*2});
+  if(shown.fireworks){ fwTimer--; if(fwTimer<=0){ spawnFw(W,H); fwTimer=40+Math.random()*50; } }
+  if(shown.bubbles&&Math.random()<0.15) parts.push({type:'bubble',x:Math.random()*W,y:H+10,r:6+Math.random()*18,sp:1+Math.random()*1.6,sway:Math.random()*1.5});
+  if(shown.leaves&&Math.random()<0.12) parts.push({type:'leaf',x:Math.random()*W,y:-10,sp:1+Math.random()*1.4,sz:16+Math.random()*14,sway:1+Math.random()*2,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.1,emoji:Math.random()<0.5?'🍂':'🍁'});
+  if(shown.stars&&Math.random()<0.18) parts.push({type:'star',x:Math.random()*W,y:Math.random()*H,life:60+Math.random()*40,max:100,r:1+Math.random()*2.5});
+  if(shown.sparkles&&Math.random()<0.25) parts.push({type:'sparkle',x:Math.random()*W,y:Math.random()*H,life:30+Math.random()*30,max:60,sz:8+Math.random()*10});
+  if(shown.confetti&&Math.random()<0.4) for(let i=0;i<2;i++) parts.push({type:'confetti',x:Math.random()*W,y:-10,sp:2+Math.random()*2.5,sway:1+Math.random()*2,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.3,w:6+Math.random()*5,h:9+Math.random()*6,color:['#ffd166','#2ec4b6','#ff6b6b','#8d8df2','#ff9f1c','#06d6a0'][Math.floor(Math.random()*6)]});
+  for(let i=parts.length-1;i>=0;i--){
+    const p=parts[i];
+    if(p.type==='snow'){ p.y+=p.sp; p.x+=Math.sin(p.y/40)*p.sw; fxx.globalAlpha=0.85; fxx.fillStyle='#fff'; fxx.beginPath(); fxx.arc(p.x,p.y,p.r,0,7); fxx.fill(); if(p.y>H+10) parts.splice(i,1); }
+    else if(p.type==='rain'){ p.y+=p.sp; fxx.globalAlpha=0.5; fxx.strokeStyle='#9cc3ff'; fxx.lineWidth=2; fxx.beginPath(); fxx.moveTo(p.x,p.y); fxx.lineTo(p.x,p.y+p.len); fxx.stroke(); if(p.y>H+10) parts.splice(i,1); }
+    else if(p.type==='heart'){ p.y-=p.sp; p.x+=Math.sin(p.y/30)*p.sway; fxx.globalAlpha=0.85; fxx.font=p.sz+'px serif'; fxx.fillText('💛',p.x,p.y); if(p.y<-20) parts.splice(i,1); }
+    else if(p.type==='spark'){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.04; p.life--; fxx.globalAlpha=Math.max(0,p.life/p.max); fxx.fillStyle=p.color; fxx.beginPath(); fxx.arc(p.x,p.y,2.4,0,7); fxx.fill(); if(p.life<=0) parts.splice(i,1); }
+    else if(p.type==='bubble'){ p.y-=p.sp; p.x+=Math.sin(p.y/35)*p.sway; fxx.globalAlpha=0.4; fxx.strokeStyle='#bfe3ff'; fxx.lineWidth=2; fxx.beginPath(); fxx.arc(p.x,p.y,p.r,0,7); fxx.stroke(); if(p.y<-30) parts.splice(i,1); }
+    else if(p.type==='leaf'){ p.y+=p.sp; p.x+=Math.sin(p.y/40)*p.sway; p.rot+=p.vr; fxx.globalAlpha=0.9; fxx.save(); fxx.translate(p.x,p.y); fxx.rotate(p.rot); fxx.font=p.sz+'px serif'; fxx.fillText(p.emoji,0,0); fxx.restore(); if(p.y>H+20) parts.splice(i,1); }
+    else if(p.type==='star'){ p.life--; const a=Math.sin((p.life/p.max)*Math.PI); fxx.globalAlpha=Math.max(0,a)*0.9; fxx.fillStyle='#fff'; fxx.beginPath(); fxx.arc(p.x,p.y,p.r,0,7); fxx.fill(); if(p.life<=0) parts.splice(i,1); }
+    else if(p.type==='sparkle'){ p.life--; const a=Math.sin((p.life/p.max)*Math.PI); fxx.globalAlpha=Math.max(0,a); fxx.fillStyle='#fff7d6'; fxx.font=p.sz+'px serif'; fxx.fillText('✦',p.x,p.y); if(p.life<=0) parts.splice(i,1); }
+    else if(p.type==='confetti'){ p.y+=p.sp; p.x+=Math.sin(p.y/30)*p.sway; p.rot+=p.vr; fxx.globalAlpha=0.9; fxx.save(); fxx.translate(p.x,p.y); fxx.rotate(p.rot); fxx.fillStyle=p.color; fxx.fillRect(-p.w/2,-p.h/2,p.w,p.h); fxx.restore(); if(p.y>H+20) parts.splice(i,1); }
+  }
+  fxx.globalAlpha=1;
+}
+function spawnFw(W,H){
+  const cx=W*0.15+Math.random()*W*0.7, cy=H*0.15+Math.random()*H*0.45;
+  const colors=['#ffd166','#2ec4b6','#ff6b6b','#8d8df2','#ffffff','#ff9f1c'];
+  const col=colors[Math.floor(Math.random()*colors.length)];
+  const n=26+Math.floor(Math.random()*14);
+  for(let i=0;i<n;i++){ const ang=(Math.PI*2*i)/n, sp=2+Math.random()*3.2; parts.push({type:'spark',x:cx,y:cy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:50+Math.random()*25,max:75,color:col}); }
+}
+<\/script>
+</body>
+</html>`;
+
+/* ============================================================
+   ייצוא מצגת לקובץ HTML עצמאי (כל המדיה מוטמעת כ-Base64)
+   נכתב כדי להשתלב ב-teachermontage.html
+   ============================================================ */
+
+/* דחיסת תמונה: טוענים ל-Image, מציירים ל-canvas בגודל מוגבל, מייצאים JPEG 0.8 */
+function compressImageToDataURL(srcUrl, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      // הגבלת ממד מרבי (שומר יחס)
+      if (w > maxDim || h > maxDim){
+        if (w >= h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      try {
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      } catch(e){ reject(e); }
+    };
+    img.onerror = () => reject(new Error('image load failed'));
+    img.src = srcUrl;
+  });
+}
+
+/* המרת קובץ (ObjectURL או נתיב גלריה) ל-Base64 dataURL — למוזיקה */
+function fetchToDataURL(url){
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then(r => { if (!r.ok) throw new Error('fetch failed ' + r.status); return r.blob(); })
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('read failed'));
+        reader.readAsDataURL(blob);
+      })
+      .catch(reject);
+  });
+}
+
+/* הערכת גודל dataURL בבייטים (Base64 = ~3/4 מאורך המחרוזת) */
+function dataUrlBytes(dataUrl){
+  const comma = dataUrl.indexOf(',');
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  return Math.floor(b64.length * 3 / 4);
+}
+
+function fmtMB(bytes){
+  return (bytes / (1024 * 1024)).toFixed(1);
+}
+
+/* בניית קובץ ה-HTML העצמאי */
+function buildStandaloneHTML(opts){
+  // opts: { title, images:[dataURL], music:[{name,dataURL}], captions:[str], transitions:[str], effects:[str] }
+  const data = {
+    images: opts.images,
+    music: opts.music.map(m => m.dataURL),
+    captions: opts.captions,
+    transitions: opts.transitions.length ? opts.transitions : ['fade'],
+    effects: opts.effects
+  };
+  const json = JSON.stringify(data);
+  const safeTitle = (opts.title || 'מצגת').replace(/</g, '').replace(/>/g, '');
+
+  // ה-HTML העצמאי — נגן מצגת מלא ועצמאי
+  return STANDALONE_TEMPLATE
+    .split('__TITLE__').join(safeTitle)
+    .replace('__DATA__', json);
+}
+
+/* הורדת מחרוזת כקובץ */
+function downloadHTMLFile(htmlString, filename){
+  const blob = new Blob([htmlString], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* התהליך המלא — נקרא בלחיצה על הכפתור */
+async function exportMontage(){
+  if (!pics.length){ alert('קודם בחרו תמונות למצגת.'); return; }
+
+  const btn = document.getElementById('export-btn');
+  const origText = btn ? btn.textContent : '';
+  if (btn){ btn.disabled = true; btn.textContent = '⏳ מכין את הקובץ...'; }
+
+  try {
+    // 1. דחיסת תמונות
+    const images = [];
+    for (let i = 0; i < pics.length; i++){
+      if (btn) btn.textContent = '⏳ מעבד תמונה ' + (i+1) + ' מתוך ' + pics.length + '...';
+      const dataUrl = await compressImageToDataURL(pics[i], 1600, 0.8);
+      images.push(dataUrl);
+    }
+
+    // 2. המרת מוזיקה (מחשב + גלריה) ל-Base64
+    const music = [];
+    for (let i = 0; i < playlist.length; i++){
+      if (btn) btn.textContent = '⏳ מטמיע מוזיקה ' + (i+1) + ' מתוך ' + playlist.length + '...';
+      try {
+        const dataUrl = await fetchToDataURL(playlist[i].url);
+        music.push({ name: playlist[i].name, dataURL: dataUrl });
+      } catch(e){
+        // אם שיר נכשל — מדלגים עליו ולא שוברים את כל הייצוא
+        console.warn('music embed failed for', playlist[i].name, e);
+      }
+    }
+
+    // 3. איסוף כיתובים, מעברים, אפקטים
+    const captions = (typeof getCaptions === 'function') ? getCaptions() : [];
+    const transitions = Object.keys(transSel).filter(k => transSel[k]);
+    const effects = Object.keys(fxActive).filter(k => fxActive[k]);
+
+    // 4. חישוב גודל משוער
+    let totalBytes = 0;
+    images.forEach(d => totalBytes += dataUrlBytes(d));
+    music.forEach(m => totalBytes += dataUrlBytes(m.dataURL));
+    // תקורה של ה-HTML עצמו (קוד) — בערך 30KB
+    totalBytes += 30 * 1024;
+
+    const mb = fmtMB(totalBytes);
+
+    // 5. אזהרות גודל (לא חוסמות)
+    let warnMsg = 'גודל המצגת המשוער: ' + mb + ' מגה.';
+    const HUGE = 80 * 1024 * 1024;   // קיצוני
+    const BIG  = 16 * 1024 * 1024;   // בינוני (גבול וואטסאפ/מייל בערך)
+    if (totalBytes >= HUGE){
+      warnMsg += '\n\n⚠️ הקובץ גדול מאוד. ייתכן שיהיה קשה לשלוח אותו, והוא עלול להיטען לאט. מומלץ להפחית תמונות או שירים.';
+    } else if (totalBytes >= BIG){
+      warnMsg += '\n\nהקובץ גדול יחסית. ייתכן שלא ניתן לשלוח אותו בוואטסאפ או במייל.';
+    }
+    warnMsg += '\n\nלהוריד את הקובץ?';
+
+    if (!confirm(warnMsg)){
+      if (btn){ btn.disabled = false; btn.textContent = origText; }
+      return;
+    }
+
+    // 6. בניית הקובץ והורדה
+    if (btn) btn.textContent = '⏳ יוצר קובץ...';
+    const title = (document.getElementById('mon-title') && document.getElementById('mon-title').value.trim()) || 'מצגת';
+    const html = buildStandaloneHTML({ title, images, music, captions, transitions, effects });
+    const fname = (title.replace(/[\\/:*?"<>|]/g, '') || 'מצגת') + '.html';
+    downloadHTMLFile(html, fname);
+
+    if (btn){ btn.disabled = false; btn.textContent = '✓ הקובץ ירד!'; setTimeout(()=>{ btn.textContent = origText; }, 2500); }
+  } catch(e){
+    console.error(e);
+    alert('משהו השתבש ביצירת הקובץ. נסו שוב, או עם פחות תמונות.');
+    if (btn){ btn.disabled = false; btn.textContent = origText; }
+  }
+}
+
 </script>
 </body>
 </html>
