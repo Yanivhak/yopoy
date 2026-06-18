@@ -125,7 +125,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v37</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v38</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div id="game-bg"></div>
 
@@ -223,10 +223,7 @@ input:focus{border-color:var(--gold); outline:none;}
       <button class="btn teal" onclick="openImport()" style="font-size:16px;">🤖 יצירת חידון באמצעות בינה מלאכותית</button>
       <div style="font-size:13px; color:var(--ink-dim); margin-top:12px;">או בנו את החידון בעצמכם בהמשך העמוד.</div>
     </div>
-    <div style="background:var(--card-hi); border-radius:12px; padding:14px; margin-bottom:18px; text-align:center;">
-      <div style="font-size:14px; color:var(--ink-dim);">קוד החידון <span class="codepill" id="edit-code" style="font-size:18px; margin-inline-start:6px;">----</span></div>
-      <div style="font-size:12px; color:var(--ink-dim); margin-top:6px;">(לזיהוי בלבד)</div>
-    </div>
+    <div style="text-align:center; font-size:13px; color:var(--ink-dim); margin-bottom:16px;">קוד החידון: <span id="edit-code" style="color:var(--gold); font-weight:700; letter-spacing:1px;">----</span> <span style="opacity:.7;">(לזיהוי בלבד)</span></div>
 
     <div class="field">
       <label>שם החידון</label>
@@ -1406,7 +1403,7 @@ function renderSharePanel(){
   if (sh.mode === 'specific'){
     panel.appendChild(shareStatusBox('🔒 משותף עם אנשים ספציפיים', sh));
   } else if (sh.mode === 'public'){
-    panel.appendChild(shareStatusBox('🔗 משותף באמצעות קישור', sh));
+    panel.appendChild(shareStatusBox('✓ קישור השיתוף פעיל', sh));
   } else {
     // לא משותף — מציגים שני כפתורי בחירה
     const row = document.createElement('div'); row.style.cssText='display:flex; flex-direction:column; gap:8px;';
