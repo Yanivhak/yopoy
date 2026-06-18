@@ -38,6 +38,11 @@ input:focus{border-color:var(--gold); outline:none;}
 .field{margin:0 0 16px; text-align:right;}
 .field label{display:block; font-size:15px; color:var(--ink-dim); margin-bottom:6px; font-weight:700;}
 .conn{position:fixed; top:12px; left:14px; font-size:12px; color:var(--ink-dim); display:flex; align-items:center; gap:6px; z-index:50;}
+.savetoast{position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px); background:#1a7a4a; color:#fff; padding:10px 22px; border-radius:30px; font-family:'Heebo'; font-weight:700; font-size:15px; box-shadow:0 8px 26px rgba(0,0,0,.45); z-index:200; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;}
+.savetoast.on{opacity:1; transform:translateX(-50%) translateY(0);}
+.adv-box summary::-webkit-details-marker{display:none;}
+.adv-box summary::after{content:'▾'; margin-inline-start:auto; transition:transform .2s; color:var(--ink-dim);}
+.adv-box[open] summary::after{transform:rotate(180deg);}
 .dot{width:9px; height:9px; border-radius:50%; background:var(--coral);}
 .dot.on{background:var(--teal);}
 .codepill{display:inline-block; font-family:'Secular One'; font-size:30px; letter-spacing:.12em; background:var(--card); color:var(--gold); border-radius:12px; padding:8px 22px; margin:6px 0;}
@@ -91,7 +96,7 @@ input:focus{border-color:var(--gold); outline:none;}
 .confetti-piece{position:fixed; top:-20px; font-size:22px; animation:fall linear forwards; z-index:60; pointer-events:none;}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg);}}
 .spark{position:fixed; width:10px; height:10px; border-radius:50%; z-index:69; pointer-events:none; transition:transform 1.3s cubic-bezier(.1,.8,.3,1), opacity 1.3s ease;}
-#fw{position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; pointer-events:none;}
+#fw{position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; pointer-events:none; background:rgba(5,8,15,.92);}
 #fw.on{display:flex;}
 .fwtext{font-family:'Secular One'; font-size:clamp(30px,5vw,60px); color:var(--gold); text-align:center; text-shadow:0 3px 16px rgba(0,0,0,.9);}
 .fwtext small{display:block; font-family:'Heebo'; font-size:clamp(18px,2.4vw,28px); color:#fff; font-weight:700; margin-top:6px;}
@@ -105,6 +110,7 @@ input:focus{border-color:var(--gold); outline:none;}
 .pstatement{font-size:22px; line-height:1.4; font-weight:700; margin:0 0 8px; color:var(--ink);}
 .phint{font-size:14px; color:var(--gold); margin:0 0 14px; font-weight:700;}
 .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+@media (max-width:400px){ .grid{grid-template-columns:1fr;} }
 .pbtn{font-family:'Heebo'; font-weight:700; font-size:18px; border:none; border-radius:14px; padding:20px 14px; cursor:pointer; background:var(--card-hi); color:var(--ink); transition:transform .1s ease;}
 .pbtn:active{transform:scale(.97);}
 .pbtn.sel{background:var(--teal); color:#06231f;}
@@ -125,8 +131,9 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v39</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v45</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
+<div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
 
 <!-- ============ מסך בית ============ -->
@@ -235,43 +242,45 @@ input:focus{border-color:var(--gold); outline:none;}
       <input type="number" id="quiz-time" min="5" max="60" value="20" oninput="touch()">
     </div>
 
-    <div class="field">
-      <label>מספר הקבוצות המשתתפות בחידון</label>
-      <select id="team-count" onchange="teamCountChanged()" style="font-family:'Heebo'; font-size:17px; padding:12px 16px; border-radius:12px; border:2px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--ink); width:100%;">
-        <option value="0">בלי קבוצות (כל אחד לעצמו)</option>
-        <option value="2">2 קבוצות</option>
-        <option value="3">3 קבוצות</option>
-        <option value="4">4 קבוצות</option>
-      </select>
-      <div id="team-names" style="margin-top:10px;"></div>
-    </div>
-
     <h2 style="margin-top:24px;">השאלות <span class="info-i" onclick="showInfo(event, 'לכל שאלה כתבו 2 עד 4 תשובות, וסמנו את התשובה הנכונה בלחיצה על העיגול הירוק שלצידה. רק תשובה אחת יכולה להיות מסומנת כנכונה.')">i</span></h2>
     <button class="btn ghost" onclick="openImport()" style="margin-bottom:12px; background:rgba(141,141,242,.18);">🤖 יצירת חידון באמצעות בינה מלאכותית</button>
     <div id="q-list"></div>
     <button class="btn ghost" onclick="addQuestion()" style="margin-top:6px;">➕ הוספת שאלה</button>
 
-    <div style="margin-top:24px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
-      <h2 style="margin-top:0;">🎨 עיצוב ואווירה (לא חובה)</h2>
-      <p style="font-size:13px; color:var(--ink-dim); margin-top:-6px; margin-bottom:14px;">תוספות שמשדרגות את המשחק — אפשר לדלג עליהן ולהוסיף בהמשך.</p>
+    <details class="adv-box" style="margin-top:20px;">
+      <summary style="cursor:pointer; font-size:16px; font-weight:700; color:var(--ink); padding:12px 14px; background:var(--card-hi); border-radius:12px; list-style:none; display:flex; align-items:center; gap:8px;">⚙️ אפשרויות נוספות <span style="font-size:13px; font-weight:400; color:var(--ink-dim);">(קבוצות, רקע, מוזיקה)</span></summary>
+      <div style="padding-top:16px;">
 
-      <div class="field">
-        <label>רקע למסך החידון <span class="info-i" onclick="showInfo(event, 'אפשר לבחור רקע מוכן מהגלריה (נטען מיד), או להעלות תמונה מהמחשב (לא נשמרת, צריך לבחור מחדש בכל פעם). בזמן המשחק יש כפתור רקע שמאפשר להוריד את הרקע אם הוא מפריע לקריאה.')">i</span></label>
-        <button class="btn ghost sm" onclick="openBgGallery()" id="bg-gallery-btn" style="width:100%;">🎨 בחירת רקע מהגלריה</button>
-        <button class="btn ghost sm" onclick="$('bg-input').click()" id="bg-btn" style="width:100%; margin-top:8px;">🖼️ בחירת תמונת רקע מהמחשב</button>
-        <input type="file" id="bg-input" accept="image/*" style="display:none" onchange="bgChosen(this.files)">
-        <div id="bg-chip" style="display:none; align-items:center; gap:10px; justify-content:center; margin-top:10px;"></div>
-        <button class="btn ghost sm" onclick="clearBg()" id="bg-clear" style="width:100%; margin-top:8px; display:none;">↩️ חזרה לרקע הכחול</button>
-      </div>
+        <div class="field">
+          <label>מספר הקבוצות המשתתפות בחידון</label>
+          <select id="team-count" onchange="teamCountChanged()" style="font-family:'Heebo'; font-size:17px; padding:12px 16px; border-radius:12px; border:2px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--ink); width:100%;">
+            <option value="0">בלי קבוצות (כל אחד לעצמו)</option>
+            <option value="2">2 קבוצות</option>
+            <option value="3">3 קבוצות</option>
+            <option value="4">4 קבוצות</option>
+          </select>
+          <div id="team-names" style="margin-top:10px;"></div>
+        </div>
 
-      <div class="field">
-        <label>מוזיקת רקע <span class="info-i" onclick="showInfo(event, 'אפשר לבחור מוזיקה מהגלריה המובנית, או להעלות קובץ מהמחשב (לא נשמר, צריך לבחור מחדש בכל פעם). המוזיקה מתנגנת בשקט בזמן החידון, ויש כפתור להשתקה בזמן המשחק.')">i</span></label>
-        <button class="btn ghost sm" onclick="openMusicGallery()" style="width:100%;">🎼 בחירת מוזיקה מהגלריה</button>
-        <button class="btn ghost sm" onclick="$('music-input').click()" id="music-btn" style="width:100%; margin-top:8px;">🎵 בחירת מוזיקה מהמחשב</button>
-        <input type="file" id="music-input" accept="audio/*" multiple style="display:none" onchange="musicChosen(this.files)">
-        <div id="music-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px; font-size:14px;"></div>
+        <div class="field">
+          <label>רקע למסך החידון <span class="info-i" onclick="showInfo(event, 'אפשר לבחור רקע מוכן מהגלריה (נטען מיד), או להעלות תמונה מהמחשב (לא נשמרת, צריך לבחור מחדש בכל פעם). בזמן המשחק יש כפתור רקע שמאפשר להוריד את הרקע אם הוא מפריע לקריאה.')">i</span></label>
+          <button class="btn ghost sm" onclick="openBgGallery()" id="bg-gallery-btn" style="width:100%;">🎨 בחירת רקע מהגלריה</button>
+          <button class="btn ghost sm" onclick="$('bg-input').click()" id="bg-btn" style="width:100%; margin-top:8px;">🖼️ בחירת תמונת רקע מהמחשב</button>
+          <input type="file" id="bg-input" accept="image/*" style="display:none" onchange="bgChosen(this.files)">
+          <div id="bg-chip" style="display:none; align-items:center; gap:10px; justify-content:center; margin-top:10px;"></div>
+          <button class="btn ghost sm" onclick="clearBg()" id="bg-clear" style="width:100%; margin-top:8px; display:none;">↩️ חזרה לרקע הכחול</button>
+        </div>
+
+        <div class="field">
+          <label>מוזיקת רקע <span class="info-i" onclick="showInfo(event, 'אפשר לבחור מוזיקה מהגלריה המובנית, או להעלות קובץ מהמחשב (לא נשמר, צריך לבחור מחדש בכל פעם). המוזיקה מתנגנת בשקט בזמן החידון, ויש כפתור להשתקה בזמן המשחק.')">i</span></label>
+          <button class="btn ghost sm" onclick="openMusicGallery()" style="width:100%;">🎼 בחירת מוזיקה מהגלריה</button>
+          <button class="btn ghost sm" onclick="$('music-input').click()" id="music-btn" style="width:100%; margin-top:8px;">🎵 בחירת מוזיקה מהמחשב</button>
+          <input type="file" id="music-input" accept="audio/*" multiple style="display:none" onchange="musicChosen(this.files)">
+          <div id="music-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px; font-size:14px;"></div>
+        </div>
+
       </div>
-    </div>
+    </details>
 
     <p class="save-state" id="save-state">נשמר אוטומטית ✓</p>
 
@@ -338,7 +347,10 @@ input:focus{border-color:var(--gold); outline:none;}
     <div class="qrbox" id="qrbox" style="background:#fff; padding:14px; border-radius:18px; display:none; margin:10px auto; width:max-content;">
       <img id="qr" alt="QR להצטרפות" style="display:block; width:190px; height:190px;">
     </div>
-    <p style="font-size:14px; color:var(--ink-dim);">סרקו את הקוד, או היכנסו לכתובת והקלידו את הקוד 👆</p>
+    <div style="background:rgba(46,196,182,.12); border:1px solid rgba(46,196,182,.4); border-radius:14px; padding:14px 18px; margin:14px auto; max-width:360px; text-align:right;">
+      <div style="font-weight:700; color:var(--teal); margin-bottom:8px; text-align:center;">איך מצטרפים? 👇</div>
+      <div style="font-size:15px; line-height:1.9;">1️⃣ סרקו את הברקוד, או היכנסו לכתובת למעלה<br>2️⃣ הקלידו את הקוד <b style="color:var(--gold);" id="join-code-echo"></b><br>3️⃣ כתבו שם ולחצו כניסה</div>
+    </div>
     <div style="margin:16px 0;">
       <div style="font-size:15px; color:var(--ink-dim); margin-bottom:8px;">מצטרפים (<b id="joined-n">0</b>):</div>
       <div id="joined-list" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
@@ -454,6 +466,7 @@ input:focus{border-color:var(--gold); outline:none;}
 <!-- ============ שחקן: שאלה ============ -->
 <div class="screen" id="pq">
   <div class="pwrap" style="justify-content:flex-start;">
+    <div id="pq-progress" style="font-size:13px; color:rgba(255,255,255,.7); font-weight:700; margin-bottom:6px;"></div>
     <div class="ptimer"><i id="pq-bar"></i></div>
     <p class="pstatement" id="pq-text"></p>
     <p class="phint" id="pq-hint"></p>
@@ -992,6 +1005,11 @@ function buildImportPrompt(){
   if (traits.length) p += ' מאפייני המשתתפים: ' + traits.join(', ') + '. התאם את רמת השאלות, אורך הניסוח ומורכבות התשובות בהתאם.';
   if (goals.length) p += ' מטרת החידון: ' + goals.join(', ') + '. התאם את אופי החידון למטרה.';
   if (impTrack==='fun') p += ' החידון נועד לפעילות חברתית — שמור על אווירה קלילה ומהנה.';
+  p += ' חשוב מאוד — החידון מוצג על הלוח והתלמידים עונים מהטלפון, אז הקיצור קריטי:' +
+       ' כל שאלה קצרה וישירה, עד 20 מילים (מקסימום מוחלט 25 מילים).' +
+       ' כל תשובה קצרה ותמציתית — רצוי שורה אחת, מילה או ביטוי קצר ולא משפט שלם.' +
+       ' כל התשובות באותה שאלה צריכות להיות באורך דומה, והתשובה הנכונה לא ארוכה מהשגויות.' +
+       ' אל תיצור הסברים, משפטים מורכבים או ניסוחים מסורבלים. העדף מושגים, שמות, תהליכים וביטויים קצרים.';
   p += '\n\nהחזר אך ורק טקסט בפורמט הבא, בלי שום הסבר נוסף, בלי מספור, ובלי כותרות:\n\n' +
     'שאלה: <נוסח השאלה>\n' +
     'נכונה: <התשובה הנכונה>\n' +
@@ -1248,7 +1266,24 @@ function parseImport(){
   valid.forEach(q => quiz.questions.push(q));
   renderQuestions(); touch(); saveQuiz();
   const ov = $('imp-overlay'); if (ov) ov.remove();
-  alert('נוצרו ' + valid.length + ' שאלות בהצלחה! אפשר לערוך אותן כרגיל.');
+  // בדיקת אורך — מסמנים שאלות/תשובות שחורגות, כדי שהמורה יקצר
+  const longCount = countOverLength(valid);
+  if (longCount > 0){
+    alert('נוצרו ' + valid.length + ' שאלות בהצלחה!\n\nשימו לב: ' + longCount + ' שאלות או תשובות ארוכות מהמומלץ וסומנו בצהוב. כדאי לקצר אותן כדי שהחידון יהיה נוח לקריאה על הלוח ובטלפון.');
+  } else {
+    alert('נוצרו ' + valid.length + ' שאלות בהצלחה! אפשר לערוך אותן כרגיל.');
+  }
+}
+// ספירת שאלות/תשובות שחורגות מהמומלץ (לדיווח אחרי ייבוא)
+function qTooLong(text){ return text && text.trim().split(/\s+/).length > 25; }
+function aTooLong(text){ return text && text.trim().length > 45; }
+function countOverLength(list){
+  let n = 0;
+  list.forEach(q => {
+    if (qTooLong(q.text)) n++;
+    (q.answers||[]).forEach(a => { if (aTooLong(a)) n++; });
+  });
+  return n;
 }
 function delQuestion(i){
   quiz.questions.splice(i,1);
@@ -1265,8 +1300,14 @@ function renderQuestions(){
 
     const qin = document.createElement('input'); qin.type='text'; qin.placeholder='נוסח השאלה'; qin.value=q.text;
     qin.style.marginBottom='10px';
-    qin.oninput = () => { q.text = qin.value; touch(); };
+    const qhint = document.createElement('div');
+    qhint.style.cssText = 'font-size:12px; color:var(--gold); margin:-4px 0 8px; display:none;';
+    qhint.textContent = '⚠️ השאלה ארוכה ועלולה להיות פחות נוחה לקריאה על הלוח ובטלפון.';
+    const updQHint = () => { qhint.style.display = qTooLong(qin.value) ? 'block' : 'none'; };
+    qin.oninput = () => { q.text = qin.value; updQHint(); touch(); };
     card.appendChild(qin);
+    updQHint();
+    card.appendChild(qhint);
 
     const tip = document.createElement('div');
     tip.style.cssText = 'font-size:13px; color:var(--teal); font-weight:700; margin-bottom:8px;';
@@ -1278,7 +1319,9 @@ function renderQuestions(){
       pick.title='סימון כתשובה הנכונה';
       pick.onclick = () => { q.correct = ai; renderQuestions(); touch(); };
       const ain = document.createElement('input'); ain.type='text'; ain.placeholder='תשובה '+(ai+1); ain.value=a;
-      ain.oninput = () => { q.answers[ai] = ain.value; touch(); };
+      const updAStyle = () => { ain.style.border = aTooLong(ain.value) ? '2px solid var(--gold)' : ''; ain.title = aTooLong(ain.value) ? 'התשובה עשויה להופיע ביותר משתי שורות אצל התלמידים' : ''; };
+      ain.oninput = () => { q.answers[ai] = ain.value; updAStyle(); touch(); };
+      updAStyle();
       const rem = document.createElement('button'); rem.className='rem'; rem.textContent='✕'; rem.title='הסרת תשובה';
       rem.onclick = () => {
         if (q.answers.length <= 2){ return; }
@@ -1408,7 +1451,7 @@ function renderSharePanel(){
   if (sh.mode === 'specific'){
     panel.appendChild(shareStatusBox('🔒 משותף עם אנשים ספציפיים', sh));
   } else if (sh.mode === 'public'){
-    panel.appendChild(shareStatusBox('✓ קישור השיתוף פעיל', sh));
+    panel.appendChild(shareStatusBox(justCopiedLink ? '✓ הקישור הועתק! אפשר לשלוח' : '✓ קישור השיתוף פעיל', sh));
   } else {
     // לא משותף — מציגים שני כפתורי בחירה
     const row = document.createElement('div'); row.style.cssText='display:flex; flex-direction:column; gap:8px;';
@@ -1515,7 +1558,31 @@ async function shareToEveryone(){
   const sh = ensureShareObj();
   sh.mode = 'public'; sh.emails = []; sh.inLibrary = false;
   if (!sh.shareId) sh.shareId = await genShareId();
-  saveQuiz(); renderSharePanel();
+  saveQuiz();
+  doCopyLink(sh.shareId);   // לחיצה אחת — הקישור נוצר ומועתק מיד
+  justCopiedLink = true;    // כדי שהפאנל יציג "הקישור הועתק"
+  renderSharePanel();
+  setTimeout(()=>{ justCopiedLink = false; }, 2000);
+}
+
+// הודעת "נשמר" קצרה שמופיעה ונעלמת
+function flashSaved(){
+  const t = $('save-toast'); if (!t) return;
+  t.classList.add('on');
+  setTimeout(()=>{ t.classList.remove('on'); }, 1600);
+}
+
+// העתקת קישור לזיכרון — ללא תלות בכפתור
+let justCopiedLink = false;
+function doCopyLink(shareId){
+  const link = shareLinkFor(shareId);
+  try {
+    const ta = document.createElement('textarea'); ta.value = link;
+    ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    return true;
+  } catch(e){ return false; }
 }
 function unshareEveryone(){
   if (!confirm('לבטל את השיתוף לכולם? (אם החידון בספרייה — הוא יוסר גם משם)')) return;
@@ -1563,10 +1630,7 @@ function removeFromLibrary(){
 
 // --- העתקת קישור ---
 function copyShareLink(btn, shareId){
-  const link = shareLinkFor(shareId);
-  const ta = document.createElement('textarea'); ta.value = link; document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); }catch(e){}
-  document.body.removeChild(ta);
+  doCopyLink(shareId);
   const orig = btn.textContent;
   btn.textContent = '✓ הקישור הועתק!';
   setTimeout(()=>{ btn.textContent = orig; }, 1600);
@@ -1663,9 +1727,11 @@ async function goPlay(){
   }
   guestPlayProceedOnce = false;   // איפוס המעבר החד-פעמי
   saveQuiz();
+  flashSaved();   // הודעת ביטחון קצרה שהחידון נשמר
   role = 'host';
   playCode = await genUniqueCode();
   $('play-code').textContent = playCode;
+  if ($('join-code-echo')) $('join-code-echo').textContent = playCode;
   $('lobby-title').textContent = quiz.title || 'החידון';
   const baseUrl = location.origin.startsWith('http') ? (location.origin + location.pathname) : '';
   const dispUrl = baseUrl.replace(/^https?:\/\//,'');
@@ -1953,11 +2019,12 @@ function nextQ(){
   qIndex++;
   if (qIndex >= quiz.questions.length){ hostFinish(); return; }
 
-  // הפסקת ביניים "הסתכלו ללוח" בנקודות מסוימות (אמצע, ושני שליש), אם יש מספיק שאלות ושחקנים
+  // הפסקת ביניים "הסתכלו ללוח" כל 4 שאלות, אם יש מספיק שאלות ושחקנים.
+  // לא עושים הפסקה אם נשארות פחות מ-2 שאלות (כדי לא לעצור ממש לפני הסוף).
   const total = quiz.questions.length;
-  const mid = Math.floor(total/2), twoThirds = Math.floor(total*2/3);
-  if (!intermissionDone.has(qIndex) && Object.keys(players).length > 0 && total >= 6 &&
-      (qIndex === mid || (qIndex === twoThirds && twoThirds >= mid + 2))){
+  const remaining = total - qIndex;
+  if (!intermissionDone.has(qIndex) && Object.keys(players).length > 0 &&
+      qIndex > 0 && qIndex % 4 === 0 && remaining >= 2){
     intermissionDone.add(qIndex);
     showIntermission();
     return; // נמשיך לשאלה כשהמורה ילחץ "ממשיכים"
@@ -2023,6 +2090,7 @@ function showIntermission(){
   const text = stats.length ? stats[Math.floor(Math.random()*stats.length)] : 'יופי! ממשיכים לחלק הבא';
   $('hint-text').textContent = text;
   show('hint');
+  sfxIntermission();   // צליל קצר ומתחלף — מושך את התלמידים להסתכל ללוח
   send({ t:'look' });
 }
 
@@ -2065,9 +2133,11 @@ function revealQ(){
   if (newRecord){
     addBanner(banners, 'gold', '🚀 שיא מהירות חדש: ' + bestName + ' · ' + (bestMs/1000).toFixed(2) + ' שניות!');
     fireworks('🚀 שיא מהירות חדש!<small>' + bestName + ' · ' + (bestMs/1000).toFixed(2) + ' שניות</small>');
+    sfxRecord();
   }
   if (newStreakRecord && streakKing){
     addBanner(banners, 'teal', '🔥 ' + streakKing + ' ברצף של ' + maxStreak + ' תשובות נכונות!');
+    sfxStreak();
   }
 
   $('hr-answer').textContent = correctText;
@@ -2123,6 +2193,76 @@ function fireworks(html, dur){
     }, b*350);
   }
   setTimeout(()=>$('fw').classList.remove('on'), dur || 4200);
+}
+
+/* ===== אפקטי קול (מסונתזים ב-Web Audio) ===== */
+let _sfxCtx = null;
+function sfxCtx(){
+  if (_sfxCtx) return _sfxCtx;
+  try { _sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ _sfxCtx = null; }
+  return _sfxCtx;
+}
+// צליל בודד (טון) עם עוצמה ומעטפת רכה
+function sfxTone(freq, startT, dur, type, gainPeak){
+  const ctx = sfxCtx(); if (!ctx) return;
+  const osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type = type || 'sine'; osc.frequency.value = freq;
+  osc.connect(g); g.connect(ctx.destination);
+  const t = ctx.currentTime + startT;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gainPeak || 0.18, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.start(t); osc.stop(t + dur + 0.05);
+}
+// משתיקים אפקטים יחד עם המוזיקה (אם המורה השתיק)
+function sfxAllowed(){ return !musicMuted; }
+// שיא מהירות — "דינג" עולה זריז
+function sfxRecord(){
+  if (!sfxAllowed()) return;
+  const ctx = sfxCtx(); if (ctx && ctx.state === 'suspended') ctx.resume();
+  sfxTone(880, 0, 0.18, 'triangle', 0.2);
+  sfxTone(1175, 0.10, 0.20, 'triangle', 0.2);
+  sfxTone(1568, 0.20, 0.28, 'triangle', 0.22);
+}
+// רצף תשובות — שתי נקישות קצרות חמות
+function sfxStreak(){
+  if (!sfxAllowed()) return;
+  const ctx = sfxCtx(); if (ctx && ctx.state === 'suspended') ctx.resume();
+  sfxTone(660, 0, 0.12, 'square', 0.12);
+  sfxTone(990, 0.09, 0.16, 'square', 0.12);
+}
+// סיום — אקורד מנצח עולה
+function sfxWin(){
+  if (!sfxAllowed()) return;
+  const ctx = sfxCtx(); if (ctx && ctx.state === 'suspended') ctx.resume();
+  // אקורד דו-מז'ור עולה (C-E-G-C)
+  sfxTone(523, 0,    0.5, 'triangle', 0.18);
+  sfxTone(659, 0.12, 0.5, 'triangle', 0.18);
+  sfxTone(784, 0.24, 0.6, 'triangle', 0.2);
+  sfxTone(1046, 0.36, 0.8, 'triangle', 0.22);
+}
+// הפסקת ביניים — מספר צלילים קצרים ומושכי-תשומת-לב, נבחר אחד אקראית כדי לא להיות מונוטוני
+const _interSfx = [
+  // 1) "טא-דה" קליל עולה
+  function(){ sfxTone(587,0,0.14,'triangle',0.16); sfxTone(880,0.12,0.22,'triangle',0.18); },
+  // 2) פעמון כפול נעים
+  function(){ sfxTone(784,0,0.16,'sine',0.18); sfxTone(1047,0.13,0.24,'sine',0.18); },
+  // 3) שלושה צעדים עולים מהירים
+  function(){ sfxTone(523,0,0.10,'triangle',0.14); sfxTone(659,0.08,0.10,'triangle',0.14); sfxTone(880,0.16,0.20,'triangle',0.18); },
+  // 4) "וופ" שובב (עולה-יורד)
+  function(){ sfxTone(700,0,0.12,'sine',0.16); sfxTone(1100,0.10,0.12,'sine',0.16); sfxTone(880,0.20,0.18,'sine',0.16); },
+  // 5) שתי נקישות גבוהות עליזות
+  function(){ sfxTone(988,0,0.12,'triangle',0.16); sfxTone(1319,0.11,0.22,'triangle',0.18); }
+];
+let _lastInterIdx = -1;
+function sfxIntermission(){
+  if (!sfxAllowed()) return;
+  const ctx = sfxCtx(); if (ctx && ctx.state === 'suspended') ctx.resume();
+  // בוחרים אקראית, אך לא אותו צליל פעמיים ברצף
+  let idx = Math.floor(Math.random()*_interSfx.length);
+  if (idx === _lastInterIdx) idx = (idx+1) % _interSfx.length;
+  _lastInterIdx = idx;
+  _interSfx[idx]();
 }
 
 function confetti(){
@@ -2187,6 +2327,7 @@ function hostFinish(){
   $('guest-save-box').style.display = isGuest ? 'block' : 'none';
   show('hfin');
   confetti();
+  sfxWin();
 }
 
 function funCard(box, ic, title, big, small){
@@ -2224,6 +2365,8 @@ let solo = false;
 function previewQuiz(){
   const err = quizReady();
   if (err){ alert(err); return; }
+  saveQuiz();
+  flashSaved();   // הודעת ביטחון שהחידון נשמר
   solo = true;
   role = 'host';
   // שחקן מדומה אחד — המורה עצמו
@@ -2451,6 +2594,8 @@ function playerMsg(m){
 
 function showPQ(m){
   curQ = m; sentThisQ=false; qShownAt=Date.now(); lastPick=-1;
+  if (m.num && m.total) $('pq-progress').textContent = 'שאלה ' + m.num + ' מתוך ' + m.total;
+  else $('pq-progress').textContent = '';
   $('pq-text').textContent = m.text;
   $('pq-hint').textContent = 'לחיצה אחת = תשובה. מהירות שווה נקודות!';
   const grid=$('pq-grid'); grid.innerHTML='';
