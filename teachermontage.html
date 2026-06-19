@@ -88,13 +88,42 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
 .info-i:hover{background:var(--gold); color:#1a2342;}
 .info-pop{position:fixed; z-index:50; max-width:280px; background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCImwbGG-lLQTuij-JzNSXcrLQk-i-TQGE",
+  authDomain: "teachers-6e0bb.firebaseapp.com",
+  databaseURL: "https://teachers-6e0bb-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "teachers-6e0bb",
+  storageBucket: "teachers-6e0bb.firebasestorage.app",
+  messagingSenderId: "568740581492",
+  appId: "1:568740581492:web:ae703d6df4efce79ba4121"
+};
+try { firebase.initializeApp(firebaseConfig); } catch(e){}
+const fdb = (firebase.apps && firebase.apps.length) ? firebase.database() : null;
+const fauth = (firebase.apps && firebase.apps.length) ? firebase.auth() : null;
+</script>
 </head>
 <body>
 
 <!-- מסך הגדרה -->
 <div class="screen on" id="setup">
-<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">v48</div>
+<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">v49</div>
   <h1>🎬 מצגת תמונות</h1>
+
+  <!-- שורת התחברות -->
+  <div id="auth-bar" style="display:flex; align-items:center; justify-content:center; gap:10px; margin:0 auto 14px; flex-wrap:wrap;">
+    <div id="auth-out">
+      <button class="btn ghost" style="font-size:14px; padding:8px 16px;" onclick="signInGoogle()">🔑 התחברות עם Google</button>
+    </div>
+    <div id="auth-in" style="display:none; align-items:center; gap:10px; font-size:14px; color:var(--ink-dim);">
+      <span>מחובר: <b id="auth-name" style="color:var(--ink);"></b></span>
+      <button class="btn ghost" style="font-size:13px; padding:6px 12px;" onclick="signOutGoogle()">התנתקות</button>
+    </div>
+  </div>
+  <div id="auth-msg" style="text-align:center; font-size:13px; color:var(--gold); min-height:18px; margin-bottom:6px;"></div>
   <p class="sub">בחרו תמונות ומוזיקה, הוסיפו כיתובים ואפקטים, ולחצו להתחיל. בסיום אפשר לשמור את המצגת כקובץ או כסרטון. הכול נשאר אצלכם — שום דבר לא נשלח לאינטרנט.</p>
 
   <div class="row">
@@ -178,6 +207,43 @@ function showInfo(ev, text){
 function closeInfo(){ const p = $('active-info'); if (p) p.remove(); }
 document.addEventListener('click', closeInfo);
 function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); $(id).classList.add('on'); }
+
+/* ===== התחברות Google ===== */
+let myUid = null, myName = '', myEmail = '';
+function signInGoogle(){
+  if (!fauth){ $('auth-msg').textContent = 'שירות ההתחברות אינו זמין כרגע.'; return; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  $('auth-msg').textContent = 'פותח חלון התחברות...';
+  fauth.signInWithPopup(provider).then(() => {
+    $('auth-msg').textContent = '';
+  }).catch(err => {
+    const code = err && err.code ? err.code : '';
+    if (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request' || code === 'auth/operation-not-supported-in-this-environment'){
+      $('auth-msg').textContent = 'מעביר אתכם להתחברות...';
+      fauth.signInWithRedirect(provider);
+    } else {
+      $('auth-msg').textContent = 'ההתחברות נכשלה. נסו שוב.';
+    }
+  });
+}
+function signOutGoogle(){ if (fauth) fauth.signOut(); }
+
+if (fauth){
+  fauth.getRedirectResult().catch(()=>{});
+  fauth.onAuthStateChanged(user => {
+    if (user){
+      myUid = user.uid;
+      myName = user.displayName || '';
+      myEmail = (user.email || '').toLowerCase();
+      if ($('auth-out')) $('auth-out').style.display = 'none';
+      if ($('auth-in')){ $('auth-in').style.display = 'flex'; $('auth-name').textContent = myName || myEmail; }
+    } else {
+      myUid = null; myName = ''; myEmail = '';
+      if ($('auth-out')) $('auth-out').style.display = 'block';
+      if ($('auth-in')) $('auth-in').style.display = 'none';
+    }
+  });
+}
 
 // בתוך הקומבו (embed=1) מסתירים את הקישור לתפריט הראשי, כי יש סרגל למעלה
 (function(){
