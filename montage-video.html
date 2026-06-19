@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>יצירת וידאו מהמצגת (בטא)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Secular+One&display=swap');
+:root{
+  --bg:#0a1020; --card:#121a2e; --ink:#f7f4ec; --ink-dim:#aab4cf;
+  --gold:#ffd166; --teal:#2ec4b6; --violet:#8d8df2; --red:#ff6b6b;
+  --line:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, #0a1020 45%, #05080f 100%); color:var(--ink); min-height:100vh; padding:24px 16px;}
+.wrap{max-width:680px; margin:0 auto;}
+h1{font-family:'Secular One'; font-size:clamp(28px,5vw,46px); color:var(--gold); margin-bottom:4px;}
+.beta{display:inline-block; background:var(--violet); color:#0b0b2a; font-weight:700; font-size:13px; border-radius:8px; padding:3px 10px; margin-bottom:14px;}
+.lead{color:var(--ink-dim); font-size:17px; line-height:1.5; margin-bottom:22px;}
+.card{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:22px; margin-bottom:18px;}
+.steps{counter-reset:s; list-style:none; padding:0;}
+.steps li{counter-increment:s; position:relative; padding-inline-start:38px; margin-bottom:12px; line-height:1.5;}
+.steps li::before{content:counter(s); position:absolute; inset-inline-start:0; top:0; width:26px; height:26px; background:var(--teal); color:#06231f; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px;}
+.btn{font-family:'Heebo'; font-weight:700; font-size:17px; border:none; border-radius:14px; padding:14px 22px; cursor:pointer; background:var(--teal); color:#06231f; transition:transform .1s, opacity .2s;}
+.btn:hover{transform:translateY(-1px);}
+.btn:disabled{opacity:.5; cursor:default; transform:none;}
+.btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+.btn.big{width:100%; font-size:19px; padding:16px;}
+.drop{border:2px dashed var(--line); border-radius:16px; padding:30px 20px; text-align:center; cursor:pointer; transition:border-color .2s, background .2s;}
+.drop:hover, .drop.over{border-color:var(--teal); background:rgba(46,196,182,.07);}
+.drop .ic{font-size:42px; margin-bottom:8px;}
+.muted{color:var(--ink-dim); font-size:14px;}
+.note{color:var(--ink-dim); font-size:14px; margin-top:10px; line-height:1.5;}
+.warn{background:rgba(255,209,102,.12); border-radius:12px; padding:12px 16px; margin:14px 0; font-size:15px; line-height:1.5;}
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px;}
+.hidden{display:none;}
+#prog-wrap{margin-top:16px;}
+#prog-bar{height:14px; background:rgba(0,0,0,.4); border-radius:10px; overflow:hidden;}
+#prog-fill{height:100%; width:0; background:var(--gold); transition:width .3s;}
+#prog-text{color:var(--ink-dim); font-size:14px; margin-top:8px; text-align:center;}
+.info-line{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); font-size:15px;}
+.info-line:last-child{border-bottom:none;}
+.info-line b{color:var(--gold);}
+video{width:100%; border-radius:14px; margin-top:14px; background:#000;}
+a.back{display:inline-block; margin-top:24px; color:var(--ink-dim); text-decoration:none; font-size:15px;}
+.ok{color:var(--teal);}
+.err{color:var(--red);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎬 יצירת וידאו מהמצגת</h1>
+  <div class="beta">גרסת ניסיון · בטא</div>
+  <p class="lead">הופכים מצגת שמורה לקובץ וידאו MP4 — מתאים להעלאה ליוטיוב, אינסטגרם, או לשליחה בכל מקום שבו וידאו עובד.</p>
+
+  <!-- שלב 1: הסבר + העלאה -->
+  <div class="card" id="upload-card">
+    <ol class="steps">
+      <li>פתחו את כלי המצגת והכינו מצגת (תמונות, מוזיקה, מעברים).</li>
+      <li>לחצו <b>"💾 הורדת המצגת למחשב"</b> — יירד קובץ HTML.</li>
+      <li>העלו את אותו קובץ לכאן, והמערכת תיצור ממנו וידאו.</li>
+    </ol>
+
+    <div class="drop" id="drop" style="margin-top:18px;">
+      <div class="ic">📂</div>
+      <div style="font-weight:700; font-size:17px; margin-bottom:4px;">העלאת קובץ המצגת</div>
+      <div class="muted">לחצו כאן, או גררו לכאן את קובץ ה-HTML שהורדתם</div>
+      <input type="file" id="file-input" accept=".html,text/html" class="hidden">
+    </div>
+    <p class="warn" style="margin-top:16px;">⚠️ <b>בווידאו נתמכים תמונות, מעברים ומוזיקה.</b> אפקטי שלג, גשם, זיקוקים וכו' זמינים במצגת האינטראקטיבית עצמה (בכלי המצגת). זוהי גרסת ניסיון, והיא תמשיך להשתפר.</p>
+  </div>
+
+  <!-- שלב 2: פרטי המצגת שזוהתה + יצירה -->
+  <div class="card hidden" id="ready-card">
+    <h2 style="font-family:'Secular One'; font-size:22px; color:var(--teal); margin-bottom:12px;">✓ המצגת זוהתה</h2>
+    <div class="info-line"><span>תמונות</span><b id="info-imgs">0</b></div>
+    <div class="info-line"><span>שירים</span><b id="info-music">0</b></div>
+    <div class="info-line"><span>מעברים</span><b id="info-trans">—</b></div>
+    <div class="info-line"><span>משך משוער</span><b id="info-dur">—</b></div>
+
+    <div class="warn" id="pre-warn">
+      <div><b>לפני שמתחילים, חשוב לדעת:</b></div>
+      <div style="margin-top:6px;">• יצירת הווידאו דורשת הורדה חד-פעמית של רכיב עיבוד (כ-25 מגה). נדרש חיבור לאינטרנט בפעם הראשונה.</div>
+      <div style="margin-top:4px;">• העיבוד לוקח זמן (כמה דקות לפי כמות התמונות). אנא המתינו ואל תסגרו את הדף.</div>
+    </div>
+
+    <div class="row">
+      <button class="btn big" id="make-btn" onclick="makeVideo()">🎬 יצירת הווידאו</button>
+    </div>
+    <button class="btn ghost" style="margin-top:10px;" onclick="resetAll()">↻ העלאת מצגת אחרת</button>
+
+    <div id="prog-wrap" class="hidden">
+      <div id="prog-bar"><div id="prog-fill"></div></div>
+      <div id="prog-text">מתחילים...</div>
+    </div>
+
+    <div id="result" class="hidden">
+      <video id="out-video" controls></video>
+      <div class="row">
+        <button class="btn big" id="dl-btn">⬇️ הורדת הווידאו</button>
+      </div>
+    </div>
+  </div>
+
+  <a class="back" href="index.html">→ חזרה לתפריט הראשי</a>
+</div>
+
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
+<script src="https://unpkg.com/@ffmpeg/util@0.12.2/dist/umd/index.js"></script>
+<script>
+/* ============================================================
+   כלי וידאו עצמאי — קורא קובץ HTML של מצגת שמורה,
+   מחלץ ממנו תמונות+מוזיקה, ויוצר MP4 עם ffmpeg.wasm.
+   לא נוגע בקוד המצגת.
+   ============================================================ */
+
+let parsed = null;       // { images:[dataURL], music:[dataURL], transitions:[], effects:[] }
+let lastVideoUrl = null;
+const SECONDS_PER_IMAGE = 4;  // משך הצגת כל תמונה
+const FADE = 1;               // משך מעבר דהייה בשניות
+
+/* ---------- העלאת קובץ ---------- */
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file-input');
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); };
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
+
+function handleFile(file){
+  if (!/\.html?$/i.test(file.name) && file.type !== 'text/html'){
+    alert('צריך להעלות קובץ HTML שהורד מכלי המצגת.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = extractDataFromHTML(reader.result);
+      if (!data || !data.images || !data.images.length){
+        alert('לא נמצאו תמונות בקובץ. ודאו שזה קובץ מצגת שהורד מהכלי.');
+        return;
+      }
+      parsed = data;
+      showReady(data);
+    } catch(e){
+      console.error(e);
+      alert('לא הצלחנו לקרוא את הקובץ. ודאו שזה קובץ מצגת תקין שהורד מהכלי.');
+    }
+  };
+  reader.onerror = () => alert('שגיאה בקריאת הקובץ.');
+  reader.readAsText(file);
+}
+
+/* מחלץ את אובייקט ה-DATA מתוך ה-HTML של המצגת השמורה */
+function extractDataFromHTML(htmlText){
+  // ה-HTML מכיל: const DATA = {...};
+  const marker = 'const DATA = ';
+  const start = htmlText.indexOf(marker);
+  if (start < 0) return null;
+  const jsonStart = start + marker.length;
+  // מאתרים את סוף ה-JSON: עד "};" שבסוף ההגדרה
+  const end = htmlText.indexOf('};', jsonStart);
+  if (end < 0) return null;
+  const jsonStr = htmlText.slice(jsonStart, end + 1);
+  return JSON.parse(jsonStr);
+}
+
+function fmtDur(sec){
+  const m = Math.floor(sec/60), s = Math.round(sec%60);
+  return m > 0 ? (m + ':' + String(s).padStart(2,'0') + ' דק׳') : (s + ' שניות');
+}
+
+const TRANS_HE = { fade:'דהייה', slide:'החלקה', zoom:'התקרבות', zoomout:'התרחקות', slideup:'החלקה מלמעלה', slidedown:'החלקה מלמטה' };
+
+function showReady(data){
+  document.getElementById('upload-card').classList.add('hidden');
+  document.getElementById('ready-card').classList.remove('hidden');
+  document.getElementById('info-imgs').textContent = data.images.length;
+  document.getElementById('info-music').textContent = (data.music||[]).length;
+  const tr = (data.transitions||['fade']).map(t => TRANS_HE[t]||t).join(', ');
+  document.getElementById('info-trans').textContent = tr || 'דהייה';
+  const dur = data.images.length * SECONDS_PER_IMAGE;
+  document.getElementById('info-dur').textContent = fmtDur(dur);
+}
+
+function resetAll(){
+  parsed = null;
+  if (lastVideoUrl){ URL.revokeObjectURL(lastVideoUrl); lastVideoUrl = null; }
+  document.getElementById('ready-card').classList.add('hidden');
+  document.getElementById('upload-card').classList.remove('hidden');
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('prog-wrap').classList.add('hidden');
+  document.getElementById('make-btn').disabled = false;
+  fileInput.value = '';
+}
+
+/* ---------- יצירת הווידאו ---------- */
+const { FFmpeg } = FFmpegWASM;
+const { fetchFile } = FFmpegUtil;
+let ffmpeg = null;
+
+function setProg(pct, text){
+  document.getElementById('prog-fill').style.width = Math.round(pct) + '%';
+  if (text) document.getElementById('prog-text').textContent = text;
+}
+
+async function makeVideo(){
+  if (!parsed) return;
+  const makeBtn = document.getElementById('make-btn');
+  makeBtn.disabled = true;
+  document.getElementById('prog-wrap').classList.remove('hidden');
+  document.getElementById('result').classList.add('hidden');
+
+  try {
+    // 1. טעינת ffmpeg.wasm (הורדה חד-פעמית)
+    if (!ffmpeg){
+      setProg(2, 'מוריד רכיב עיבוד (פעם ראשונה, עד דקה)...');
+      ffmpeg = new FFmpeg();
+      ffmpeg.on('progress', ({ progress }) => {
+        // התקדמות הקידוד עצמו (40%-95%)
+        const p = 40 + Math.max(0, Math.min(1, progress)) * 55;
+        setProg(p, 'מקודד וידאו... ' + Math.round(progress*100) + '%');
+      });
+      const base = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+      await ffmpeg.load({
+        coreURL: base + '/ffmpeg-core.js',
+        wasmURL: base + '/ffmpeg-core.wasm'
+      });
+    }
+
+    setProg(15, 'מכין תמונות...');
+
+    // 2. כתיבת התמונות למערכת הקבצים של ffmpeg
+    const imgs = parsed.images;
+    for (let i = 0; i < imgs.length; i++){
+      const name = 'img' + String(i).padStart(4,'0') + '.jpg';
+      await ffmpeg.writeFile(name, await fetchFile(imgs[i]));
+      setProg(15 + (i/imgs.length)*10, 'מכין תמונה ' + (i+1) + ' מתוך ' + imgs.length + '...');
+    }
+
+    // 3. כתיבת המוזיקה (אם יש) — מאחדים לקובץ אחד פשוט: לוקחים את הראשון
+    //    (בבטא: שיר ראשון כפס קול. ריבוי שירים = שיפור עתידי)
+    let hasMusic = parsed.music && parsed.music.length > 0;
+    if (hasMusic){
+      setProg(27, 'מכין מוזיקה...');
+      await ffmpeg.writeFile('audio0.mp3', await fetchFile(parsed.music[0]));
+    }
+
+    // 4. בניית קובץ רשימת תמונות עבור ffmpeg (concat demuxer)
+    //    כל תמונה מוצגת SECONDS_PER_IMAGE שניות
+    let listLines = [];
+    for (let i = 0; i < imgs.length; i++){
+      const name = 'img' + String(i).padStart(4,'0') + '.jpg';
+      listLines.push("file '" + name + "'");
+      listLines.push('duration ' + SECONDS_PER_IMAGE);
+    }
+    // התמונה האחרונה חייבת להופיע פעם נוספת (דרישת concat demuxer)
+    listLines.push("file 'img" + String(imgs.length-1).padStart(4,'0') + ".jpg'");
+    await ffmpeg.writeFile('list.txt', listLines.join('\n'));
+
+    setProg(38, 'מתחיל בקידוד...');
+
+    const totalDur = imgs.length * SECONDS_PER_IMAGE;
+
+    // 5. פקודת ffmpeg
+    // וידאו: מתוך רשימת התמונות, בגודל אחיד 1280x720, 30fps, עם דהייה רכה בין תמונות
+    // הערה: fps + scale + pad לשמירת יחס ורקע שחור
+    const vf = "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30";
+
+    let args = ['-f','concat','-safe','0','-i','list.txt'];
+    if (hasMusic){
+      // -stream_loop -1 לפני קלט המוזיקה => המוזיקה תרוץ בלופ אינסופי.
+      // יחד עם -t (אורך הווידאו) זה מטפל בשני המקרים:
+      // מוזיקה קצרה => חוזרת בלופ עד סוף הווידאו; מוזיקה ארוכה => נחתכת בסוף הווידאו.
+      args.push('-stream_loop','-1','-i','audio0.mp3');
+    }
+    args.push('-vf', vf);
+    args.push('-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p');
+    if (hasMusic){
+      args.push('-c:a','aac','-b:a','160k');
+    }
+    args.push('-t', String(totalDur));
+    args.push('-movflags','+faststart');
+    args.push('output.mp4');
+
+    await ffmpeg.exec(args);
+
+    setProg(96, 'מסיים...');
+
+    // 6. קריאת הפלט והצגתו
+    const out = await ffmpeg.readFile('output.mp4');
+    const blob = new Blob([out.buffer], { type: 'video/mp4' });
+    if (lastVideoUrl) URL.revokeObjectURL(lastVideoUrl);
+    lastVideoUrl = URL.createObjectURL(blob);
+
+    setProg(100, '✓ הווידאו מוכן!');
+    const vid = document.getElementById('out-video');
+    vid.src = lastVideoUrl;
+    document.getElementById('result').classList.remove('hidden');
+
+    const dlBtn = document.getElementById('dl-btn');
+    dlBtn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = lastVideoUrl; a.download = 'מצגת.mp4';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    };
+
+    makeBtn.disabled = false;
+
+  } catch(e){
+    console.error(e);
+    setProg(0, '');
+    document.getElementById('prog-text').innerHTML = '<span class="err">משהו השתבש ביצירת הווידאו. נסו שוב, או עם פחות תמונות.</span>';
+    makeBtn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
