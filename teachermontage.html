@@ -66,6 +66,10 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
 .trans-btn.on, .motion-btn.on{background:var(--gold); color:#1a2342; border-color:var(--gold);}
 .moncap{position:fixed; bottom:42px; left:0; right:0; text-align:center; z-index:4; font-family:'Secular One'; font-size:clamp(28px,4vw,52px); color:var(--gold); text-shadow:0 2px 14px rgba(0,0,0,.9); transition:opacity .7s ease; opacity:0;}
 #mon-end{position:fixed; inset:0; z-index:7; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:6vw; opacity:0; transition:opacity 1.2s ease; pointer-events:none; overflow:hidden; background:linear-gradient(-45deg, #ff5e62, #ff9966, #ffd200, #36d1dc, #5b86e5, #c471ed, #ff5e9c); background-size:400% 400%; animation:endGradient 10s ease infinite;}
+/* מצב תמונה: רקע תמונה מטושטשת + שכבה כהה לקריאות (מוגדר ב-JS) */
+#mon-end.photo-bg{background:#111; animation:none;}
+#mon-end .end-photo{position:absolute; inset:0; z-index:-2; background-size:cover; background-position:center; filter:blur(18px) brightness(.9); transform:scale(1.12);}
+#mon-end .end-shade{position:absolute; inset:0; z-index:-1; background:rgba(0,0,0,.55);}
 #mon-end.vis{opacity:1;}
 @keyframes endGradient{0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;}}
 #mon-end .end-title{font-family:'Secular One'; font-size:clamp(60px,11vw,150px); color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.25), 0 6px 24px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.8); margin-bottom:52px; line-height:1.1; opacity:0; transform:translateY(34px) scale(.92);}
@@ -89,7 +93,7 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
 
 <!-- מסך הגדרה -->
 <div class="screen on" id="setup">
-<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">v44</div>
+<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">v45</div>
   <h1>🎬 מצגת תמונות</h1>
   <p class="sub">בחרו תמונות ומוזיקה, הוסיפו כיתובים ואפקטים, ולחצו להתחיל. בסיום אפשר לשמור את המצגת כקובץ או כסרטון. הכול נשאר אצלכם — שום דבר לא נשלח לאינטרנט.</p>
 
@@ -139,7 +143,7 @@ h1{font-family:'Secular One'; font-size:clamp(32px,5vw,52px); margin:0 0 6px; co
   <div class="monwrap" id="monwrap"></div>
   <canvas id="fx-canvas" style="position:fixed; inset:0; z-index:5; pointer-events:none;"></canvas>
   <div class="moncap" id="moncap"></div>
-  <div id="mon-end"><canvas id="mon-end-fw"></canvas><div class="end-title" id="mon-end-title"></div><div class="end-text" id="mon-end-text"></div></div>
+  <div id="mon-end"><div class="end-photo" id="mon-end-photo"></div><div class="end-shade" id="mon-end-shade"></div><canvas id="mon-end-fw"></canvas><div class="end-title" id="mon-end-title"></div><div class="end-text" id="mon-end-text"></div></div>
   <div id="mon-progress"><i id="mon-progress-fill"></i></div>
   <div id="mon-controls">
     <button onclick="toggleMontageMusic()" id="mon-music">🔊 מוזיקה</button>
@@ -568,7 +572,7 @@ function getCaptions(){
 }
 
 /* ---------- שקופית סיום ---------- */
-let endTitle = '', endText = '';
+let endTitle = '', endText = '', endBg = 'gradient';   // endBg: 'gradient' או 'photo'
 function openEndPanel(){
   if ($('mon-modal')){ closeModal(); return; }
   const box = openModal('שקופית סיום');
@@ -597,11 +601,42 @@ function openEndPanel(){
   inp2.style.cssText = "width:100%; font-family:'Heebo'; font-size:16px; padding:10px 14px; border-radius:12px; border:2px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--ink); text-align:center; resize:vertical;";
   box.appendChild(inp2);
 
+  // בחירת רקע לשקופית הסיום
+  const lbl3 = document.createElement('div');
+  lbl3.style.cssText = 'font-size:13px; color:var(--ink-dim); margin:16px 0 8px;';
+  lbl3.textContent = 'רקע השקופית';
+  box.appendChild(lbl3);
+
+  const bgRow = document.createElement('div');
+  bgRow.style.cssText = 'display:flex; gap:10px;';
+  const bgOptions = [
+    { val: 'gradient', label: '🌈 רקע צבעוני' },
+    { val: 'photo', label: '🖼️ תמונה מהמצגת' }
+  ];
+  let chosenBg = endBg;
+  const bgBtns = [];
+  bgOptions.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'btn ghost';
+    b.textContent = opt.label;
+    b.style.cssText = 'flex:1; font-size:15px; padding:10px;';
+    const paint = () => {
+      bgBtns.forEach(x => { x.btn.style.background = ''; x.btn.style.color = ''; });
+      if (chosenBg === opt.val){ b.style.background = 'var(--gold)'; b.style.color = '#1a2342'; }
+    };
+    b.onclick = () => { chosenBg = opt.val; bgBtns.forEach(x => x.paint()); };
+    bgBtns.push({ btn: b, paint });
+    bgRow.appendChild(b);
+  });
+  bgBtns.forEach(x => x.paint());
+  box.appendChild(bgRow);
+
   const close = document.createElement('button');
   close.className = 'btn'; close.textContent = '✓ אישור'; close.style.cssText += 'margin-top:16px; width:100%;';
   close.onclick = () => {
     endTitle = inp1.value.trim();
     endText = inp2.value.trim();
+    endBg = chosenBg;
     updateEndBtn();
     closeModal();
   };
@@ -781,6 +816,24 @@ function showMonEnd(){
   if (!el) return;
   $('mon-end-title').textContent = endTitle || '';
   $('mon-end-text').textContent = endText || '';
+  // רקע: תמונה מטושטשת או גרדיאנט
+  const photo = $('mon-end-photo');
+  if (endBg === 'photo'){
+    // לוקחים את התמונה המוצגת כרגע (האחרונה שהוצגה)
+    const curImg = monFlip ? monImgA : monImgB; // אחרי ההחלפה האחרונה, ה'נוכחי' הוא ההפוך
+    let src = '';
+    if (monImgA && monImgA.classList.contains('vis')) src = monImgA.src;
+    else if (monImgB && monImgB.classList.contains('vis')) src = monImgB.src;
+    if (src){
+      photo.style.backgroundImage = 'url("' + src + '")';
+      el.classList.add('photo-bg');
+    } else {
+      el.classList.remove('photo-bg'); // אין תמונה — נשארים בגרדיאנט
+    }
+  } else {
+    el.classList.remove('photo-bg');
+    photo.style.backgroundImage = '';
+  }
   // מסתיר את הכתובית מאחור (שלא תופיע על שקופית הסיום)
   const cap = $('moncap'); if (cap) cap.style.opacity = '0';
   capIdx = -1; // איפוס כדי שהכתובית תתחיל נכון בסבב הבא
