@@ -617,7 +617,8 @@ function startShow(){
   monMusicMuted = false;
   $('mon-music').textContent = '🔊 מוזיקה';
   playMusic();
-  startFx();
+  // בדיקה 3: ביטול זמני של אפקטים (לבדוק אם canvas האפקטים גורם לשחור)
+  // startFx();
   applyMonwrapClasses();
 
   const wrap = $('monwrap');
