@@ -148,6 +148,9 @@ input:focus{border-color:var(--gold); outline:none;}
         <button class="btn" onclick="signInGoogle()" style="width:100%; background:#fff; color:#1a2342; display:flex; align-items:center; justify-content:center; gap:10px;">
           <span style="font-weight:800; color:#4285F4;">G</span> התחברות עם Google
         </button>
+        <div style="text-align:center; font-size:13px; color:var(--ink-dim); margin-top:6px;">
+          ההתחברות שומרת על המערכת בטוחה ואמינה <span class="info-i" onclick="showInfo(event, 'ההתחברות עוזרת לשמור על המערכת בטוחה ואמינה — היא מוודאת שכל חידון נשמר לחשבון אמיתי, ומונעת שימוש לרעה שעלול לפגוע בחוויה. כך גם ספריית החידונים המשותפת נשארת נקייה ואיכותית לכולם. אפשר גם להיכנס כאורח, אבל אז לא ניתן לשמור או לשתף.')">i</span>
+        </div>
         <button class="btn ghost" onclick="enterGuest()" style="width:100%; margin-top:10px;">
           👤 כניסה כאורח <span class="info-i" onclick="event.stopPropagation(); showInfo(event, 'כאורח אפשר לבנות חידון, לערוך, לשחק ולהשתמש בכל האפשרויות — אבל בלי יכולת לשמור או לשתף את החידון. כדי לשמור ולשתף, יש להתחבר עם Google. בסוף משחק של אורח תהיה הזדמנות להתחבר ולשמור.')">i</span>
         </button>
