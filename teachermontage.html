@@ -617,8 +617,7 @@ function startShow(){
   monMusicMuted = false;
   $('mon-music').textContent = '🔊 מוזיקה';
   playMusic();
-  // בדיקה 3: ביטול זמני של אפקטים (לבדוק אם canvas האפקטים גורם לשחור)
-  // startFx();
+  startFx();
   applyMonwrapClasses();
 
   const wrap = $('monwrap');
@@ -673,15 +672,25 @@ function monStep(){
     shuffle(order);
   }
 
-  // בדיקה 2: ביטול זמני של עדכון הכתוביות (לבידוד באג המסך השחור)
-  // updateCaptionForSlide(monIdx);
-  // בדיקה זמנית: מעבר דהייה קבוע (לבידוד באג המסך השחור)
-  const t = 'fade';
+  // עדכון כתובית לפי מספר התמונה (חלוקה למקטעים)
+  updateCaptionForSlide(monIdx);
+  // בחירת מעבר (אם נבחרו כמה — מתחלפים)
+  const sel = selectedTransitions();
+  const t = sel.length ? sel[transCycle % sel.length] : 'fade';
   transCycle++;
   setTransitionClass(t);
   const cur = monFlip ? monImgB : monImgA, prev = monFlip ? monImgA : monImgB;
-  cur.src = order[monIdx];
-  cur.classList.add('vis'); prev.classList.remove('vis');
+  const thisSrc = order[monIdx];
+  // טוענים ומפענחים את התמונה לפני שמציגים אותה (מונע פריים שחור מ-ObjectURL שלא פוענח)
+  cur.src = thisSrc;
+  const reveal = () => { cur.classList.add('vis'); prev.classList.remove('vis'); };
+  if (cur.decode){
+    cur.decode().then(reveal).catch(reveal);
+  } else if (!cur.complete){
+    cur.onload = reveal; cur.onerror = reveal;
+  } else {
+    reveal();
+  }
   monFlip = !monFlip;
   monIdx++;
   if (fill) fill.style.width = Math.round((monIdx / order.length) * 100) + '%';
