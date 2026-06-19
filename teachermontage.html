@@ -674,9 +674,8 @@ function monStep(){
 
   // עדכון כתובית לפי מספר התמונה (חלוקה למקטעים)
   updateCaptionForSlide(monIdx);
-  // בחירת מעבר
-  const sel = selectedTransitions();
-  const t = sel.length ? sel[transCycle % sel.length] : 'fade';
+  // בדיקה זמנית: מעבר דהייה קבוע (לבידוד באג המסך השחור)
+  const t = 'fade';
   transCycle++;
   setTransitionClass(t);
   const cur = monFlip ? monImgB : monImgA, prev = monFlip ? monImgA : monImgB;
