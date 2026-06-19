@@ -197,7 +197,7 @@ function resetAll(){
 
 /* ---------- יצירת הווידאו ---------- */
 const { FFmpeg } = FFmpegWASM;
-const { fetchFile } = FFmpegUtil;
+const { fetchFile, toBlobURL } = FFmpegUtil;
 let ffmpeg = null;
 
 function setProg(pct, text){
@@ -223,9 +223,10 @@ async function makeVideo(){
         setProg(p, 'מקודד וידאו... ' + Math.round(progress*100) + '%');
       });
       const base = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+      // טוענים את ליבת ffmpeg כ-blob URLs — דרוש כדי שה-worker יוכל לטעון מ-CDN
       await ffmpeg.load({
-        coreURL: base + '/ffmpeg-core.js',
-        wasmURL: base + '/ffmpeg-core.wasm'
+        coreURL: await toBlobURL(base + '/ffmpeg-core.js', 'text/javascript'),
+        wasmURL: await toBlobURL(base + '/ffmpeg-core.wasm', 'application/wasm')
       });
     }
 
@@ -311,7 +312,8 @@ async function makeVideo(){
   } catch(e){
     console.error(e);
     setProg(0, '');
-    document.getElementById('prog-text').innerHTML = '<span class="err">משהו השתבש ביצירת הווידאו. נסו שוב, או עם פחות תמונות.</span>';
+    const detail = (e && e.message) ? e.message : String(e);
+    document.getElementById('prog-text').innerHTML = '<span class="err">משהו השתבש ביצירת הווידאו.<br>פרטים: ' + detail + '</span>';
     makeBtn.disabled = false;
   }
 }
