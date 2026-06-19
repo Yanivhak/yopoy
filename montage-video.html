@@ -106,8 +106,6 @@ a.back{display:inline-block; margin-top:24px; color:var(--ink-dim); text-decorat
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js" onerror="window._ffmpegLoadError='ffmpeg.js לא נטען'"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/umd/index.js"></script>
-<script src="https://unpkg.com/@ffmpeg/util@0.12.2/dist/umd/index.js"></script>
 <script>
 /* ============================================================
    כלי וידאו עצמאי — קורא קובץ HTML של מצגת שמורה,
@@ -212,46 +210,33 @@ async function makeVideo(){
   document.getElementById('result').classList.add('hidden');
 
   try {
-    // גישה לספריות רק עכשיו (אחרי שנטענו) — עם המתנה קצרה אם עדיין נטענות
+    // המתנה קצרה אם ffmpeg עדיין נטענת
     let waited = 0;
-    while ((typeof FFmpegWASM === 'undefined' || typeof FFmpegUtil === 'undefined') && waited < 5000){
+    while (typeof FFmpegWASM === 'undefined' && waited < 8000){
       setProg(1, 'טוען רכיב עיבוד...');
       await new Promise(r => setTimeout(r, 250));
       waited += 250;
     }
-    // אם ה-util עדיין חסר — ננסה לטעון אותו דינמית ממקור גיבוי
-    if (typeof FFmpegUtil === 'undefined'){
-      setProg(1, 'טוען רכיב עיבוד (גיבוי)...');
-      const utilSources = [
-        'https://unpkg.com/@ffmpeg/util@0.12.2/dist/umd/index.js',
-        'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/umd/index.js'
-      ];
-      for (const src of utilSources){
-        if (typeof FFmpegUtil !== 'undefined') break;
-        try {
-          await new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = src;
-            s.onload = resolve;
-            s.onerror = () => reject(new Error('failed ' + src));
-            document.head.appendChild(s);
-          });
-          // המתנה קצרה שייקלט
-          await new Promise(r => setTimeout(r, 300));
-        } catch(e){ /* ננסה את המקור הבא */ }
-      }
-    }
-    // אבחון מפורט: מה בדיוק חסר
-    const hasWASM = (typeof FFmpegWASM !== 'undefined');
-    const hasUtil = (typeof FFmpegUtil !== 'undefined');
-    if (!hasWASM || !hasUtil){
-      throw new Error('הספריות לא נטענו. FFmpegWASM=' + hasWASM + ', FFmpegUtil=' + hasUtil + '. ייתכן חסימת רשת/CDN.');
+    if (typeof FFmpegWASM === 'undefined'){
+      throw new Error('רכיב העיבוד (ffmpeg) לא נטען מהרשת. נסו לרענן את הדף.');
     }
     const FFmpeg = FFmpegWASM.FFmpeg;
-    const fetchFile = FFmpegUtil.fetchFile;
-    const toBlobURL = FFmpegUtil.toBlobURL;
     if (typeof FFmpeg !== 'function'){ throw new Error('FFmpeg אינו זמין (FFmpegWASM.FFmpeg חסר).'); }
-    if (typeof toBlobURL !== 'function'){ throw new Error('toBlobURL אינו זמין (FFmpegUtil.toBlobURL חסר).'); }
+
+    // מימוש עצמי של הפונקציות (במקום @ffmpeg/util שלא יוצר גלובל בדפדפן)
+    async function myToBlobURL(url, mimeType){
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('הורדה נכשלה (' + resp.status + ') מ-' + url);
+      const buf = await resp.arrayBuffer();
+      const blob = new Blob([buf], { type: mimeType });
+      return URL.createObjectURL(blob);
+    }
+    async function myFetchFile(input){
+      // input יכול להיות dataURL (Base64) או URL רגיל
+      const resp = await fetch(input);
+      const buf = await resp.arrayBuffer();
+      return new Uint8Array(buf);
+    }
 
     // 1. טעינת ffmpeg.wasm (הורדה חד-פעמית)
     if (!ffInstance){
@@ -263,18 +248,17 @@ async function makeVideo(){
         setProg(p, 'מקודד וידאו... ' + Math.round(progress*100) + '%');
       });
       const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
-      // טוענים את ליבת ffmpeg כ-blob URLs — דרוש כדי שה-worker יוכל לטעון מ-CDN
       let coreURL, wasmURL;
       try {
-        coreURL = await toBlobURL(base + '/ffmpeg-core.js', 'text/javascript');
-        wasmURL = await toBlobURL(base + '/ffmpeg-core.wasm', 'application/wasm');
+        coreURL = await myToBlobURL(base + '/ffmpeg-core.js', 'text/javascript');
+        wasmURL = await myToBlobURL(base + '/ffmpeg-core.wasm', 'application/wasm');
       } catch(dlErr){
-        throw new Error('הורדת ליבת העיבוד נכשלה (toBlobURL): ' + (dlErr && dlErr.message ? dlErr.message : dlErr));
+        throw new Error('הורדת ליבת העיבוד נכשלה: ' + (dlErr && dlErr.message ? dlErr.message : dlErr));
       }
       try {
         await ffInstance.load({ coreURL, wasmURL });
       } catch(loadErr){
-        throw new Error('טעינת ליבת העיבוד נכשלה (load): ' + (loadErr && loadErr.message ? loadErr.message : loadErr));
+        throw new Error('טעינת ליבת העיבוד נכשלה: ' + (loadErr && loadErr.message ? loadErr.message : loadErr));
       }
     }
 
@@ -284,7 +268,7 @@ async function makeVideo(){
     const imgs = parsed.images;
     for (let i = 0; i < imgs.length; i++){
       const name = 'img' + String(i).padStart(4,'0') + '.jpg';
-      await ffInstance.writeFile(name, await fetchFile(imgs[i]));
+      await ffInstance.writeFile(name, await myFetchFile(imgs[i]));
       setProg(15 + (i/imgs.length)*10, 'מכין תמונה ' + (i+1) + ' מתוך ' + imgs.length + '...');
     }
 
@@ -293,7 +277,7 @@ async function makeVideo(){
     let hasMusic = parsed.music && parsed.music.length > 0;
     if (hasMusic){
       setProg(27, 'מכין מוזיקה...');
-      await ffInstance.writeFile('audio0.mp3', await fetchFile(parsed.music[0]));
+      await ffInstance.writeFile('audio0.mp3', await myFetchFile(parsed.music[0]));
     }
 
     // 4. בניית קובץ רשימת תמונות עבור ffmpeg (concat demuxer)
