@@ -110,7 +110,7 @@ const fauth = (firebase.apps && firebase.apps.length) ? firebase.auth() : null;
 
 <!-- מסך הגדרה -->
 <div class="screen on" id="setup">
-<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">v49</div>
+<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">montage v50</div>
   <h1>🎬 מצגת תמונות</h1>
 
   <!-- שורת התחברות -->
@@ -227,6 +227,44 @@ function signInGoogle(){
   });
 }
 function signOutGoogle(){ if (fauth) fauth.signOut(); }
+
+/* ===== בנק משפטים (Firebase, רק למחוברים) ===== */
+let sentenceBank = [];   // [{key, text}]
+function bankRef(){
+  if (!fdb || !myUid) return null;
+  return fdb.ref('sentence_bank/' + myUid);
+}
+function loadSentenceBank(cb){
+  const ref = bankRef();
+  if (!ref){ sentenceBank = []; if (cb) cb(); return; }
+  ref.once('value').then(snap => {
+    const val = snap.val() || {};
+    sentenceBank = Object.keys(val).map(k => ({ key: k, text: val[k].text || '' }))
+      .filter(s => s.text)
+      .sort((a, b) => a.text.localeCompare(b.text, 'he'));
+    if (cb) cb();
+  }).catch(() => { sentenceBank = []; if (cb) cb(); });
+}
+function saveSentenceToBank(text, cb){
+  const ref = bankRef();
+  if (!ref || !text){ if (cb) cb(false); return; }
+  // בדיקה אם כבר קיים (לא שומרים כפילויות)
+  if (sentenceBank.some(s => s.text === text)){ if (cb) cb('exists'); return; }
+  const newRef = ref.push();
+  newRef.set({ text: text, ts: Date.now() }).then(() => {
+    sentenceBank.push({ key: newRef.key, text: text });
+    sentenceBank.sort((a, b) => a.text.localeCompare(b.text, 'he'));
+    if (cb) cb(true);
+  }).catch(() => { if (cb) cb(false); });
+}
+function deleteSentenceFromBank(key, cb){
+  const ref = bankRef();
+  if (!ref || !key){ if (cb) cb(false); return; }
+  ref.child(key).remove().then(() => {
+    sentenceBank = sentenceBank.filter(s => s.key !== key);
+    if (cb) cb(true);
+  }).catch(() => { if (cb) cb(false); });
+}
 
 if (fauth){
   fauth.getRedirectResult().catch(()=>{});
@@ -542,13 +580,79 @@ function openCapPanel(){
   list.className = 'list'; list.id = 'cap-panel-list'; list.style.marginTop = '8px';
   box.appendChild(list);
 
+  // אזור בנק המשפטים השמורים
+  const bankWrap = document.createElement('div');
+  bankWrap.id = 'cap-bank-wrap';
+  bankWrap.style.cssText = 'margin-top:16px; border-top:1px solid rgba(255,255,255,.12); padding-top:14px;';
+  box.appendChild(bankWrap);
+
   const close = document.createElement('button');
   close.className = 'btn'; close.textContent = '✓ אישור'; close.style.cssText += 'margin-top:14px; width:100%;';
   close.onclick = closeModal;
   box.appendChild(close);
 
   renderCapList();
+  // טוען ומציג את בנק המשפטים
+  if (myUid){
+    loadSentenceBank(() => renderSentenceBank());
+  } else {
+    renderSentenceBank();
+  }
   inp.focus();
+}
+
+/* מציג את בנק המשפטים השמורים בתוך חלון הכיתוב */
+function renderSentenceBank(){
+  const wrap = $('cap-bank-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  // כותרת
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:14px; color:var(--gold); font-weight:700; margin-bottom:8px;';
+  title.textContent = '💾 משפטים שמורים';
+  wrap.appendChild(title);
+
+  if (!myUid){
+    // אורח — הזמנה להתחבר
+    const msg = document.createElement('div');
+    msg.style.cssText = 'font-size:13px; color:var(--ink-dim); line-height:1.5;';
+    msg.textContent = 'התחברו עם Google (בראש המסך) כדי לשמור משפטים ולהשתמש בהם שוב בכל מצגת.';
+    wrap.appendChild(msg);
+    return;
+  }
+  if (!sentenceBank.length){
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:13px; color:var(--ink-dim);';
+    empty.textContent = 'הבנק ריק. לחצו 💾 ליד משפט כדי לשמור אותו כאן.';
+    wrap.appendChild(empty);
+    return;
+  }
+  // רשימת המשפטים
+  const listEl = document.createElement('div');
+  listEl.className = 'list';
+  sentenceBank.forEach(s => {
+    const row = document.createElement('div'); row.className = 'item';
+    const txt = document.createElement('span');
+    txt.textContent = s.text;
+    txt.style.cssText = 'cursor:pointer; flex:1;';
+    txt.title = 'לחיצה להוספה לכיתוב';
+    txt.onclick = () => {
+      // מוסיף את המשפט לכיתוב (אם לא קיים כבר)
+      if (!captions.includes(s.text)){
+        captions.push(s.text);
+        renderCapList();
+        const fb = $('cap-feedback');
+        if (fb){ fb.textContent = 'נוסף לכיתוב ✓'; fb.style.opacity = '1'; setTimeout(() => { fb.style.opacity = '0'; }, 1500); }
+      }
+    };
+    const del = document.createElement('button'); del.className = 'x'; del.textContent = '🗑️'; del.title = 'מחיקה מהבנק';
+    del.onclick = () => {
+      deleteSentenceFromBank(s.key, (ok) => { if (ok) renderSentenceBank(); });
+    };
+    row.appendChild(txt); row.appendChild(del);
+    listEl.appendChild(row);
+  });
+  wrap.appendChild(listEl);
 }
 function addCapLine(){
   const inp = $('cap-input');
@@ -611,7 +715,19 @@ function renderCapList(){
         edit.onclick = () => editCaption(i);
         const x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.title = 'הסרת השורה';
         x.onclick = () => removeCaption(i);
-        row.appendChild(txt); row.appendChild(edit); row.appendChild(x);
+        row.appendChild(txt); row.appendChild(edit);
+        // כפתור שמירה לבנק (רק למחוברים)
+        if (myUid){
+          const save = document.createElement('button'); save.className = 'x'; save.textContent = '💾'; save.title = 'שמירה לבנק המשפטים';
+          save.onclick = () => {
+            saveSentenceToBank(c, (res) => {
+              if (res === true){ save.textContent = '✓'; renderSentenceBank(); }
+              else if (res === 'exists'){ save.textContent = '✓'; }
+            });
+          };
+          row.appendChild(save);
+        }
+        row.appendChild(x);
         panel.appendChild(row);
       });
     }
