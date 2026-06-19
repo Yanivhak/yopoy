@@ -225,6 +225,8 @@ async function picsChosen(files){
             converted++;
           } catch(e){
             failed++; // אם נכשל — מדלגים על התמונה הזו
+            console.error('HEIC conversion failed for', f.name, '→', e);
+            window._lastHeicError = (e && e.message) ? e.message : String(e);
           }
           showHeicProgress(converted + failed, heicCount);
         } else {
@@ -234,7 +236,7 @@ async function picsChosen(files){
       fileArr = out;
       hideHeicProgress();
       if (failed > 0){
-        alert('הומרו ' + converted + ' תמונות HEIC ל-JPG. ' + failed + ' לא הצליחו להמרה והושמטו.');
+        alert('הומרו ' + converted + ' תמונות HEIC ל-JPG. ' + failed + ' לא הצליחו להמרה והושמטו.\n\nשגיאה: ' + (window._lastHeicError || 'לא ידועה'));
       }
     } else {
       // הספרייה לא נטענה — מדלגים על תמונות HEIC כדי שלא יופיעו שחורות
