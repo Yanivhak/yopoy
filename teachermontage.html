@@ -130,7 +130,7 @@ const fauth = (firebase.apps && firebase.apps.length) ? firebase.auth() : null;
 
 <!-- מסך הגדרה -->
 <div class="screen on" id="setup">
-<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">montage v65</div>
+<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">montage v66</div>
   <h1>🎬 מצגת תמונות</h1>
 
   <!-- שורת התחברות + טעינת מצגת -->
@@ -372,6 +372,7 @@ if (fauth){
 /* ---------- בחירת תמונות ---------- */
 let pics = [];
 let picsOrderMode = 'random';   // 'random' = ערבוב אוטומטי (ברירת מחדל), 'fixed' = לפי הסדר בחלון התמונות
+let picNames = [];              // שמות הקבצים במקביל ל-pics, לזיהוי כפילויות בהוספה
 function isHeicFile(f){
   return /\.(heic|heif)$/i.test(f.name) || f.type === 'image/heic' || f.type === 'image/heif';
 }
@@ -432,7 +433,22 @@ async function picsChosen(files){
 
   if (!fileArr.length){ refreshStart(); return; }
 
-  pics = pics.concat(fileArr.map(f => URL.createObjectURL(f)));
+  // זיהוי כפילויות לפי שם הקובץ — רק כשמוסיפים לתמונות שכבר נבחרו
+  // (בבחירה ראשונה מאותה תיקייה לא ייתכנו שני קבצים באותו שם)
+  if (pics.length){
+    const existing = new Set(picNames.filter(Boolean));
+    const dups = fileArr.filter(f => f.name && existing.has(f.name));
+    if (dups.length){
+      const shown = dups.map(f => f.name).slice(0, 6).join('\n');
+      const more = dups.length > 6 ? '\n(ועוד ' + (dups.length - 6) + ')' : '';
+      const addAnyway = confirm(dups.length + ' מהתמונות כבר נבחרו (לפי שם הקובץ):\n' + shown + more +
+        '\n\nלהוסיף אותן שוב בכל זאת?\n\nאישור = הוסף בכל זאת\nביטול = דלג על הכפולות');
+      if (!addAnyway){ fileArr = fileArr.filter(f => !(f.name && existing.has(f.name))); }
+    }
+  }
+  if (!fileArr.length){ if ($('pics-grid')) renderPicsGrid(); refreshStart(); return; }
+
+  fileArr.forEach(f => { pics.push(URL.createObjectURL(f)); picNames.push(f.name || ''); });
   $('pics-btn').textContent = '📷 ' + pics.length + ' תמונות';
   if ($('pics-grid')) renderPicsGrid();
   refreshStart();
@@ -859,6 +875,7 @@ function movePic(i, dir){
   const j = i + dir;
   if (j < 0 || j >= pics.length) return;
   const t = pics[i]; pics[i] = pics[j]; pics[j] = t;
+  const tn = picNames[i]; picNames[i] = picNames[j]; picNames[j] = tn;
   renderPicsGrid();
   refreshStart();
 }
@@ -866,6 +883,7 @@ function movePic(i, dir){
 function removePic(i){
   const url = pics[i];
   pics.splice(i, 1);
+  picNames.splice(i, 1);
   try { URL.revokeObjectURL(url); } catch(e){}
   if ($('pics-btn')) $('pics-btn').textContent = pics.length ? ('📷 ' + pics.length + ' תמונות') : '📷 תמונות';
   renderPicsGrid();
@@ -1326,14 +1344,19 @@ function updatePicsSummary(){
   if (!pics.length){ wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
   const totalMs = pics.length * MON_SLIDE_MS + (hasEndSlide() ? MON_END_MS : 0);
-  const line = '📷 נבחרו ' + pics.length + ' תמונות · משך מוערך ' + fmtDuration(totalMs);
   let warn = '';
   if (pics.length > 150){
-    warn = '<div style="color:var(--coral); font-weight:700; margin-top:5px;">⚠️ הרבה תמונות — הקובץ שיורד עלול לצאת כבד מאוד ולהיטען לאט (ובמכשירים חלשים אף להיתקע). שקלו לצמצם.</div>';
+    warn = '<div style="color:var(--coral); font-weight:700; margin-top:8px; font-size:13px;">⚠️ הרבה תמונות — הקובץ שיורד עלול לצאת כבד מאוד ולהיטען לאט (ובמכשירים חלשים אף להיתקע). שקלו לצמצם.</div>';
   } else if (pics.length > 80){
-    warn = '<div style="color:var(--gold); margin-top:5px;">שימו לב: מספר תמונות גדול — הקובץ עשוי לצאת גדול.</div>';
+    warn = '<div style="color:var(--gold); margin-top:8px; font-size:13px;">שימו לב: מספר תמונות גדול — הקובץ עשוי לצאת גדול.</div>';
   }
-  el.innerHTML = '<span style="color:var(--ink-dim);">' + line + '</span>' + warn;
+  el.innerHTML =
+    '<div style="display:inline-flex; gap:18px; align-items:center; flex-wrap:wrap; justify-content:center; ' +
+    'background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:11px 20px;">' +
+      '<span style="font-size:15px; color:var(--ink);">📷 <b style="font-size:18px;">' + pics.length + '</b> תמונות</span>' +
+      '<span style="width:1px; height:22px; background:rgba(255,255,255,.18);"></span>' +
+      '<span style="font-size:15px; color:var(--ink);">⏱️ משך מוערך <b style="font-size:18px; color:var(--gold);">' + fmtDuration(totalMs) + '</b> דק׳</span>' +
+    '</div>' + warn;
 }
 
 function refreshStart(){
@@ -2346,6 +2369,7 @@ function restoreFromHTML(html){
   // תמונות
   pics.forEach(u => { try { URL.revokeObjectURL(u); } catch(e){} });
   pics = data.images.slice();
+  picNames = pics.map(() => '');
   picsOrderMode = (data.picsOrder === 'fixed') ? 'fixed' : 'random';
   if ($('pics-btn')) $('pics-btn').textContent = '📷 ' + pics.length + ' תמונות';
 
@@ -2400,6 +2424,7 @@ function clearAll(){
   // תמונות
   pics.forEach(u => { try { URL.revokeObjectURL(u); } catch(e){} });
   pics = [];
+  picNames = [];
   if ($('pics-btn')) $('pics-btn').textContent = '📷 תמונות';
 
   // מוזיקה
