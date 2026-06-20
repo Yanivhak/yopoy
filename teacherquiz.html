@@ -111,6 +111,16 @@ input:focus{border-color:var(--gold); outline:none;}
 .phint{font-size:14px; color:var(--gold); margin:0 0 14px; font-weight:700;}
 .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 @media (max-width:400px){ .grid{grid-template-columns:1fr;} }
+/* ===== מובייל (≤640px): שורות כפתורים של המורה נערמות לרוחב מלא. שורת בחירת הקבוצה של התלמיד (j-team-btns) נשארת גריד גמיש ===== */
+@media (max-width:640px){
+  .btn{ font-size:16px; }
+  .row{ flex-direction:column; align-items:stretch; }
+  .row > .btn{ width:100%; }
+  .row > .info-i{ align-self:center; margin-top:2px; }
+  #j-team-btns{ flex-direction:row; flex-wrap:wrap; align-items:flex-start; }
+  #j-team-btns > .pbtn, #j-team-btns > button{ width:auto; }
+}
+
 .pbtn{font-family:'Heebo'; font-weight:700; font-size:18px; border:none; border-radius:14px; padding:20px 14px; cursor:pointer; background:var(--card-hi); color:var(--ink); transition:transform .1s ease;}
 .pbtn:active{transform:scale(.97);}
 .pbtn.sel{background:var(--teal); color:#06231f;}
