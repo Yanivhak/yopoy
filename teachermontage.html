@@ -130,7 +130,7 @@ const fauth = (firebase.apps && firebase.apps.length) ? firebase.auth() : null;
 
 <!-- מסך הגדרה -->
 <div class="screen on" id="setup">
-<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">montage v66</div>
+<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">montage v67</div>
   <h1>🎬 מצגת תמונות</h1>
 
   <!-- שורת התחברות + טעינת מצגת -->
@@ -190,8 +190,9 @@ const fauth = (firebase.apps && firebase.apps.length) ? firebase.auth() : null;
     <p class="note" id="start-hint" style="color:var(--gold); margin-top:10px;">כדי להתחיל, בחרו קודם תמונות (חובה). מוזיקה היא רשות.</p>
   </div>
 
-  <div style="margin-top:16px; display:flex; gap:18px; justify-content:center; align-items:center; flex-wrap:wrap;">
+  <div style="margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,.08); display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap;">
     <a href="index.html" target="_top" id="main-menu-link" style="color:var(--ink-dim); font-size:14px; text-decoration:none;">🏠 חזרה לתפריט הראשי</a>
+    <span id="footer-sep" style="width:1px; height:15px; background:rgba(255,255,255,.2);"></span>
     <button class="danger-link" id="clear-all-link" onclick="clearAll()" title="איפוס לוח העבודה — מסיר הכל ומתחיל מחדש">🗑️ נקה הכל</button>
   </div>
 </div>
@@ -366,6 +367,8 @@ if (fauth){
   if (new URLSearchParams(location.search).get('embed') === '1'){
     const link = $('main-menu-link');
     if (link) link.style.display = 'none';
+    const sep = $('footer-sep');
+    if (sep) sep.style.display = 'none';
   }
 })();
 
@@ -433,25 +436,24 @@ async function picsChosen(files){
 
   if (!fileArr.length){ refreshStart(); return; }
 
-  // זיהוי כפילויות לפי שם הקובץ — רק כשמוסיפים לתמונות שכבר נבחרו
-  // (בבחירה ראשונה מאותה תיקייה לא ייתכנו שני קבצים באותו שם)
-  if (pics.length){
-    const existing = new Set(picNames.filter(Boolean));
-    const dups = fileArr.filter(f => f.name && existing.has(f.name));
-    if (dups.length){
-      const shown = dups.map(f => f.name).slice(0, 6).join('\n');
-      const more = dups.length > 6 ? '\n(ועוד ' + (dups.length - 6) + ')' : '';
-      const addAnyway = confirm(dups.length + ' מהתמונות כבר נבחרו (לפי שם הקובץ):\n' + shown + more +
-        '\n\nלהוסיף אותן שוב בכל זאת?\n\nאישור = הוסף בכל זאת\nביטול = דלג על הכפולות');
-      if (!addAnyway){ fileArr = fileArr.filter(f => !(f.name && existing.has(f.name))); }
-    }
+  // בחירה ראשונה (pics ריק): אין צורך בבדיקת כפילויות — מאותה תיקייה אין שמות זהים
+  if (!pics.length){
+    fileArr.forEach(f => { pics.push(URL.createObjectURL(f)); picNames.push(f.name || ''); });
+    $('pics-btn').textContent = '📷 ' + pics.length + ' תמונות';
+    if ($('pics-grid')) renderPicsGrid();
+    refreshStart();
+    return;
   }
-  if (!fileArr.length){ if ($('pics-grid')) renderPicsGrid(); refreshStart(); return; }
 
-  fileArr.forEach(f => { pics.push(URL.createObjectURL(f)); picNames.push(f.name || ''); });
+  // הוספה לתמונות קיימות: מוסיפים מיד את החדשות, ולכפולות (לפי שם) פותחים חלון בחירה עם ממוזערות
+  const existing = new Set(picNames.filter(Boolean));
+  const dupFiles = fileArr.filter(f => f.name && existing.has(f.name));
+  const newFiles = fileArr.filter(f => !(f.name && existing.has(f.name)));
+  newFiles.forEach(f => { pics.push(URL.createObjectURL(f)); picNames.push(f.name || ''); });
   $('pics-btn').textContent = '📷 ' + pics.length + ' תמונות';
-  if ($('pics-grid')) renderPicsGrid();
   refreshStart();
+  if (dupFiles.length){ openDupResolver(dupFiles); }
+  else if ($('pics-grid')){ renderPicsGrid(); }
 }
 
 // פס התקדמות להמרת HEIC
@@ -888,6 +890,58 @@ function removePic(i){
   if ($('pics-btn')) $('pics-btn').textContent = pics.length ? ('📷 ' + pics.length + ' תמונות') : '📷 תמונות';
   renderPicsGrid();
   refreshStart();
+}
+
+/* חלון בחירה לתמונות כפולות — מציג ממוזערות ומאפשר לבחור פרטנית אילו להוסיף */
+function openDupResolver(dupFiles){
+  const dupItems = dupFiles.map(f => ({ url: URL.createObjectURL(f), name: f.name || '' }));
+  const box = openModal('תמונות כפולות');
+
+  const sub = document.createElement('div');
+  sub.style.cssText = 'font-size:13px; color:var(--ink-dim); margin-bottom:14px; line-height:1.5;';
+  sub.textContent = 'התמונות הבאות כבר קיימות במצגת (לפי שם הקובץ). סמנו אילו מהן להוסיף שוב בכל זאת — מה שלא תסמנו לא יתווסף.';
+  box.appendChild(sub);
+
+  const checks = [];
+  dupItems.forEach(it => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:8px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:8px 10px;';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = false;
+    cb.style.cssText = 'width:18px; height:18px; flex-shrink:0; accent-color:var(--teal); cursor:pointer;';
+    const img = document.createElement('img'); img.src = it.url; img.loading = 'lazy';
+    img.style.cssText = 'width:48px; height:48px; object-fit:cover; border-radius:8px; flex-shrink:0; cursor:pointer;';
+    img.onclick = () => { cb.checked = !cb.checked; };
+    const nm = document.createElement('span'); nm.textContent = it.name;
+    nm.style.cssText = 'flex:1; font-size:13px; color:var(--ink-dim); word-break:break-all;';
+    row.appendChild(cb); row.appendChild(img); row.appendChild(nm);
+    box.appendChild(row);
+    checks.push({ cb: cb, item: it });
+  });
+
+  const toolRow = document.createElement('div');
+  toolRow.style.cssText = 'display:flex; gap:8px; margin:12px 0 6px;';
+  const allBtn = document.createElement('button'); allBtn.className = 'btn ghost';
+  allBtn.textContent = 'סמן הכל'; allBtn.style.cssText += 'flex:1; font-size:13px; padding:8px;';
+  allBtn.onclick = () => checks.forEach(c => { c.cb.checked = true; });
+  const noneBtn = document.createElement('button'); noneBtn.className = 'btn ghost';
+  noneBtn.textContent = 'נקה הכל'; noneBtn.style.cssText += 'flex:1; font-size:13px; padding:8px;';
+  noneBtn.onclick = () => checks.forEach(c => { c.cb.checked = false; });
+  toolRow.appendChild(allBtn); toolRow.appendChild(noneBtn);
+  box.appendChild(toolRow);
+
+  const apply = document.createElement('button'); apply.className = 'btn';
+  apply.textContent = '✓ אישור'; apply.style.cssText += 'width:100%; margin-top:6px; font-size:15px; padding:12px;';
+  apply.onclick = () => {
+    checks.forEach(c => {
+      if (c.cb.checked){ pics.push(c.item.url); picNames.push(c.item.name); }
+      else { try { URL.revokeObjectURL(c.item.url); } catch(e){} }
+    });
+    if ($('pics-btn')) $('pics-btn').textContent = pics.length ? ('📷 ' + pics.length + ' תמונות') : '📷 תמונות';
+    closeModal();
+    openPicsPanel();
+    refreshStart();
+  };
+  box.appendChild(apply);
 }
 
 /* ---------- חלון מוזיקה ---------- */
@@ -1351,12 +1405,7 @@ function updatePicsSummary(){
     warn = '<div style="color:var(--gold); margin-top:8px; font-size:13px;">שימו לב: מספר תמונות גדול — הקובץ עשוי לצאת גדול.</div>';
   }
   el.innerHTML =
-    '<div style="display:inline-flex; gap:18px; align-items:center; flex-wrap:wrap; justify-content:center; ' +
-    'background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:11px 20px;">' +
-      '<span style="font-size:15px; color:var(--ink);">📷 <b style="font-size:18px;">' + pics.length + '</b> תמונות</span>' +
-      '<span style="width:1px; height:22px; background:rgba(255,255,255,.18);"></span>' +
-      '<span style="font-size:15px; color:var(--ink);">⏱️ משך מוערך <b style="font-size:18px; color:var(--gold);">' + fmtDuration(totalMs) + '</b> דק׳</span>' +
-    '</div>' + warn;
+    '<span style="font-size:14px; color:var(--ink-dim);">📷 נבחרו <b style="color:var(--ink);">' + pics.length + '</b> תמונות &nbsp;·&nbsp; משך מוערך <b style="color:var(--gold); font-size:16px;">' + fmtDuration(totalMs) + '</b> דק׳</span>' + warn;
 }
 
 function refreshStart(){
