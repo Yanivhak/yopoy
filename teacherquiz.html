@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v58 - מסך השיתוף: "קישור השיתוף פעיל" → "🔗 החידון משותף" (מצב קבוע, לא מתג מטעה). הוסר "ביטול שיתוף" מכל המצבים (חסר ערך — העותקים בלתי-נגיעים). נשארה רק "הסרה מהספרייה" (הפעולה היחידה עם תוצאה אמיתית) + שורת הסבר גלויה + i
+  v57 - הסרת כפתור "ביטול שיתוף" משיתוף פרטי (מיותר — הקישור חד-פעמי, ולמשתף לא משנה מה קרה אצל הנמען). הכפתור נשאר בשיתוף ציבורי, שם הוא רלוונטי
   v56 - רשימת החידונים: (א) הצגת "📩 שותף על ידי X" לחידונים שהתקבלו משיתוף (השם נשמר עכשיו בעותק); (ב) תיקון שהתפריט זז כשהשם ארוך — הכפתורים מקובעים בצד, הכותרת נחתכת ב-...
   v55 - "חידון חדש" ממסך הסיום + "נקה הכל" בתחתית העורך (שומר קוד/שיתוף, רק כשיש תוכן)
   v54 - פריט 12: חצי הזזה (▲▼) לכל שאלה בעורך הראשי — שינוי סדר ישיר, אותו עיצוב כמו החצים בחלון ה-AI
@@ -156,7 +158,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v56</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v58</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -1777,7 +1779,7 @@ function renderSharePanel(){
   if (sh.mode === 'specific'){
     panel.appendChild(shareStatusBox('🔒 משותף עם אנשים ספציפיים', sh));
   } else if (sh.mode === 'public'){
-    panel.appendChild(shareStatusBox(justCopiedLink ? '✓ הקישור הועתק! אפשר לשלוח' : '✓ קישור השיתוף פעיל', sh));
+    panel.appendChild(shareStatusBox(justCopiedLink ? '✓ הקישור הועתק! אפשר לשלוח' : '🔗 החידון משותף', sh));
   } else {
     // לא משותף — מציגים שני כפתורי בחירה
     const row = document.createElement('div'); row.style.cssText='display:flex; flex-direction:column; gap:8px;';
@@ -1791,12 +1793,16 @@ function renderSharePanel(){
 function shareStatusBox(titleText, sh){
   const box = document.createElement('div');
   box.style.cssText='background:rgba(255,255,255,.05); border-radius:10px; padding:12px;';
-  const head = document.createElement('div'); head.style.cssText='display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;';
+  const head = document.createElement('div'); head.style.cssText='display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;';
   const t = document.createElement('span'); t.style.cssText='font-size:14px; font-weight:700; color:var(--teal);'; t.textContent=titleText;
-  const xAll = document.createElement('button'); xAll.textContent='✕ ביטול שיתוף'; xAll.style.cssText='background:none; border:1px solid rgba(255,255,255,.3); color:var(--coral); border-radius:8px; padding:4px 10px; cursor:pointer; font-family:Heebo; font-size:12px;';
-  xAll.onclick = sh.mode === 'specific' ? unshareSpecificAll : unshareEveryone;
-  head.appendChild(t); head.appendChild(xAll);
+  head.appendChild(t);
   box.appendChild(head);
+  // שורת הסבר גלויה + i לפירוט — מסבירה למה אין "ביטול שיתוף" (העותקים בלתי-נגיעים)
+  const explain = document.createElement('div');
+  explain.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:10px; line-height:1.5;';
+  explain.innerHTML = 'השיתוף יוצר עותקים אצל מי שקיבל — אותם אי אפשר למחוק. ' +
+    '<span class="info-i" onclick="showInfo(event, \'כששיתפתם חידון, כל מי שפתח את הקישור קיבל עותק עצמאי משלו. העותקים האלה שייכים להם ולא ניתן למחוק אותם או לבטל אותם, גם אם תפסיקו לשתף. השיתוף הוא חד-פעמי מעצם טבעו — ברגע שנשלח, הוא נשלח.\')" style="cursor:pointer;">i</span>';
+  box.appendChild(explain);
 
   if (sh.mode === 'specific'){
     // רשימת מיילים + הוספה
