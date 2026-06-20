@@ -2068,8 +2068,11 @@ html,body{height:100%; background:#000; overflow:hidden; font-family:'Heebo',san
     <button onclick="prevSlide()" id="prevBtn" title="חזרה לתמונה הקודמת">⏪ תמונה קודמת</button>
     <button onclick="nextSlide()" id="nextBtn" title="דילוג לתמונה הבאה">⏩ תמונה הבאה</button>
     <button onclick="cycleSpeed()" id="speedBtn">⚡ מהירות: רגיל</button>
+    <button onclick="openFxPanel()" id="fxBtn">✨ אפקטים</button>
+    <button onclick="finishToLast()" id="finishBtn">⏭️ סיום</button>
     <button onclick="toggleCount()" id="countBtn">🔢 מונה</button>
     <button onclick="toggleClock()" id="clockBtn">⏱️ שעון</button>
+    <button onclick="goToVideo()" id="videoBtn" title="המרת המצגת לקובץ וידאו">🎬 הפיכה לסרטון</button>
   </div>
 </div>
 <script>
@@ -2085,7 +2088,7 @@ let endShowing=false;
 function hasEnd(){ return !!((DATA.endTitle&&DATA.endTitle.length)||(DATA.endText&&DATA.endText.length)); }
 
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} }
-function selTrans(){ return (DATA.transitions&&DATA.transitions.length)?DATA.transitions:['fade']; }
+function selTrans(){ return (transSet&&transSet.length)?transSet:['fade']; }
 function setTrans(t){ const w=document.getElementById('monwrap'); w.className='monwrap'; if(t!=='fade') w.classList.add('t-'+t); }
 
 function showEnd(){
@@ -2241,10 +2244,14 @@ function updateCap(slideNum){
 
 /* ---- אפקטים (fx) ---- */
 let fxc, fxx, fxRAF, parts=[], fxSwitch=0, fxShown=0, fwTimer=0;
-const FX=DATA.effects||[];
-const FXI=DATA.intensity||0.7;
+/* מצב חי שאפשר לשנות מהפאנל בזמן ההצגה (מתחיל מהערכים שנצרבו במצגת) */
+let FX=(DATA.effects||[]).slice();
+let FXI=DATA.intensity||0.7;
+let transSet=(DATA.transitions&&DATA.transitions.length?DATA.transitions:['fade']).slice();
+let fxStarted=false;
 function startFx(){
-  if(!FX.length) return;
+  if(fxStarted) return;
+  fxStarted=true;
   fxc=document.getElementById('fxc'); fxx=fxc.getContext('2d');
   resizeFx(); window.addEventListener('resize', resizeFx);
   fxLoop();
@@ -2287,8 +2294,100 @@ function spawnFw(W,H){
   const n=26+Math.floor(Math.random()*14);
   for(let i=0;i<n;i++){ const ang=(Math.PI*2*i)/n, sp=2+Math.random()*3.2; parts.push({type:'spark',x:cx,y:cy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:50+Math.random()*25,max:75,color:col}); }
 }
-<\/script>
-</body>
+
+/* ---- פאנל עיצוב ואפקטים (כמו בעורך, פועל חי תוך כדי ההצגה) ---- */
+function openFxPanel(){
+  let ov=document.getElementById('fx-overlay');
+  if(ov){ ov.remove(); return; } // לחיצה שנייה סוגרת
+  startFx(); // מוודאים שמנוע האפקטים פעיל גם אם המצגת נשמרה בלי אפקטים
+  ov=document.createElement('div'); ov.id='fx-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:30; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:18px;';
+  ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+  const box=document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:440px; width:100%; max-height:86vh; overflow:auto; text-align:right; font-family:Heebo,sans-serif;';
+  box.innerHTML='<div style="font-size:24px; font-weight:800; color:#ffd166; margin-bottom:4px;">עיצוב ואפקטים</div>'+
+    '<div style="font-size:13px; color:#9fb0d0; margin-bottom:16px;">בחרו מה שתרצו. אם בוחרים כמה — הם מתחלפים. אפשר לשנות גם תוך כדי ההצגה.</div>';
+  function group(title){ var d=document.createElement('div'); d.style.margin='14px 0'; d.innerHTML='<div style="font-size:14px; color:#9fb0d0; margin-bottom:8px; font-weight:700;">'+title+'</div>'; var r=document.createElement('div'); r.style.cssText='display:flex; flex-wrap:wrap; gap:8px;'; d.appendChild(r); box.appendChild(d); return r; }
+  function mkBtn(label){ var b=document.createElement('button'); b.textContent=label; b.style.cssText='font-family:Heebo,sans-serif; font-size:14px; font-weight:700; color:#f7f4ec; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); border-radius:10px; padding:8px 14px; cursor:pointer;'; return b; }
+  function setOn(b,on){ if(on){ b.style.background='#ffd166'; b.style.color='#1a2342'; } else { b.style.background='rgba(255,255,255,.08)'; b.style.color='#f7f4ec'; } }
+
+  // מעבר בין תמונות (אפשר כמה — מתחלפים)
+  var tRow=group('מעבר בין תמונות (אפשר כמה — יתחלפו)');
+  [['fade','🌫️ דהייה'],['slide','➡️ החלקה'],['zoom','🔍 התקרבות'],['zoomout','🔭 התרחקות'],['slideup','⬆️ מלמעלה'],['slidedown','⬇️ מלמטה']].forEach(function(pair){
+    var t=pair[0], b=mkBtn(pair[1]); setOn(b, transSet.indexOf(t)>=0);
+    b.onclick=function(){
+      var i=transSet.indexOf(t);
+      if(i>=0){ if(transSet.length>1){ transSet.splice(i,1); setOn(b,false); } } // חייב להישאר לפחות אחד
+      else { transSet.push(t); setOn(b,true); }
+    };
+    tRow.appendChild(b);
+  });
+  // אפקטים על המסך (אפשר כמה)
+  var fRow=group('אפקטים על המסך (אפשר כמה)');
+  [['snow','❄️ שלג'],['rain','🌧️ גשם'],['fireworks','🎆 זיקוקים'],['hearts','💛 לבבות'],['bubbles','🫧 בועות'],['leaves','🍂 עלים'],['stars','⭐ כוכבים'],['sparkles','✨ נצנוצים'],['confetti','🎉 קונפטי']].forEach(function(pair){
+    var fx=pair[0], b=mkBtn(pair[1]); setOn(b, FX.indexOf(fx)>=0);
+    b.onclick=function(){
+      var i=FX.indexOf(fx);
+      if(i>=0){ FX.splice(i,1); setOn(b,false); } else { FX.push(fx); setOn(b,true); }
+      fxShown=0; fxSwitch=0;
+    };
+    fRow.appendChild(b);
+  });
+  // עוצמת האפקטים
+  var iRow=group('עוצמת האפקטים');
+  [[0.4,'נמוכה'],[0.7,'בינונית'],[1.0,'גבוהה']].forEach(function(pair){
+    var val=pair[0], b=mkBtn(pair[1]); setOn(b, Math.abs(FXI-val)<0.01);
+    b.onclick=function(){ FXI=val; [].slice.call(iRow.children).forEach(function(c){ setOn(c,false); }); setOn(b,true); };
+    iRow.appendChild(b);
+  });
+  var close=mkBtn('✓ אישור'); close.style.marginTop='14px'; close.style.width='100%'; setOn(close,true);
+  close.onclick=function(){ ov.remove(); };
+  box.appendChild(close);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+
+/* דילוג ישיר לשקופית הסיום (אם אין שקופית סיום — קופץ לתמונה האחרונה) */
+function finishToLast(){
+  if(endShowing) return;
+  if(!order.length) return;
+  clearInterval(iv);
+  if(hasEnd()){
+    idx=order.length; // יגרום ל-step להציג את שקופית הסיום
+    paused=false; step();
+  } else {
+    idx=order.length-1;
+    paused=false; step();
+    clearInterval(iv); paused=true;
+    var pb=document.getElementById('pauseBtn'); if(pb) pb.textContent='▶️ המשך';
+  }
+}
+
+/* מעבר לבונה הווידאו (ייחודי לקובץ הנשמר) */
+function goToVideo(){
+  var ov=document.getElementById('vid-overlay');
+  if(ov){ ov.remove(); return; }
+  ov=document.createElement('div'); ov.id='vid-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:30; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:18px;';
+  ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+  var box=document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:24px; max-width:440px; width:100%; text-align:right; font-family:Heebo,sans-serif;';
+  box.innerHTML='<div style="font-size:24px; font-weight:800; color:#ffd166; margin-bottom:10px;">🎬 הפיכת המצגת לסרטון</div>'+
+    '<div style="font-size:15px; color:#f7f4ec; line-height:1.6; margin-bottom:8px;">אפשר להפוך את המצגת הזו לקובץ וידאו (MP4) — נוח לשיתוף בוואטסאפ, באינסטגרם או ביוטיוב.</div>'+
+    '<div style="font-size:15px; color:#f7f4ec; line-height:1.6; margin-bottom:8px;">ייפתח כלי יצירת הווידאו. שם <b>טוענים את קובץ המצגת הזה</b>, והוא יהפוך אותו לסרטון.</div>'+
+    '<div style="font-size:13px; color:#ffd166; line-height:1.6; margin-bottom:18px;">⚠️ שימו לב: בסרטון יופיעו התמונות, המעברים והמוזיקה — אך לא האפקטים שעל המסך (שלג, זיקוקים וכד׳). זו מגבלה של כלי הווידאו בגרסת הניסיון.</div>';
+  var go=document.createElement('a');
+  go.href='https://yanivhak.github.io/teachers_enter/montage-video.html';
+  go.target='_blank'; go.rel='noopener';
+  go.textContent='פתיחת כלי יצירת הווידאו ←';
+  go.style.cssText='display:block; text-align:center; text-decoration:none; font-family:Heebo,sans-serif; font-size:16px; font-weight:800; color:#1a2342; background:#ffd166; border-radius:12px; padding:12px 18px; margin-bottom:10px;';
+  box.appendChild(go);
+  var cancel=document.createElement('button'); cancel.textContent='ביטול';
+  cancel.style.cssText='display:block; width:100%; font-family:Heebo,sans-serif; font-size:14px; font-weight:700; color:#f7f4ec; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); border-radius:10px; padding:10px; cursor:pointer;';
+  cancel.onclick=function(){ ov.remove(); };
+  box.appendChild(cancel);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+<\/script></body>
 </html>`;
 
 /* ============================================================
