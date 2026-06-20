@@ -150,7 +150,7 @@ input:focus{border-color:var(--gold); outline:none;}
 <div class="screen on" id="home">
   <div class="wrap">
     <h1>🧠 בונה חידונים</h1>
-    <p class="sub">בנו חידון טריוויה משלכם, והתלמידים משחקים מהטלפון. בלי התקנה.</p>
+    <p class="sub">בנו חידון טריוויה משלכם, והמשתתפים משחקים מהטלפון. בלי התקנה.</p>
 
     <!-- התחברות Google (לא חובה) -->
     <div id="auth-box" style="max-width:380px; margin:0 auto 18px;">
@@ -190,7 +190,7 @@ input:focus{border-color:var(--gold); outline:none;}
     <p id="home-msg" style="color:var(--coral); min-height:20px; margin-top:12px;"></p>
 
     <div class="field" style="max-width:380px; margin:18px auto 6px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
-      <label>קיבלתם קישור או קוד שיתוף ממורה אחר?</label>
+      <label>קיבלתם קישור או קוד שיתוף ממישהו אחר?</label>
       <input type="text" id="share-input" placeholder="הדביקו כאן את הקישור או הקוד">
       <button class="btn ghost sm" onclick="openSharedByInput()" style="margin-top:10px; width:100%;">📥 פתיחת חידון משותף</button>
       <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">תקבלו עותק משלכם לרשימה, שאפשר לערוך ולשחק בלי לפגוע במקור.</div>
@@ -214,7 +214,7 @@ input:focus{border-color:var(--gold); outline:none;}
   </div>
 </div>
 
-<!-- ============ רשימת החידונים של המורה ============ -->
+<!-- ============ רשימת החידונים של המנחה ============ -->
 <div class="screen" id="mylist">
   <div class="wrap">
     <h2 id="mylist-title">החידונים שלי</h2>
@@ -298,8 +298,8 @@ input:focus{border-color:var(--gold); outline:none;}
     <p class="save-state" id="save-state">נשמר אוטומטית ✓</p>
 
     <div class="row" style="margin-top:18px;">
-      <button class="btn teal" onclick="goPlay()">▶️ התחלת משחק עם הכיתה</button>
-      <button class="btn" onclick="previewQuiz()" style="background:var(--violet); color:#0b0b2a;">👁️ בדיקה (ללא תלמידים)</button>
+      <button class="btn teal" onclick="goPlay()">▶️ התחלת משחק עם הקהל</button>
+      <button class="btn" onclick="previewQuiz()" style="background:var(--violet); color:#0b0b2a;">👁️ בדיקה (ללא משתתפים)</button>
     </div>
     <div class="row" style="margin-top:10px;">
       <button class="btn ghost sm" onclick="saveNow()">💾 שמירה</button>
@@ -312,7 +312,7 @@ input:focus{border-color:var(--gold); outline:none;}
       <div id="share-panel" style="max-width:460px; margin:0 auto;"></div>
     </div>
 
-    <p class="help">איך זה עובד: מלאו שאלות, ולכל שאלה סמנו את התשובה הנכונה בעיגול הירוק. הכול נשמר אוטומטית. רוצים לראות איך זה ייראה? לחצו "בדיקה" ותעברו על השאלות בעצמכם, בלי שאף תלמיד צריך להיכנס. כשתרצו לשחק עם הכיתה, לחצו "התחלת משחק" ותקבלו קוד שאותו נותנים לתלמידים.</p>
+    <p class="help">איך זה עובד: מלאו שאלות, ולכל שאלה סמנו את התשובה הנכונה בעיגול הירוק. הכול נשמר אוטומטית. רוצים לראות איך זה ייראה? לחצו "בדיקה" ותעברו על השאלות בעצמכם, בלי שאף משתתף צריך להיכנס. כשתרצו לשחק עם הקהל, לחצו "התחלת משחק" ותקבלו קוד שאותו נותנים למשתתפים.</p>
 
     <div style="text-align:center; margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08);">
       <a href="index.html" id="editor-main-menu-link" style="color:var(--ink-dim); text-decoration:none; font-size:14px;">→ לתפריט הראשי (חידון · מצגת · מצגת+חידון)</a>
@@ -353,7 +353,7 @@ input:focus{border-color:var(--gold); outline:none;}
 <div class="screen" id="lobby">
   <div class="wrap">
     <h2 id="lobby-title">החידון</h2>
-    <p class="sub">התלמידים נכנסים לכתובת, מקלידים את הקוד, ומצטרפים.</p>
+    <p class="sub">המשתתפים נכנסים לכתובת, מקלידים את הקוד, ומצטרפים.</p>
     <div>קוד למשחק:</div>
     <span class="codepill" id="play-code">----</span>
     <p style="font-size:15px; color:var(--ink-dim);" id="join-addr"></p>
@@ -390,7 +390,7 @@ input:focus{border-color:var(--gold); outline:none;}
   <div class="pwrap">
     <p class="big-emoji">👀</p>
     <h2>הסתכלו ללוח!</h2>
-    <p class="sub">רגע של הפסקה — המורה מראה משהו על המסך הגדול.</p>
+    <p class="sub">רגע של הפסקה — המנחה מראה משהו על המסך הגדול.</p>
   </div>
 </div>
 
@@ -455,7 +455,7 @@ input:focus{border-color:var(--gold); outline:none;}
       <input type="text" id="j-code" inputmode="numeric" maxlength="6" placeholder="קוד המשחק">
     </div>
     <div class="field">
-      <label>שם שיוצג למורה</label>
+      <label>שם שיוצג למנחה</label>
       <input type="text" id="j-name" maxlength="14" placeholder="שם או כינוי">
     </div>
     <div id="j-teams" class="field" style="display:none;">
@@ -472,7 +472,7 @@ input:focus{border-color:var(--gold); outline:none;}
   <div class="pwrap">
     <p class="big-emoji">✅</p>
     <h2 id="pwait-title">אתם בפנים!</h2>
-    <p class="sub">חכו שהמורה יתחיל. תראו את השאלות כאן.</p>
+    <p class="sub">חכו שהמנחה יתחיל. תראו את השאלות כאן.</p>
   </div>
 </div>
 
@@ -965,6 +965,7 @@ let impTopics = new Set(), impGoals = new Set();
 let impAge = '', impTraits = new Set();
 let impTrack = 'study';        // 'study' = לימודים, 'fun' = פעילות וגיבוש
 let impOpenSection = 'topics'; // איזה סעיף פתוח באקורדיון
+let impNote = '';              // הערה חופשית שהמנחה מוסיף לפרומפט
 
 /* תוכן שני המסלולים — כל מסלול עם אותם שדות אבל ערכים שונים */
 const IMP_CONTENT = {
@@ -1018,7 +1019,9 @@ function buildImportPrompt(){
   if (traits.length) p += ' מאפייני המשתתפים: ' + traits.join(', ') + '. התאם את רמת השאלות, אורך הניסוח ומורכבות התשובות בהתאם.';
   if (goals.length) p += ' מטרת החידון: ' + goals.join(', ') + '. התאם את אופי החידון למטרה.';
   if (impTrack==='fun') p += ' החידון נועד לפעילות חברתית — שמור על אווירה קלילה ומהנה.';
-  p += ' חשוב מאוד — החידון מוצג על הלוח והתלמידים עונים מהטלפון, אז הקיצור קריטי:' +
+  const noteTxt = ($('imp-note') ? $('imp-note').value.trim() : impNote.trim());
+  if (noteTxt) p += ' הערה נוספת חשובה: ' + noteTxt + '.';
+  p += ' חשוב מאוד — החידון מוצג על הלוח והמשתתפים עונים מהטלפון, אז הקיצור קריטי:' +
        ' כל שאלה קצרה וישירה, עד 20 מילים (מקסימום מוחלט 25 מילים).' +
        ' כל תשובה קצרה ותמציתית — רצוי שורה אחת, מילה או ביטוי קצר ולא משפט שלם.' +
        ' כל התשובות באותה שאלה צריכות להיות באורך דומה, והתשובה הנכונה לא ארוכה מהשגויות.' +
@@ -1163,6 +1166,19 @@ function openImport(){
     '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">כמה שאלות?</div><div id="imp-q-row" style="display:flex; gap:6px;"></div></div>' +
     '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">כמה תשובות?</div><div id="imp-a-row" style="display:flex; gap:6px;"></div></div>';
   box.appendChild(sel);
+
+  // ===== הערה חופשית לפרומפט =====
+  const noteWrap = document.createElement('div'); noteWrap.style.cssText='margin:14px 0 4px;';
+  const noteLabel = document.createElement('div'); noteLabel.style.cssText='font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;';
+  noteLabel.textContent='הערה חופשית (לא חובה)';
+  const noteSub = document.createElement('div'); noteSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:7px; line-height:1.5;';
+  noteSub.textContent='משהו שתרצו להוסיף להנחיה — לדוגמה: "הקפד על רמת קושי גבוהה" או "התמקד בעיקר בשנות ה-90".';
+  const noteInp = document.createElement('textarea'); noteInp.id='imp-note';
+  noteInp.style.cssText='width:100%; height:62px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:9px 12px; font-family:Heebo; font-size:14px; resize:vertical;';
+  noteInp.value = impNote;
+  noteInp.oninput = ()=>{ impNote = noteInp.value; $('imp-prompt').value = buildImportPrompt(); };
+  noteWrap.appendChild(noteLabel); noteWrap.appendChild(noteSub); noteWrap.appendChild(noteInp);
+  box.appendChild(noteWrap);
 
   // ===== שלבים ממוספרים =====
   const hr1 = document.createElement('div'); hr1.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:18px 0 14px;'; box.appendChild(hr1);
@@ -1332,7 +1348,7 @@ function renderQuestions(){
       pick.title='סימון כתשובה הנכונה';
       pick.onclick = () => { q.correct = ai; renderQuestions(); touch(); };
       const ain = document.createElement('input'); ain.type='text'; ain.placeholder='תשובה '+(ai+1); ain.value=a;
-      const updAStyle = () => { ain.style.border = aTooLong(ain.value) ? '2px solid var(--gold)' : ''; ain.title = aTooLong(ain.value) ? 'התשובה עשויה להופיע ביותר משתי שורות אצל התלמידים' : ''; };
+      const updAStyle = () => { ain.style.border = aTooLong(ain.value) ? '2px solid var(--gold)' : ''; ain.title = aTooLong(ain.value) ? 'התשובה עשויה להופיע ביותר משתי שורות אצל המשתתפים' : ''; };
       ain.oninput = () => { q.answers[ai] = ain.value; updAStyle(); touch(); };
       updAStyle();
       const rem = document.createElement('button'); rem.className='rem'; rem.textContent='✕'; rem.title='הסרת תשובה';
@@ -1668,7 +1684,7 @@ function openSharedById(shareId){
     if (data.mode === 'specific'){
       const allowed = (data.allowedEmails || []).map(e=>(e||'').toLowerCase());
       if (allowed.indexOf((myEmail||'').toLowerCase()) === -1){
-        $('home-msg').textContent = 'החידון הזה משותף רק עם משתמשים מורשים. בקשו מהמורה לשתף עם המייל שלכם.';
+        $('home-msg').textContent = 'החידון הזה משותף רק עם משתמשים מורשים. בקשו מהמנחה לשתף עם המייל שלכם.';
         return;
       }
     }
@@ -2500,7 +2516,7 @@ function soloFinish(){
   // מסך סיום קצר שמסביר שזו הייתה בדיקה
   $('podium').innerHTML='';
   $('team-final').innerHTML='<div style="font-size:clamp(20px,3vw,30px);">✅ סיימתם את הבדיקה!</div>';
-  $('fun-cards').innerHTML='<div style="color:var(--ink-dim); max-width:420px;">ככה החידון ייראה לתלמידים. כשתרצו לשחק עם הכיתה, חזרו ולחצו "התחלת משחק עם הכיתה".</div>';
+  $('fun-cards').innerHTML='<div style="color:var(--ink-dim); max-width:420px;">ככה החידון ייראה למשתתפים. כשתרצו לשחק עם הקהל, חזרו ולחצו "התחלת משחק עם הקהל".</div>';
   // נחליף את כפתורי הסיום הרגילים בכפתור חזרה לעריכה בלבד (זמני)
   $('guest-save-box').style.display = 'none';
   show('hfin');
@@ -2588,7 +2604,7 @@ function joinGame(){
       const iv=setInterval(()=>{
         if (joined || tries++>5){
           clearInterval(iv);
-          if(!joined){ $('j-msg').textContent='לא הצלחנו להתחבר. בדקו את הקוד ושמסך המורה פתוח.'; resetBtn(); }
+          if(!joined){ $('j-msg').textContent='לא הצלחנו להתחבר. בדקו את הקוד ושמסך המנחה פתוח.'; resetBtn(); }
           return;
         }
         send({ t:'join', id:myId, name:myName, team:myTeam });
