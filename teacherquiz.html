@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v90 - רציפות ויזואלית בין שתי נקודות-הכניסה ל-AI: עד כה כרטיס ה-AI (חידון ריק) היה טורקיז עם הטקסט "יצירת חידון באמצעות בינה מלאכותית", והכפתור (חידון עם תוכן) היה סגול עם "עריכת חידון באמצעות AI" — צבע שונה וניסוח שונה גרמו לכך שהמשתמש לא בהכרח הבין שזו אותה פעולה. עכשיו שניהם זהים: אותו אייקון (🤖), אותו צבע (טורקיז/teal), ואותו ניסוח "...באמצעות AI" — נבדלים רק בפועל (יצירת/עריכת) שמשקף את ההקשר. כותרת חלון ה-AI עצמו (openImport) נשארה עם "בינה מלאכותית" המלא (כותרת פורמלית, הקשר אחר)
   v89 - הסרה מהספרייה ישירות מהרשימה: עד כה בכרטיס ברשימה הפריט "📚 נמצא בספרייה" היה מושבת — אי אפשר היה להסיר מהספרייה בלי להיכנס לעורך. עכשיו כשהחידון בספרייה, הפריט בתפריט ⋯ הוא "✕ הסרה מהספרייה" פעיל (אדום), עם אישור ברור ("להסיר את החידון X מהספרייה הציבורית? ... החידון עצמו יישאר אצלכם ברשימה"). removeFromLibraryCard מסיר לפי ה-libraryId של אותה רשומה וכותב את share בחזרה ל-teachers/{key}/{code}/share. המשתמש מסיר רק את הרשומה שלו (הסרה-כאדמין-לכולם היא מנגנון נפרד). כך יש שליטה מלאה מהמקום שבו כל החידונים מופיעים, בלי מעבר לעריכה
   v88 - QR-לחזרה הפך מ-overlay מסך-מלא לפינה קטנה שלא עוצרת את המשחק: עד כה כפתור "📲 קוד חזרה" פתח overlay על כל המסך (inset:0, רקע כהה) שכיסה את השאלה והתשובות — המשחק נעצר לכולם בזמן ששחקן אחד רק רצה לחזור. עכשיו showReturnQR מציג פאנל קומפקטי בפינה שמאלית-תחתונה (הצד הנגדי לסרגל המנחה שיושב מימין-למטה), מעל שורת הקרדיט: QR בגודל 150px + קוד המשחק + הסבר קצר "מי שיצא — סרקו לחזרה". בלי רקע כהה — השאלה והתשופות במרכז נשארות גלויות ופעילות, וכולם ממשיכים לשחק. הכפתור הפך למתג אמיתי: לחיצה ראשונה מציגה, נוספת מסתירה (גם כפתור "✕ הסתרה" בפאנל). hideReturnQR מנקה את הפינה ביציאה/סיום משחק (backToEditor/restartGame/finishToList/newQuizFromGame ומסך הסיום)
   v87 - תיקון פידבק בחלון ההוספה-לספרייה כשאין 30 תווים: עד כה כפתור "הוספה" היה disabled כשהתיאור קצר מ-30 תווים, אז לחיצה לא עשתה כלום בלי שום הסבר — נראה כאילו תקול. עכשיו הכפתור תמיד פעיל; בלחיצה עם פחות מ-30 תווים מופיעה הודעה ברורה ("יש לכתוב תיאור של לפחות 30 תווים... כתבתם עד כה X") + הדגשת מסגרת תיבת הטקסט (ענבר) + מיקוד בה. גם המונה שופר: גדול וברור יותר, מיושר לימין, ומראה "נכתבו X מתוך 30 תווים"
@@ -224,7 +225,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v89</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v90</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -353,7 +354,7 @@ input:focus{border-color:var(--gold); outline:none;}
       <button onclick="dismissAiCard()" title="סגירה" style="position:absolute; top:8px; left:10px; background:none; border:none; color:var(--ink-dim); font-size:20px; cursor:pointer; line-height:1; padding:2px 6px;">✕</button>
       <div style="font-size:18px; font-weight:800; color:var(--teal); margin-bottom:6px;">⏱️ רוצים לחסוך זמן?</div>
       <div style="font-size:14px; color:var(--ink); margin-bottom:14px; line-height:1.5;">תנו לבינה מלאכותית לבנות עבורכם חידון מלא תוך פחות מדקה.</div>
-      <button class="btn teal" onclick="openImport()" style="font-size:16px;">🤖 יצירת חידון באמצעות בינה מלאכותית</button>
+      <button class="btn teal" onclick="openImport()" style="font-size:16px;">🤖 יצירת חידון באמצעות AI</button>
       <div style="font-size:13px; color:var(--ink-dim); margin-top:12px;">או בנו את החידון בעצמכם בהמשך העמוד.</div>
     </div>
 
@@ -379,7 +380,7 @@ input:focus{border-color:var(--gold); outline:none;}
     </div>
 
     <h2 style="margin-top:14px;">השאלות <span class="info-i" onclick="showInfo(event, 'לכל שאלה כתבו 2 עד 4 תשובות, וסמנו את התשובה הנכונה בלחיצה על העיגול הירוק שלצידה. רק תשובה אחת יכולה להיות מסומנת כנכונה.')">i</span></h2>
-    <button id="ai-edit-btn" class="btn" onclick="openImport()" style="display:none; margin-bottom:14px; background:var(--violet); color:#0b0b2a; font-size:16px;">🤖 עריכת החידון באמצעות AI</button>
+    <button id="ai-edit-btn" class="btn teal" onclick="openImport()" style="display:none; margin-bottom:14px; font-size:16px;">🤖 עריכת החידון באמצעות AI</button>
     <div id="q-list"></div>
     <button class="btn ghost" onclick="addQuestion()" style="margin-top:6px;">➕ הוספת שאלה</button>
 
