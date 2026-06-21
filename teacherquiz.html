@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v81 - כפתורי הקשר ב"אודות" בשורה אחת בנייד: כפתור המייל קוצר מ"✉️ yanivhpro@gmail.com" ל"✉️ מייל" (הלחיצה עדיין פותחת מייל לאותה כתובת), וה-flex שונה ל-nowrap + white-space:nowrap לכל כפתור — כך שלושת הכפתורים (מייל/וואטסאפ/חיוג) נשארים בשורה אחת גם בטלפון צר במקום להישבר לשתי שורות
+  v80 - מירכוז שורת ההסבר מתחת לשדה הקוד במסך הבית ("תקבלו עותק...") — הייתה מיושרת לימין, עכשיו ממורכזת בהתאם לשדה ולכפתור הממורכזים
   v79 - עיצוב מחדש של מסך הבית (היררכיה ברורה): סדר חדש המשקף שימוש בפועל (מסך עבודה, לא שיווק). (א) אזור המשתמש כווץ מכרטיס גדול לשורה דקה: "🟢 מחוברים כ־[שם] | התנתקות" + שורת-משנה "החידונים נשמרים בחשבון זה". (ב) שלוש פעולות ראשיות באותו גודל, היררכיה לפי צבע בלבד: ➕ בניית חידון חדש (טורקיז) → 🗂️ החידונים שלי (צהוב) → 📚 ספריית חידונים מוכנים (כחול/navy חדש). "החידונים שלי" מעל הספרייה — הפעולה היומיומית של מורה קיים קודמת לגילוי-ספרייה החד-פעמי. (ג) פתיחה-לפי-קוד כווצה לכרטיס משני מתחת לקו מפריד. (ד) אזור היוצר הועבר ל-details "אודות ▾" מתקפל בתחתית, סגור כברירת מחדל (במקום credit-box גלוי גדול). כל מזהי ההתחברות (auth-out/auth-in/guest-badge/auth-name/auth-email/email-block) נשמרו — שונה רק ה-layout, לא לוגיקת ה-sign-in. נוסף .btn.navy ל-CSS
   v78 - חובת שם בפעולות אקטיביות: כל פעולה אקטיבית — שמירה ידנית (saveNow), שיתוף (shareToEveryone + startSpecificShare), משחק (goPlay), בדיקה (previewQuiz) — דורשת עכשיו שם לחידון. בלי שם: הודעה "תנו שם לחידון לפני שתמשיכו" והפעולה נעצרת. בדיקת השם (quizNameMissing) רצה לפני בדיקת המוכנות (quizReady), כדי שההודעה הראשונה תהיה הרלוונטית. השמירה האוטומטית לא נוגעת בזה — היא ממשיכה לעבוד גם בלי שם, כדי לא לאבד עבודה תוך כדי כתיבה. כך חידון בלי שם נשמר אוטומטית (כטיוטה, "שמירה אוטומטית בלבד") אבל אי אפשר "לסגור" אותו כגמור עד שנותנים לו שם
   v77 - תיקוני זבל ושיפור הניקוי: (א) חידון ריק לגמרי (בלי כותרת ובלי תוכן בשאלות) לא נשמר עוד — newQuiz לא שומר ביצירה, ו-saveQuiz חוסם כתיבה של חידון ריק שאינו מאושר. מונע הצטברות חידוני-זבל. (ב) חסימת שיתוף של חידון לא-מוכן — shareToEveryone ו-startSpecificShare בודקים quizReady לפני, כמו שמירה/משחק. (ג) "בדיקה" (previewQuiz) נוספה לפעולות שמאשרות חידון (isConfirmed=true) — פעולה אקטיבית שמעידה על רצינות, ודורשת ממילא quizReady. כעת מאשרים: שמירה ידנית, שיתוף, משחק, בדיקה. (ד) תווית הכרטיס שונתה מ"לא נשמר ידנית" ל"● שמירה אוטומטית בלבד" — מדויק יותר (החידון כן נשמר, רק לא במכוון) ומסביר למה הוא ברשימה. (ה) כפתור הניקוי הפך לדיאלוג "הצלה": מציג את כל החידונים-בשמירה-אוטומטית-בלבד ממוינים לפי עדכון אחרון (חדש למעלה, עם "עודכן לפני..."), כולם מסומנים למחיקה כברירת מחדל, והמשתמש מסיר סימון כדי להשאיר חידון. מונה חי (יימחקו/יישארו), כפתור מחיקה מושבת אם לא נשאר מה למחוק, ואישור סופי. מטפל בתרחיש "מלא זבל ואחד טוב" בלי בחירה-מרובה כבדה. relativeTime — עזר ל"עודכן לפני..."
@@ -214,7 +216,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v79</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v81</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -277,7 +279,7 @@ input:focus{border-color:var(--gold); outline:none;}
       <label>קיבלתם קוד ממורה אחר?</label>
       <input type="text" id="share-input" placeholder="לדוגמה: K7M4P2" style="text-align:center; letter-spacing:.1em; text-transform:uppercase;">
       <button class="btn ghost sm" onclick="openSharedByInput()" style="margin-top:10px; width:100%;">📥 פתיחת חידון</button>
-      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">תקבלו עותק משלכם לרשימה. (גם קישור שיתוף יעבוד כאן.)</div>
+      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px; text-align:center;">תקבלו עותק משלכם לרשימה. (גם קישור שיתוף יעבוד כאן.)</div>
     </div>
 
     <div style="margin-top:12px;">
@@ -290,10 +292,10 @@ input:focus{border-color:var(--gold); outline:none;}
       <div style="text-align:center; margin-top:14px;">
         <div style="font-size:14px; color:var(--ink-dim);">נבנה על ידי</div>
         <div style="font-family:'Secular One'; font-size:22px; color:var(--gold); margin:4px 0 12px;">ד״ר יניב חכים</div>
-        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; align-items:center;">
-          <a href="mailto:yanivhpro@gmail.com" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">✉️ yanivhpro@gmail.com</a>
-          <a href="https://wa.me/972544617463" target="_blank" rel="noopener" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">💬 וואטסאפ</a>
-          <a href="tel:+972544617463" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">📞 חיוג</a>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:nowrap; align-items:center;">
+          <a href="mailto:yanivhpro@gmail.com" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px; white-space:nowrap;">✉️ מייל</a>
+          <a href="https://wa.me/972544617463" target="_blank" rel="noopener" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px; white-space:nowrap;">💬 וואטסאפ</a>
+          <a href="tel:+972544617463" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px; white-space:nowrap;">📞 חיוג</a>
         </div>
       </div>
     </details>
