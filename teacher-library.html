@@ -40,6 +40,7 @@ h1{font-family:'Secular One'; font-size:clamp(30px,5vw,44px); color:var(--gold);
 </style>
 </head>
 <body>
+<div style="position:fixed; top:8px; left:10px; font-size:11px; color:rgba(170,180,207,.5); z-index:50;">library v2</div>
 <div class="wrap">
   <h1>📚 ספריית חידונים</h1>
   <p class="sub">חידונים ששיתפו מורים אחרים. אפשר להעתיק אותם לעצמכם בלחיצה.</p>
@@ -197,6 +198,15 @@ function renderList(){
     report.onclick = () => reportQuiz(key);
     actions.appendChild(report);
 
+    // כפתור הסרה — מופיע רק על חידונים שהמשתמש המחובר שיתף בעצמו
+    if (myUid && q.ownerUid && q.ownerUid === myUid){
+      const remove = document.createElement('button');
+      remove.textContent = '✕ הסרה מהספרייה';
+      remove.style.cssText = 'background:rgba(255,107,107,.16); color:var(--coral); box-shadow:inset 0 0 0 1px rgba(255,107,107,.4);';
+      remove.onclick = () => removeMine(q);
+      actions.appendChild(remove);
+    }
+
     card.appendChild(actions);
     list.appendChild(card);
   });
@@ -223,6 +233,26 @@ function copyToMine(q){
     fdb.ref('library/'+q._key+'/downloads').transaction(d => (d||0)+1).catch(()=>{});
     toast('✅ הועתק! החידון נמצא עכשיו ברשימת החידונים שלך.');
   }).catch(()=>{ toast('תקלה בהעתקה. נסו שוב.'); });
+}
+
+// הסרת חידון מהספרייה — רק הבעלים שלו. מסיר את ה-entry, וגם מסנכרן את רשומת
+// החידון המקורית (teachers/{ownerUid}/{quizId}/share) כך ש-inLibrary יחזור ל-false.
+// כך המצב עקבי בכל המקומות: ספרייה, עריכה, ורשימת החידונים שלי.
+function removeMine(q){
+  if (!myUid || q.ownerUid !== myUid){ return; }
+  if (!confirm('להסיר את החידון "' + (q.title||'') + '" מהספרייה הציבורית?\nהוא יוסר מהספרייה ולא יהיה זמין יותר למורים אחרים.\nהחידון עצמו יישאר אצלכם ברשימה.')) return;
+  // 1. הסרת רשומת הספרייה
+  fdb.ref('library/'+q._key).remove().then(()=>{
+    // 2. סנכרון רשומת החידון המקורית — אם ידוע הקוד שלה
+    if (q.quizId){
+      fdb.ref('teachers/'+myUid+'/'+q.quizId+'/share').once('value').then(s=>{
+        const sh = s.val();
+        if (sh){ sh.inLibrary = false; sh.libraryId = null; fdb.ref('teachers/'+myUid+'/'+q.quizId+'/share').set(sh).catch(()=>{}); }
+      }).catch(()=>{});
+    }
+    toast('✅ החידון הוסר מהספרייה.');
+    // הרשימה תתעדכן מהמאזין on('value')
+  }).catch(()=>{ toast('תקלה בהסרה. נסו שוב.'); });
 }
 
 function vote(quizId, kind){
