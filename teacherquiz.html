@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v79 - עיצוב מחדש של מסך הבית (היררכיה ברורה): סדר חדש המשקף שימוש בפועל (מסך עבודה, לא שיווק). (א) אזור המשתמש כווץ מכרטיס גדול לשורה דקה: "🟢 מחוברים כ־[שם] | התנתקות" + שורת-משנה "החידונים נשמרים בחשבון זה". (ב) שלוש פעולות ראשיות באותו גודל, היררכיה לפי צבע בלבד: ➕ בניית חידון חדש (טורקיז) → 🗂️ החידונים שלי (צהוב) → 📚 ספריית חידונים מוכנים (כחול/navy חדש). "החידונים שלי" מעל הספרייה — הפעולה היומיומית של מורה קיים קודמת לגילוי-ספרייה החד-פעמי. (ג) פתיחה-לפי-קוד כווצה לכרטיס משני מתחת לקו מפריד. (ד) אזור היוצר הועבר ל-details "אודות ▾" מתקפל בתחתית, סגור כברירת מחדל (במקום credit-box גלוי גדול). כל מזהי ההתחברות (auth-out/auth-in/guest-badge/auth-name/auth-email/email-block) נשמרו — שונה רק ה-layout, לא לוגיקת ה-sign-in. נוסף .btn.navy ל-CSS
   v78 - חובת שם בפעולות אקטיביות: כל פעולה אקטיבית — שמירה ידנית (saveNow), שיתוף (shareToEveryone + startSpecificShare), משחק (goPlay), בדיקה (previewQuiz) — דורשת עכשיו שם לחידון. בלי שם: הודעה "תנו שם לחידון לפני שתמשיכו" והפעולה נעצרת. בדיקת השם (quizNameMissing) רצה לפני בדיקת המוכנות (quizReady), כדי שההודעה הראשונה תהיה הרלוונטית. השמירה האוטומטית לא נוגעת בזה — היא ממשיכה לעבוד גם בלי שם, כדי לא לאבד עבודה תוך כדי כתיבה. כך חידון בלי שם נשמר אוטומטית (כטיוטה, "שמירה אוטומטית בלבד") אבל אי אפשר "לסגור" אותו כגמור עד שנותנים לו שם
   v77 - תיקוני זבל ושיפור הניקוי: (א) חידון ריק לגמרי (בלי כותרת ובלי תוכן בשאלות) לא נשמר עוד — newQuiz לא שומר ביצירה, ו-saveQuiz חוסם כתיבה של חידון ריק שאינו מאושר. מונע הצטברות חידוני-זבל. (ב) חסימת שיתוף של חידון לא-מוכן — shareToEveryone ו-startSpecificShare בודקים quizReady לפני, כמו שמירה/משחק. (ג) "בדיקה" (previewQuiz) נוספה לפעולות שמאשרות חידון (isConfirmed=true) — פעולה אקטיבית שמעידה על רצינות, ודורשת ממילא quizReady. כעת מאשרים: שמירה ידנית, שיתוף, משחק, בדיקה. (ד) תווית הכרטיס שונתה מ"לא נשמר ידנית" ל"● שמירה אוטומטית בלבד" — מדויק יותר (החידון כן נשמר, רק לא במכוון) ומסביר למה הוא ברשימה. (ה) כפתור הניקוי הפך לדיאלוג "הצלה": מציג את כל החידונים-בשמירה-אוטומטית-בלבד ממוינים לפי עדכון אחרון (חדש למעלה, עם "עודכן לפני..."), כולם מסומנים למחיקה כברירת מחדל, והמשתמש מסיר סימון כדי להשאיר חידון. מונה חי (יימחקו/יישארו), כפתור מחיקה מושבת אם לא נשאר מה למחוק, ואישור סופי. מטפל בתרחיש "מלא זבל ואחד טוב" בלי בחירה-מרובה כבדה. relativeTime — עזר ל"עודכן לפני..."
   v76 - תווית "לא נשמר ידנית" + ניקוי טיוטות: שדה חדש isConfirmed על רשומת החידון מבדיל בין חידון שבוצעה עליו פעולה משמעותית לבין חידון שנשמר רק אוטומטית תוך כדי עבודה (ואולי נזנח). חידון חדש נוצר ללא הדגל (isConfirmed=false). מסירים את הדגל (מציבים true ושומרים): saveNow (שמירה ידנית), shareToEveryone + startSpecificShare (שיתוף), goPlay (התחלת משחק). לא נוגעים: previewQuiz (בדיקה), שמירה אוטומטית (touch/saveQuiz), צפייה. הנימוק: שיתוף/משחק = אישור מפורש שהחידון אמיתי, גם בלי לחיצת "שמור". כרטיס לא-מאושר מציג תווית "● לא נשמר ידנית" (ענבר). כפתור "🗑 ניקוי חידונים שלא נשמרו ידנית" בראש הרשימה (cleanupDrafts) — מופיע רק כשיש כאלה, מוחק רק לא-מאושרים (כולל ניקוי הצמדה), עם דיאלוג אישור שמציין כמה יימחקו. אפס מיגרציה לאחור — חידון ישן בלי השדה מוצג כלא-מאושר (לא מנחשים). isConfirmed מסונכרן דרך openExisting/playExisting/testExisting; עותק שהתקבל (confirmAddShared) מתחיל false. שם השדה isConfirmed (ולא keepInList) כי הוא מתאר "אושר ע"י פעולה" ולא "המשתמש ביקש להשאיר ברשימה"
@@ -67,6 +68,7 @@ h2{font-family:'Secular One'; font-size:clamp(22px,3.4vw,34px); margin:0 0 14px;
 .btn:active{transform:translateY(1px);}
 .btn.ghost{background:transparent; color:var(--ink); box-shadow:inset 0 0 0 2px var(--ink-dim);}
 .btn.teal{background:var(--teal); color:#06231f;}
+.btn.navy{background:#3a4a7a; color:#eef1ff;}
 .btn:disabled{opacity:.45; cursor:default;}
 .btn.sm{font-size:15px; padding:10px 18px;}
 .row{display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
@@ -212,7 +214,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v78</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v79</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -223,8 +225,8 @@ input:focus{border-color:var(--gold); outline:none;}
     <h1>🧠 בונה חידונים</h1>
     <p class="sub">בנו חידון טריוויה משלכם, והמשתתפים משחקים מהטלפון. בלי התקנה.</p>
 
-    <!-- התחברות Google (לא חובה) -->
-    <div id="auth-box" style="max-width:380px; margin:0 auto 18px;">
+    <!-- שורת התחברות דקה -->
+    <div id="auth-box" style="max-width:420px; margin:0 auto 16px;">
       <div id="auth-out">
         <button class="btn" onclick="signInGoogle()" style="width:100%; background:#fff; color:#1a2342; display:flex; align-items:center; justify-content:center; gap:10px;">
           <span style="font-weight:800; color:#4285F4;">G</span> התחברות עם Google
@@ -236,14 +238,21 @@ input:focus{border-color:var(--gold); outline:none;}
           👤 כניסה כאורח <span class="info-i" onclick="event.stopPropagation(); showInfo(event, 'כאורח אפשר לבנות חידון, לערוך, לשחק ולהשתמש בכל האפשרויות — אבל בלי יכולת לשמור או לשתף את החידון. כדי לשמור ולשתף, יש להתחבר עם Google. בסוף משחק של אורח תהיה הזדמנות להתחבר ולשמור.')">i</span>
         </button>
       </div>
-      <div id="auth-in" style="display:none; background:var(--card); border-radius:12px; padding:12px 16px;">
-        <div style="font-size:14px;">מחוברים כ־<b id="auth-name" style="color:var(--gold);"></b></div>
-        <div style="font-size:13px; color:var(--ink-dim); word-break:break-all;" id="auth-email"></div>
-        <button class="btn ghost sm" onclick="signOutGoogle()" style="margin-top:10px;">התנתקות</button>
+      <div id="auth-in" style="display:none;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; font-size:14px; color:var(--ink-dim);">
+          <span>🟢 מחוברים כ־<b id="auth-name" style="color:var(--gold);"></b></span>
+          <span style="opacity:.4;">|</span>
+          <a href="javascript:void(0)" onclick="signOutGoogle()" style="color:var(--ink-dim); text-decoration:underline; cursor:pointer;">התנתקות</a>
+        </div>
+        <div id="auth-email" style="display:none;"></div>
+        <div style="text-align:center; font-size:12px; color:var(--ink-dim); margin-top:3px; opacity:.7;">החידונים נשמרים בחשבון זה</div>
       </div>
-      <div id="guest-badge" style="display:none; background:var(--card); border-radius:12px; padding:12px 16px;">
-        <div style="font-size:14px;">מצב אורח 👤 <span style="color:var(--ink-dim); font-size:13px;">(החידונים לא נשמרים)</span></div>
-        <button class="btn ghost sm" onclick="signInGoogle()" style="margin-top:10px;">התחברות עם Google לשמירה</button>
+      <div id="guest-badge" style="display:none;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; font-size:14px; color:var(--ink-dim);">
+          <span>👤 מצב אורח <span style="font-size:12px;">(החידונים לא נשמרים)</span></span>
+          <span style="opacity:.4;">|</span>
+          <a href="javascript:void(0)" onclick="signInGoogle()" style="color:var(--gold); text-decoration:underline; cursor:pointer;">התחברות לשמירה</a>
+        </div>
       </div>
     </div>
 
@@ -254,34 +263,40 @@ input:focus{border-color:var(--gold); outline:none;}
       <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">המייל משמש רק לזיהוי ולשמירת החידונים שלכם. לא נשלח אליו דואר.</div>
     </div>
     </div>
-    <div class="row" style="margin:14px 0 4px;">
-      <button class="btn" onclick="goShowList()">📂 הצגת החידונים שלי</button>
-      <button class="btn teal" onclick="goNewQuiz()">➕ בניית חידון חדש</button>
+
+    <!-- שלוש פעולות ראשיות — אותו גודל, היררכיה לפי צבע -->
+    <div style="max-width:420px; margin:0 auto; display:flex; flex-direction:column; gap:10px;">
+      <button class="btn teal" onclick="goNewQuiz()" style="width:100%;">➕ בניית חידון חדש</button>
+      <button class="btn" onclick="goShowList()" style="width:100%;">🗂️ החידונים שלי</button>
+      <a href="teacher-library.html" class="btn navy" style="width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">📚 ספריית חידונים מוכנים</a>
     </div>
     <p id="home-msg" style="color:var(--coral); min-height:20px; margin-top:12px;"></p>
 
-    <div class="field" style="max-width:380px; margin:18px auto 6px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
-      <label>קיבלתם קוד חידון ממורה אחר?</label>
+    <!-- פעולה משנית: פתיחה לפי קוד -->
+    <div class="field" style="max-width:420px; margin:18px auto 6px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
+      <label>קיבלתם קוד ממורה אחר?</label>
       <input type="text" id="share-input" placeholder="לדוגמה: K7M4P2" style="text-align:center; letter-spacing:.1em; text-transform:uppercase;">
-      <button class="btn ghost sm" onclick="openSharedByInput()" style="margin-top:10px; width:100%;">📥 פתיחת חידון לפי קוד</button>
-      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">תקבלו עותק משלכם לרשימה, שאפשר לערוך ולשחק בלי לפגוע במקור. (גם קישור שיתוף יעבוד כאן.)</div>
+      <button class="btn ghost sm" onclick="openSharedByInput()" style="margin-top:10px; width:100%;">📥 פתיחת חידון</button>
+      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">תקבלו עותק משלכם לרשימה. (גם קישור שיתוף יעבוד כאן.)</div>
     </div>
-    <div style="margin-top:14px;">
-      <a href="teacher-library.html" style="display:inline-block; color:var(--gold); font-size:15px; text-decoration:none; background:var(--card); border-radius:10px; padding:10px 18px;">📚 ספריית חידונים מוכנים</a>
-    </div>
+
     <div style="margin-top:12px;">
       <a href="index.html" target="_top" id="main-menu-link" style="color:var(--ink-dim); font-size:14px; text-decoration:none;">🏠 חזרה לתפריט הראשי</a>
     </div>
 
-    <div id="credit-box" style="margin-top:30px; padding-top:22px; border-top:1px solid rgba(255,255,255,.12);">
-      <div style="font-size:15px; color:var(--ink-dim);">נבנה על ידי</div>
-      <div style="font-family:'Secular One'; font-size:22px; color:var(--gold); margin:4px 0 12px;">ד״ר יניב חכים</div>
-      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; align-items:center;">
-        <a href="mailto:yanivhpro@gmail.com" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">✉️ yanivhpro@gmail.com</a>
-        <a href="https://wa.me/972544617463" target="_blank" rel="noopener" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">💬 וואטסאפ</a>
-        <a href="tel:+972544617463" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">📞 חיוג</a>
+    <!-- אודות — מתקפל, סגור כברירת מחדל -->
+    <details id="about-box" style="max-width:420px; margin:24px auto 0; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
+      <summary style="cursor:pointer; color:var(--ink-dim); font-size:15px; text-align:center; list-style:none;">אודות ▾</summary>
+      <div style="text-align:center; margin-top:14px;">
+        <div style="font-size:14px; color:var(--ink-dim);">נבנה על ידי</div>
+        <div style="font-family:'Secular One'; font-size:22px; color:var(--gold); margin:4px 0 12px;">ד״ר יניב חכים</div>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; align-items:center;">
+          <a href="mailto:yanivhpro@gmail.com" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">✉️ yanivhpro@gmail.com</a>
+          <a href="https://wa.me/972544617463" target="_blank" rel="noopener" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">💬 וואטסאפ</a>
+          <a href="tel:+972544617463" style="color:var(--ink); text-decoration:none; background:var(--card); border-radius:10px; padding:9px 16px; font-size:14px;">📞 חיוג</a>
+        </div>
       </div>
-    </div>
+    </details>
   </div>
 </div>
 
