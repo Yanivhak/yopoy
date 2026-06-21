@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v84 - תיקון רגרסיה מ-v82: גישה ל-AI לעריכה הוחזרה. ב-v82 הוסר בטעות כפתור ה-AI מאזור השאלות בהנחה שהוא כפילות של הכרטיס העליון — אבל הכרטיס נעלם כשיש תוכן, ולכן חידון עם תוכן נשאר בלי שום גישה ל-AI. למעשה אלה שני מצבים של אותו מסע: כרטיס "יצירה" (חידון ריק) וכפתור "עריכה" (יש תוכן). הכלל החדש ב-updateAiCard: quizHasRealContent()===false → כרטיס AI בלבד (אלא אם נסגר ב-X); ===true → כפתור AI בלבד. בכל רגע נקודת-כניסה אחת בדיוק ל-AI, והשניים לעולם לא מופיעים יחד (זו הייתה הבעיה המקורית). הכפתור (ai-edit-btn) ממוקם צמוד לכותרת "השאלות", קטן יותר מהמקור (כלי-עזר לעריכה, לא פעולה ראשית), טקסט "🤖 עריכת החידון באמצעות AI". updateAiCard נקרא גם מ-renderQuestions לסנכרון אחרי הוספת/מחיקת שאלה
   v83 - שני תיקונים קטנים במסך הבית (אזור "אודות"): (א) "נבנה על ידי" ושם היוצר אוחדו לשורה אחת באותו גודל/צבע/סגנון ("נבנה על ידי ד״ר יניב חכים") במקום שתי שורות נפרדות (תווית קטנה אפורה + שם גדול זהוב). (ב) הוסרה ההערה המיותרת "(גם קישור שיתוף יעבוד כאן.)" משורת ההסבר מתחת לשדה הקוד
   v82 - ארגון מחדש של מסך העריכה (היררכיה וזרימה): (א) הוסר כפתור ה-AI הכפול מאזור השאלות — נשאר רק הכרטיס העליון, שממילא נעלם כשיש תוכן (כפילות שיצרה רעש). גם הקוד המת שעדכן את תוויתו הוסר. (ב) אזור השאלות עולה גבוה יותר: הסרת כפתור ה-AI + צמצום הרווח מעל כותרת "השאלות" (24→14px). (ג) כפתורי הפעולה אורגנו לשלושה בלוקים מופרדים בקווים: הפעלה (משחק/בדיקה) · ניהול (שמירה/חזרה) · שיתוף. השמירה נשארת כפתור פעיל (היא מאשרת חידון — isConfirmed) ולא הפכה לתווית-סטטוס. השיתוף קורב מתחת לבלוק הניהול אך נשאר בלוק עצמאי (לא מעורבב עם משחק/בדיקה — הזרימה היא עריכה→אישור→שיתוף/משחק). (ד) "מספר הקבוצות המשתתפות בחידון" שונה ל"מבנה המשחק", והאפשרות "בלי קבוצות (כל אחד לעצמו)" ל"כל משתתף לעצמו" — המשתמש בוחר מבנה, לא רק מספר. (ה) כותרת "אפשרויות נוספות" הוחלשה (פונט/משקל/רקע קטנים יותר). (ו) חצי ▲▼ בכרטיס השאלה הובהרו: תווית "סדר:" לידם, חצים גדולים יותר ואזור-לחיצה גדול יותר (כבר היו להם טולטיפים)
   v81 - כפתורי הקשר ב"אודות" בשורה אחת בנייד: כפתור המייל קוצר מ"✉️ yanivhpro@gmail.com" ל"✉️ מייל" (הלחיצה עדיין פותחת מייל לאותה כתובת), וה-flex שונה ל-nowrap + white-space:nowrap לכל כפתור — כך שלושת הכפתורים (מייל/וואטסאפ/חיוג) נשארים בשורה אחת גם בטלפון צר במקום להישבר לשתי שורות
@@ -218,7 +219,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v83</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v84</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -373,6 +374,7 @@ input:focus{border-color:var(--gold); outline:none;}
     </div>
 
     <h2 style="margin-top:14px;">השאלות <span class="info-i" onclick="showInfo(event, 'לכל שאלה כתבו 2 עד 4 תשובות, וסמנו את התשובה הנכונה בלחיצה על העיגול הירוק שלצידה. רק תשובה אחת יכולה להיות מסומנת כנכונה.')">i</span></h2>
+    <button id="ai-edit-btn" class="btn ghost sm" onclick="openImport()" style="display:none; margin-bottom:12px; background:rgba(141,141,242,.18); font-size:14px;">🤖 עריכת החידון באמצעות AI</button>
     <div id="q-list"></div>
     <button class="btn ghost" onclick="addQuestion()" style="margin-top:6px;">➕ הוספת שאלה</button>
 
@@ -1363,10 +1365,15 @@ function quizHasRealContent(){
 let aiCardDismissed = false;
 function updateAiCard(){
   const card = $('ai-suggest-card');
-  if (!card) return;
-  // ברגע שיש תוכן אמיתי — מסמנים שנחשף, כדי שלא יחזור אם ימחקו הכול
-  if (quizHasRealContent()) aiCardDismissed = true;
-  card.style.display = (aiCardDismissed || quizHasRealContent()) ? 'none' : 'block';
+  const editBtn = $('ai-edit-btn');
+  const hasContent = quizHasRealContent();
+  // ברגע שיש תוכן אמיתי — מסמנים שהכרטיס נחשף, כדי שלא יחזור אם ימחקו הכול
+  if (hasContent) aiCardDismissed = true;
+  // כלל נקודת-כניסה אחת ל-AI:
+  //   אין תוכן → כרטיס "יצירה" בלבד (אלא אם נסגר ב-X), בלי כפתור עריכה.
+  //   יש תוכן  → כפתור "עריכה" בלבד, בלי כרטיס.
+  if (card) card.style.display = (hasContent || aiCardDismissed) ? 'none' : 'block';
+  if (editBtn) editBtn.style.display = hasContent ? 'block' : 'none';
 }
 // סגירת הכרטיס ידנית (כפתור X) — לא יחזור באותו חידון
 function dismissAiCard(){
@@ -2058,6 +2065,7 @@ function renderQuestions(){
   });
   // כפתור "נקה הכל" מוצג רק כשיש תוכן אמיתי לנקות
   if ($('clear-all-wrap')) $('clear-all-wrap').style.display = quizHasRealContent() ? 'block' : 'none';
+  updateAiCard();   // סנכרון נקודת-הכניסה ל-AI (כרטיס/כפתור) אחרי שינוי מבני בשאלות
 }
 
 function touch(){
