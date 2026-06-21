@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v89 - הסרה מהספרייה ישירות מהרשימה: עד כה בכרטיס ברשימה הפריט "📚 נמצא בספרייה" היה מושבת — אי אפשר היה להסיר מהספרייה בלי להיכנס לעורך. עכשיו כשהחידון בספרייה, הפריט בתפריט ⋯ הוא "✕ הסרה מהספרייה" פעיל (אדום), עם אישור ברור ("להסיר את החידון X מהספרייה הציבורית? ... החידון עצמו יישאר אצלכם ברשימה"). removeFromLibraryCard מסיר לפי ה-libraryId של אותה רשומה וכותב את share בחזרה ל-teachers/{key}/{code}/share. המשתמש מסיר רק את הרשומה שלו (הסרה-כאדמין-לכולם היא מנגנון נפרד). כך יש שליטה מלאה מהמקום שבו כל החידונים מופיעים, בלי מעבר לעריכה
+  v88 - QR-לחזרה הפך מ-overlay מסך-מלא לפינה קטנה שלא עוצרת את המשחק: עד כה כפתור "📲 קוד חזרה" פתח overlay על כל המסך (inset:0, רקע כהה) שכיסה את השאלה והתשובות — המשחק נעצר לכולם בזמן ששחקן אחד רק רצה לחזור. עכשיו showReturnQR מציג פאנל קומפקטי בפינה שמאלית-תחתונה (הצד הנגדי לסרגל המנחה שיושב מימין-למטה), מעל שורת הקרדיט: QR בגודל 150px + קוד המשחק + הסבר קצר "מי שיצא — סרקו לחזרה". בלי רקע כהה — השאלה והתשופות במרכז נשארות גלויות ופעילות, וכולם ממשיכים לשחק. הכפתור הפך למתג אמיתי: לחיצה ראשונה מציגה, נוספת מסתירה (גם כפתור "✕ הסתרה" בפאנל). hideReturnQR מנקה את הפינה ביציאה/סיום משחק (backToEditor/restartGame/finishToList/newQuizFromGame ומסך הסיום)
   v87 - תיקון פידבק בחלון ההוספה-לספרייה כשאין 30 תווים: עד כה כפתור "הוספה" היה disabled כשהתיאור קצר מ-30 תווים, אז לחיצה לא עשתה כלום בלי שום הסבר — נראה כאילו תקול. עכשיו הכפתור תמיד פעיל; בלחיצה עם פחות מ-30 תווים מופיעה הודעה ברורה ("יש לכתוב תיאור של לפחות 30 תווים... כתבתם עד כה X") + הדגשת מסגרת תיבת הטקסט (ענבר) + מיקוד בה. גם המונה שופר: גדול וברור יותר, מיושר לימין, ומראה "נכתבו X מתוך 30 תווים"
   v86 - הוספה לספרייה גלויה בעורך (נקודת-כניסה אחת): עד כה ההוספה-לספרייה בעורך הייתה חבויה — הופיעה רק בתוך פאנל השיתוף ורק אחרי שיתוף-לכולם (sh.mode==='public'). מורה שלא שיתף לא ראה אותה. עכשיו: (א) נוסף בלוק "📚 ספריית החידונים הציבורית" גלוי וקבוע בעורך, מתחת לבלוק השיתוף, עם renderLibraryPanel — כפתור "הוספה לספרייה הציבורית" כשלא בספרייה, או "✓ מופיע בספרייה" + "הסרה" כשכן. (ב) ההוספה המותנית הישנה הוסרה מפאנל השיתוף — כדי שלא תהיה כפילות (שתי הוספות-לספרייה בעורך). נקודת-כניסה אחת גלויה. (ג) ה-prompt הישן והמכוער (openLibraryPublish) הוסר; גם העורך וגם הרשימה משתמשים עכשיו באותו חלון מעוצב (openLibraryPublishFromCard) — קיבל פרמטר onDone כדי שהעורך ירענן את הפאנל שלו במקום לנווט לרשימה. תצוגת הקרדיט בספרייה עדיין תלויה ב-teacher-library.html (קובץ נפרד)
   v85 - הוספה לספרייה מהרשימה + הגדלת AI בעורך: (א) כפתור "עריכת החידון באמצעות AI" בעורך הוגדל מ-sm זעיר לכפתור מלא בצבע סגול בולט (פונקציה חשובה שאסור לפספס; עדיין מותנה-תוכן לפי הכלל מ-v84 — מופיע רק כשיש תוכן, אף פעם יחד עם הכרטיס העליון). (ב) בתפריט ⋯ של כרטיס ברשימה נוסף "📚 הוספה לספרייה" (אחרי "🔗 שיתוף" — שיתוף תכוף קודם, ספרייה נדירה אחריו). פותח חלון מעוצב (openLibraryPublishFromCard) עם תיבת-טקסט לתיאור, ספירת-תווים חיה ומינימום 30 תווים (כפתור ההוספה מושבת עד שמגיעים), כפתורי ביטול/הוספה. בונה entry זהה למבנה של openLibraryPublish הקיים, יוצר shareId אם חסר, וכותב את אובייקט share בחזרה ל-teachers/{key}/{code}/share בלי לגעת בשאר השדות. חידון שכבר בספרייה מציג "📚 נמצא בספרייה" מושבת. המטרה: לאפשר צמיחת הספרייה השיתופית בקלות מהרשימה
@@ -222,7 +224,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v87</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v89</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -1196,9 +1198,14 @@ function buildQuizCard(code, q){
   const shareItem = document.createElement('button'); shareItem.className='qlcard-menu-item'; shareItem.textContent='🔗 שיתוף';
   shareItem.onclick=(e)=>{ e.stopPropagation(); closeAllCardMenus(); openShareModal(code, q); };
   const libItem = document.createElement('button'); libItem.className='qlcard-menu-item';
-  libItem.textContent = (q.share && q.share.inLibrary) ? '📚 נמצא בספרייה' : '📚 הוספה לספרייה';
-  if (q.share && q.share.inLibrary){ libItem.disabled = true; libItem.style.opacity='.5'; }
-  else libItem.onclick=(e)=>{ e.stopPropagation(); closeAllCardMenus(); openLibraryPublishFromCard(code, q); };
+  if (q.share && q.share.inLibrary){
+    libItem.textContent = '✕ הסרה מהספרייה';
+    libItem.classList.add('danger');
+    libItem.onclick=(e)=>{ e.stopPropagation(); closeAllCardMenus(); removeFromLibraryCard(code, q); };
+  } else {
+    libItem.textContent = '📚 הוספה לספרייה';
+    libItem.onclick=(e)=>{ e.stopPropagation(); closeAllCardMenus(); openLibraryPublishFromCard(code, q); };
+  }
   const delItem = document.createElement('button'); delItem.className='qlcard-menu-item danger'; delItem.textContent='🗑 מחיקה';
   delItem.onclick=(e)=>{ e.stopPropagation(); closeAllCardMenus(); if(confirm('למחוק את החידון "'+(q.title||'')+'"? אי אפשר לבטל.')){ fdb.ref('teachers/'+myStoreKey+'/'+code).remove().then(()=>refreshMyList()); } };
   menu.appendChild(pinItem); menu.appendChild(shareItem); menu.appendChild(libItem); menu.appendChild(delItem);
@@ -2516,6 +2523,20 @@ function removeFromLibrary(){
   saveQuiz(); renderSharePanel(); if ($('library-panel')) renderLibraryPanel();
 }
 
+// הסרה מהספרייה ישירות מכרטיס ברשימה — לפי ה-libraryId של אותה רשומה, עם אישור ברור.
+// מסיר רק את הרשומה של המשתמש מהספרייה; החידון עצמו נשאר ברשימה שלו.
+function removeFromLibraryCard(code, q){
+  if (!q.share || !q.share.inLibrary){ return; }
+  if (!confirm('להסיר את החידון "' + (q.title||'') + '" מהספרייה הציבורית?\nהוא יוסר מהספרייה ולא יהיה זמין יותר למורים אחרים.\nהחידון עצמו יישאר אצלכם ברשימה.')) return;
+  const share = q.share;
+  if (share.libraryId) fdb.ref('library/'+share.libraryId).remove().catch(()=>{});
+  share.inLibrary = false; share.libraryId = null;
+  q.share = share;
+  fdb.ref('teachers/'+myStoreKey+'/'+code+'/share').set(share)
+    .then(()=>refreshMyList())
+    .catch(()=>{ alert('תקלה בהסרה מהספרייה. נסו שוב.'); });
+}
+
 // --- העתקת קישור ---
 function copyShareLink(btn, shareId){
   doCopyLink(shareId);
@@ -3696,6 +3717,7 @@ function hostFinish(){
   applyGameBg(false);
   $('host-bar').style.display='none';
   $('ingame-credit').style.display='none';
+  hideReturnQR();
   const board = scoreboard();
   // פודיום
   const pod = $('podium'); pod.innerHTML='';
@@ -3749,43 +3771,43 @@ function hostSkip(){
   if (!revealed && curQ){ revealQ(); } else { nextQ(); }
 }
 function hostJumpFinish(){ clearInterval(hostTimer); hostFinish(); }
-function backToEditor(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; renderEditor(); show('editor'); }
-function restartGame(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; goPlay(); }
-function finishToList(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; refreshMyList(); }
+function backToEditor(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; hideReturnQR(); renderEditor(); show('editor'); }
+function restartGame(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; hideReturnQR(); goPlay(); }
+function finishToList(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; hideReturnQR(); refreshMyList(); }
 // יצירת חידון חדש ישירות ממסך הסיום (אותו ניקוי מצב משחק, ואז newQuiz)
-function newQuizFromGame(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; newQuiz(); }
+function newQuizFromGame(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; hideReturnQR(); newQuiz(); }
 
-// מציג overlay עם QR גדול + קוד, כדי שמשתתף שעף יוכל לחזור למשחק (פריט 10)
+// מסיר את פינת ה-QR אם פתוחה (בסיום/יציאה מהמשחק)
+function hideReturnQR(){ const c = $('return-qr-corner'); if (c) c.remove(); }
+
+// מתג QR-לחזרה: פינה קטנה בצד שמאל-למטה (הצד הנגדי לסרגל המנחה), בלי לכסות את המשחק.
+// לחיצה ראשונה מציגה, לחיצה נוספת מסתירה. השחקן שיצא סורק מהפינה וכולם ממשיכים לשחק.
 function showReturnQR(){
-  const old = $('return-qr-overlay'); if (old) old.remove();
+  const existing = $('return-qr-corner');
+  if (existing){ existing.remove(); return; }   // מתג: אם פתוח — סוגרים
   const code = playCode || topic;
   if (!code) return;
   const baseUrl = location.origin.startsWith('http') ? (location.origin + location.pathname) : '';
   const joinUrl = baseUrl ? (baseUrl + '?game=' + code) : '';
 
-  const ov = document.createElement('div'); ov.id='return-qr-overlay';
-  ov.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.82); display:flex; align-items:center; justify-content:center; z-index:10000; padding:20px;';
-  ov.onclick = (e)=>{ if(e.target===ov) ov.remove(); };  // לחיצה ברקע סוגרת
+  const panel = document.createElement('div'); panel.id='return-qr-corner';
+  // צד שמאל-למטה, מעל שורת הקרדיט הקטנה. z-index גבוה מהמשחק אך הפאנל קטן ולא מכסה את המרכז.
+  panel.style.cssText = 'position:fixed; bottom:44px; left:14px; z-index:85; background:var(--card); border:1px solid rgba(255,255,255,.22); border-radius:14px; padding:12px 12px 10px; text-align:center; box-shadow:0 6px 24px rgba(0,0,0,.45); width:max-content; max-width:200px;';
 
-  const box = document.createElement('div');
-  box.style.cssText = 'background:var(--card); border-radius:20px; padding:28px 26px; text-align:center; max-width:420px; width:100%;';
-
-  let html = '<div style="font-family:\'Secular One\'; font-size:24px; color:var(--gold); margin-bottom:6px;">📲 חזרה למשחק</div>';
-  html += '<div style="font-size:14px; color:var(--ink-dim); margin-bottom:18px; line-height:1.5;">מי שיצא מהמשחק — סרקו את הקוד או היכנסו עם המספר כדי לחזור עם הניקוד שנצבר.</div>';
+  let html = '<div style="font-size:12px; color:var(--ink-dim); margin-bottom:8px; line-height:1.4;">מי שיצא — סרקו לחזרה למשחק</div>';
   if (joinUrl){
-    html += '<div style="background:#fff; padding:14px; border-radius:16px; display:inline-block; margin-bottom:16px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=2&data=' + encodeURIComponent(joinUrl) + '" style="display:block; width:230px; height:230px;" alt="QR לחזרה"></div>';
+    html += '<div style="background:#fff; padding:8px; border-radius:10px; display:inline-block;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=1&data=' + encodeURIComponent(joinUrl) + '" style="display:block; width:150px; height:150px;" alt="QR לחזרה"></div>';
   }
-  html += '<div style="font-size:15px; color:var(--ink-dim); margin-bottom:4px;">קוד המשחק:</div>';
-  html += '<div style="font-family:\'Secular One\'; font-size:42px; color:var(--gold); letter-spacing:6px; margin-bottom:18px;">' + code + '</div>';
-  box.innerHTML = html;
+  html += '<div style="font-size:12px; color:var(--ink-dim); margin-top:8px;">קוד: <b style="font-family:\'Secular One\'; font-size:20px; color:var(--gold); letter-spacing:3px;">' + code + '</b></div>';
+  panel.innerHTML = html;
 
-  const closeBtn = document.createElement('button'); closeBtn.className='btn teal'; closeBtn.style.width='100%';
-  closeBtn.textContent = '✓ סגירה';
-  closeBtn.onclick = ()=>ov.remove();
-  box.appendChild(closeBtn);
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ הסתרה';
+  closeBtn.style.cssText = 'margin-top:8px; width:100%; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); color:var(--ink); border-radius:8px; padding:5px 0; cursor:pointer; font-family:Heebo; font-size:12px;';
+  closeBtn.onclick = ()=>panel.remove();
+  panel.appendChild(closeBtn);
 
-  ov.appendChild(box);
-  document.body.appendChild(ov);
+  document.body.appendChild(panel);
 }
 
 function saveNow(){
