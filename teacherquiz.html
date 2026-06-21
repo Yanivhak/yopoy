@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v72 - קוד-תצוגה אנושי לחידון (6 תווים) במקום 4 ספרות: כל חידון מקבל ביצירה קוד קבוע בן 6 תווים (אותיות+ספרות בלי תווים מבלבלים, genDisplayCode), ייחודי גלובלית מול נתיב חדש codes/. זהו הקוד היחיד שהמשתמש רואה — בכרטיס וברשימה ובעורך — במקום 4-הספרות, שהן מעתה מפתח-אחסון פנימי בלבד (teachers/{key}/{4ספרות} לא השתנה — כלל קשיח). שלושה קודים נפרדים במערכת: מפתח-אחסון (4 ספרות, פנימי), קוד-תצוגה (6 תווים, קבוע, מה שהמשתמש משתף), וקוד-משחק (playCode, מתחלף בכל משחק, מה שהתלמיד מקליד). שיתוף: לחיצת "שיתוף" מציגה אזהרה (העותקים אצל המקבלים בלתי-נגיעים, אין ביטול), ואז מפרסמת ל-shared/{shareId} כרגיל וגם רושמת codes/{displayCode}→shareId (אינדקס, מצביע ל-shareId; התוכן ב-shared/). פאנל השיתוף מציג קוד בולט (העתקה) כאפשרות ראשית + קישור כאפשרות שנייה. קבלה: שדה הבית מקבל קוד 6-תווים (openSharedByCode → codes/ → openSharedById), וגם קישור/shareId גולמי עדיין עובדים כ-fallback. ensureDisplayCode — רשת ביטחון עצלה לחידון בלי קוד, רק בפתיחת החידון עצמו, לא בטעינת הרשימה (לא הופך צפייה לכתיבה גורפת). syncShareCopies הוא המקום היחיד שכותב codes/ — לכל מצב שיתוף
   v71 - תיקון התחברות Google באייפון (אומת מול יועץ GPT): באייפון signInWithPopup לא אמין (כל הדפדפנים WebKit), והנפילה ל-redirect כ-fallback יצרה מצב לא-עקבי של "לשונית שגיאה אבל מחובר". התיקון: (א) זיהוי iOS (isIOS, כולל אייפד שמתחזה ל-Mac) — באייפון signInWithRedirect *ישירות*, בלי לנסות popup קודם. מחשב/אנדרואיד — popup כרגיל. (ב) getRedirectResult מלא — מציג שגיאה ברורה למשתמש + console.error לדיבוג, במקום catch ריק. (ג) תיקון אובדן חידון-אורח: ב-redirect הדף נטען מחדש וה-quiz בזיכרון אובד. עכשיו אורח באייפון ששומר — החידון נשמר ב-sessionStorage לפני ההפניה ומשוחזר אחרי החזרה (restorePendingGuestQuiz, נקרא מ-onAuthStateChanged). הערה: הפתרון היציב המלא לבעיות Safari/ITP הוא Custom Auth Domain על דומיין משלי (לא github.io) — פרויקט עתידי
   v70 - שני שיפורים לרשימת החידונים: (א) הצמדה לראש (📌) — פריט חדש בתפריט ⋯ מצמיד חידון לראש הרשימה מעל מיון-העדכון. נעוצים מסומנים ב-📌 ליד השם. ההצמדה נשמרת בנתיב נפרד teachers_meta/{key}/pinned (נתיב חדש, לא נוגע ב-teachers/) כדי ש-saveQuiz — שעושה set על הרשומה — לא ידרוס אותה. מיון: נעוצים קודם, ובכל קבוצה לפי עדכון אחרון. (ב) חיפוש לפי שם — שדה חיפוש בראש הרשימה, מסנן לפי כותרת בלבד (לא תוכן — נמנע מרעש). מופיע רק כשיש 6+ חידונים. בכוונה לא רב-שדה/מתקדם: כותרת מכסה את רוב המקרים, והרחבה תיעשה רק על בסיס משוב אמיתי
   v69 - תיקון באג כפילות אינסופית בעדכון: אחרי שמירת גרסה "(מעודכן)", לחיצה חוזרת על הקישור הציעה שוב "יש גרסה מעודכנת" ושמרה עוד עותק, בלי סוף. הסיבה — הזיהוי בדק רק את העותק *האחרון* שנמצא (forEach שדרס matchCode), ואם הוא היה הישן, ההשוואה מול ה-received הישן תמיד אמרה "שונה". התיקון: בודקים את *כל* העותקים מאותו shareId — אם *לאחד מהם* ה-received תואם את התוכן הנוכחי, "כבר אצלך" וחוסם. רק אם *אף* עותק לא תואם — זו באמת גרסה חדשה
@@ -204,7 +205,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v71</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v72</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -253,10 +254,10 @@ input:focus{border-color:var(--gold); outline:none;}
     <p id="home-msg" style="color:var(--coral); min-height:20px; margin-top:12px;"></p>
 
     <div class="field" style="max-width:380px; margin:18px auto 6px; padding-top:18px; border-top:1px solid rgba(255,255,255,.12);">
-      <label>קיבלתם קישור או קוד שיתוף ממישהו אחר?</label>
-      <input type="text" id="share-input" placeholder="הדביקו כאן את הקישור או הקוד">
-      <button class="btn ghost sm" onclick="openSharedByInput()" style="margin-top:10px; width:100%;">📥 פתיחת חידון משותף</button>
-      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">תקבלו עותק משלכם לרשימה, שאפשר לערוך ולשחק בלי לפגוע במקור.</div>
+      <label>קיבלתם קוד חידון ממורה אחר?</label>
+      <input type="text" id="share-input" placeholder="לדוגמה: K7M4P2" style="text-align:center; letter-spacing:.1em; text-transform:uppercase;">
+      <button class="btn ghost sm" onclick="openSharedByInput()" style="margin-top:10px; width:100%;">📥 פתיחת חידון לפי קוד</button>
+      <div style="font-size:13px; color:var(--ink-dim); margin-top:6px;">תקבלו עותק משלכם לרשימה, שאפשר לערוך ולשחק בלי לפגוע במקור. (גם קישור שיתוף יעבוד כאן.)</div>
     </div>
     <div style="margin-top:14px;">
       <a href="teacher-library.html" style="display:inline-block; color:var(--gold); font-size:15px; text-decoration:none; background:var(--card); border-radius:10px; padding:10px 18px;">📚 ספריית חידונים מוכנים</a>
@@ -321,7 +322,7 @@ input:focus{border-color:var(--gold); outline:none;}
       <button class="btn teal" onclick="openImport()" style="font-size:16px;">🤖 יצירת חידון באמצעות בינה מלאכותית</button>
       <div style="font-size:13px; color:var(--ink-dim); margin-top:12px;">או בנו את החידון בעצמכם בהמשך העמוד.</div>
     </div>
-    <div style="text-align:center; font-size:13px; color:var(--ink-dim); margin-bottom:16px;">קוד החידון: <span id="edit-code" style="color:var(--gold); font-weight:700; letter-spacing:1px;">----</span> <span style="opacity:.7;">(לזיהוי בלבד)</span></div>
+    <div style="text-align:center; font-size:13px; color:var(--ink-dim); margin-bottom:16px;">קוד החידון: <span id="edit-code" style="color:var(--gold); font-weight:700; letter-spacing:1px;">----</span></div>
 
     <div class="field">
       <label>שם החידון</label>
@@ -1035,7 +1036,7 @@ function buildQuizCard(code, q){
     ? '<div class="qlcard-shared">📩 שותף על ידי ' + escapeHtml(q.copiedFrom.ownerName) + '</div>'
     : '';
   titleWrap.innerHTML = '<div class="qlcard-title">' + pinMark + escapeHtml(q.title || 'חידון ללא שם') + '</div>' +
-                        '<div class="qlcard-meta">מספר ' + code + ' · ' + (q.questions? q.questions.length:0) + ' שאלות</div>' +
+                        '<div class="qlcard-meta">קוד ' + escapeHtml(q.displayCode || '——') + ' · ' + (q.questions? q.questions.length:0) + ' שאלות</div>' +
                         sharedLine;
 
   // כפתור ⋯ + תפריט נפתח
@@ -1125,11 +1126,12 @@ function closeShareModal(){
 
 async function newQuiz(){
   editCode = await genUniqueCode();
-  quiz = { title:'', time:20, teamCount:0, teamNames:[], questions:[], share:{ mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null } };
+  const displayCode = await genDisplayCode();   // קוד-תצוגה אנושי קבוע, נוצר פעם אחת
+  quiz = { title:'', time:20, teamCount:0, teamNames:[], questions:[], displayCode: displayCode, share:{ mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null } };
   resetAiMeta();             // חידון חדש — בחירות AI מתאפסות (פריט 1)
   aiCardDismissed = false;   // חידון חדש — הכרטיס יוצג שוב
   quiz.questions.push({ text:'', answers:['',''], correct:0 });  // שאלה ריקה ראשונה — לפני הרינדור, כדי לרנדר פעם אחת בלבד
-  $('edit-code').textContent = editCode;
+  $('edit-code').textContent = quiz.displayCode || '——';
   renderEditor();   // רינדור יחיד עם המצב הסופי (בלי רינדור כפול ובלי הבהוב)
   show('editor');
   saveQuiz();
@@ -1160,13 +1162,15 @@ function openExisting(code, data){
     title: data.title || '', time: data.time || 20,
     teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
     questions: data.questions || [],
+    displayCode: data.displayCode || null,
     share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
   if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
   if (data.aiMeta) quiz.aiMeta = data.aiMeta;   // משמרים את ה-meta באובייקט
   loadAiMeta(data.aiMeta);                       // טוענים את הבחירות לשדות (פריט 1)
   aiCardDismissed = false;   // פתיחת חידון — מאפסים; אם יש בו תוכן הכרטיס ממילא לא יוצג
-  $('edit-code').textContent = editCode;
+  $('edit-code').textContent = quiz.displayCode || '——';
+  ensureDisplayCode();       // חידון שאין לו עדיין קוד-תצוגה — מקבל אחד (רשת ביטחון, לא מיגרציה גורפת)
   renderEditor();
   show('editor');
 }
@@ -1177,10 +1181,11 @@ function playExisting(code, data){
     title: data.title || '', time: data.time || 20,
     teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
     questions: data.questions || [],
+    displayCode: data.displayCode || null,
     share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
   if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
-  $('edit-code').textContent = editCode;
+  $('edit-code').textContent = quiz.displayCode || '——';
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
   prePlay();        // עוברים למסך הכנה (מוזיקה ורקע) לפני הלובי
 }
@@ -1200,10 +1205,11 @@ function testExisting(code, data){
     title: data.title || '', time: data.time || 20,
     teamCount: data.teamCount || 0, teamNames: data.teamNames || [],
     questions: data.questions || [],
+    displayCode: data.displayCode || null,
     share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
   if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
-  $('edit-code').textContent = editCode;
+  $('edit-code').textContent = quiz.displayCode || '——';
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
   previewQuiz();    // עוברים ישר לבדיקה (ללא תלמידים)
 }
@@ -1956,6 +1962,11 @@ function syncShareCopies(){
     ownerName: myAuthName || myEmail || 'מורה'
   };
   fdb.ref('shared/'+sh.shareId).set(sharedRec).catch(()=>{});
+  // אינדקס הקוד האנושי → shareId. נכתב כאן כדי שכל חידון משותף (לכולם או ספציפי) יהיה נגיש בקוד.
+  // הקוד מצביע על shareId בלבד; תוכן החידון נשמר ב-shared/ ומתעדכן למעלה.
+  if (quiz.displayCode){
+    fdb.ref('codes/'+quiz.displayCode).set({ shareId: sh.shareId, updated: Date.now() }).catch(()=>{});
+  }
   // עדכון הספרייה אם החידון בה — כתיבה אחת אטומית (כדי שלא יישאר מצב חלקי)
   if (sh.mode === 'public' && sh.inLibrary && sh.libraryId){
     fdb.ref('library/'+sh.libraryId).update({
@@ -2002,6 +2013,32 @@ async function genLibId(){
 function shareLinkFor(shareId){
   const base = location.origin.startsWith('http') ? (location.origin + location.pathname) : '';
   return base ? (base + '?share=' + shareId) : shareId;
+}
+
+/* ===== קוד-תצוגה אנושי (6 תווים) — מובטח ייחודי גלובלית מול codes/ =====
+   זהו הקוד שהמשתמש רואה ומשתף בעל-פה. שונה ממפתח האחסון הפנימי (4 ספרות)
+   ושונה מ-shareId (מזהה טכני לקישור). נוצר פעם אחת ביצירת החידון ונשאר קבוע. */
+async function genDisplayCode(){
+  for (let attempt=0; attempt<25; attempt++){
+    const code = randomShareChars(); // 6 תווים מהאלפבית ללא תווים מבלבלים
+    try {
+      const snap = await fdb.ref('codes/'+code).once('value');
+      if (!snap.exists()) return code;
+    } catch(e){
+      return code; // אם הבדיקה נכשלה (רשת) — לא תוקעים את המשתמש
+    }
+  }
+  // גיבוי נדיר מאוד: אם לא נמצא קוד פנוי אחרי 25 ניסיונות
+  return randomShareChars() + Date.now().toString(36).slice(-2).toUpperCase();
+}
+
+// רשת ביטחון: חידון שנפתח ואין לו קוד-תצוגה (נוצר לפני הפיצ'ר) — מקבל אחד עכשיו.
+// פעולה עצלה: רק כשניגשים לחידון ספציפי, לא בטעינת הרשימה (לא הופכים צפייה לכתיבה גורפת).
+async function ensureDisplayCode(){
+  if (!quiz || quiz.displayCode) return;
+  quiz.displayCode = await genDisplayCode();
+  if ($('edit-code')) $('edit-code').textContent = quiz.displayCode;  // עדכון התצוגה אחרי הקצאה עצלה
+  saveQuiz();
 }
 
 /* ===== פאנל השיתוף בעורך ===== */
@@ -2068,7 +2105,23 @@ function shareStatusBox(titleText, sh){
     box.appendChild(addRow);
   }
 
-  // קישור השיתוף (משותף לשני המצבים)
+  // קוד השיתוף האנושי — הדרך המומלצת לשיתוף (אפשר להכתיב בעל-פה / לכתוב על הלוח)
+  if (quiz && quiz.displayCode){
+    const codeWrap = document.createElement('div'); codeWrap.style.cssText='margin-top:10px; text-align:center;';
+    const codeLabel = document.createElement('div'); codeLabel.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:4px;';
+    codeLabel.textContent='קוד לשיתוף — מי שיקליד אותו יקבל עותק של החידון';
+    codeWrap.appendChild(codeLabel);
+    const codePill = document.createElement('div'); codePill.style.cssText='display:inline-flex; align-items:center; gap:10px; background:var(--card); border:1px solid rgba(255,255,255,.15); border-radius:12px; padding:8px 16px;';
+    const codeTxt = document.createElement('span'); codeTxt.style.cssText="font-family:'Secular One'; font-size:26px; letter-spacing:.12em; color:var(--gold);";
+    codeTxt.textContent = quiz.displayCode;
+    const codeCopy = document.createElement('button'); codeCopy.className='btn ghost sm'; codeCopy.textContent='העתקה'; codeCopy.style.cssText='padding:4px 12px; font-size:13px;';
+    codeCopy.onclick=()=>{ const ok=doCopyText(quiz.displayCode); const o=codeCopy.textContent; codeCopy.textContent= ok?'✓ הועתק':'העתקה'; setTimeout(()=>{ codeCopy.textContent=o; },1400); };
+    codePill.appendChild(codeTxt); codePill.appendChild(codeCopy);
+    codeWrap.appendChild(codePill);
+    box.appendChild(codeWrap);
+  }
+
+  // קישור השיתוף (משותף לשני המצבים) — אפשרות שנייה, ללחיצה
   if (sh.shareId){
     const linkRow = document.createElement('div'); linkRow.style.cssText='margin-top:10px; display:flex; gap:6px;';
     const copyBtn = document.createElement('button'); copyBtn.className='btn teal sm'; copyBtn.textContent='🔗 העתקת קישור שיתוף'; copyBtn.style.flex='1';
@@ -2076,7 +2129,7 @@ function shareStatusBox(titleText, sh){
     linkRow.appendChild(copyBtn);
     box.appendChild(linkRow);
     const hint = document.createElement('div'); hint.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; text-align:center;';
-    hint.textContent='שלחו את הקישור למישהו אחר. החידון יועתק לחשבונו והוא יוכל לערוך את העותק שלו.';
+    hint.textContent='או שלחו קישור ללחיצה. כך או כך — המקבל מקבל עותק לעריכה.';
     box.appendChild(hint);
   }
 
@@ -2132,10 +2185,13 @@ function unshareSpecificAll(){
 // --- פעולות שיתוף לכולם ---
 async function shareToEveryone(){
   if (!myUid){ alert('צריך להתחבר עם Google כדי לשתף.'); return; }
+  // אזהרה לפני שיתוף ראשון — השיתוף יוצר עותקים בלתי-נגיעים ואי אפשר לבטל אותו
+  if (!confirm('שימו לב: ברגע שתשתפו, כל מי שיקבל את הקוד או הקישור יקבל עותק עצמאי משלו. אי אפשר למחוק את העותקים האלה או לבטל את השיתוף.\n\nהמקור שלכם לא ייפגע — המקבלים עורכים עותק נפרד.\n\nלשתף?')) return;
+  await ensureDisplayCode();   // ודאות שיש קוד-תצוגה לפני שמפרסמים אותו
   const sh = ensureShareObj();
   sh.mode = 'public'; sh.emails = []; sh.inLibrary = false;
   if (!sh.shareId) sh.shareId = await genShareId();
-  saveQuiz();
+  saveQuiz();   // saveQuiz → syncShareCopies רושם גם את codes/{displayCode} → shareId
   doCopyLink(sh.shareId);   // לחיצה אחת — הקישור נוצר ומועתק מיד
   justCopiedLink = true;    // כדי שהפאנל יציג "הקישור הועתק"
   renderSharePanel();
@@ -2155,6 +2211,16 @@ function doCopyLink(shareId){
   const link = shareLinkFor(shareId);
   try {
     const ta = document.createElement('textarea'); ta.value = link;
+    ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    return true;
+  } catch(e){ return false; }
+}
+// העתקת טקסט כללי לזיכרון (לקוד השיתוף האנושי)
+function doCopyText(text){
+  try {
+    const ta = document.createElement('textarea'); ta.value = text;
     ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
@@ -2217,11 +2283,27 @@ function copyShareLink(btn, shareId){
 function openSharedByInput(){
   if (!myUid || !myStoreKey){ $('home-msg').textContent = 'יש להתחבר עם Google כדי לפתוח חידון משותף ולשמור אותו אצלכם.'; return; }
   let val = ($('share-input').value || '').trim();
-  if (!val){ $('home-msg').textContent = 'הדביקו קישור או קוד שיתוף.'; return; }
-  // אם הדביקו קישור מלא — נחלץ את ה-share
-  const m = val.match(/[?&]share=([A-Za-z0-9_]+)/);
-  const shareId = m ? m[1] : val;
-  openSharedById(shareId);
+  if (!val){ $('home-msg').textContent = 'הקלידו קוד חידון (לדוגמה K7M4P2).'; return; }
+  // קישור מלא → נחלץ ממנו את ה-shareId ונפתח ישירות
+  const linkMatch = val.match(/[?&]share=([A-Za-z0-9_]+)/);
+  if (linkMatch){ openSharedById(linkMatch[1]); return; }
+  // shareId גולמי (sh_...) → פתיחה ישירה
+  if (/^sh_/i.test(val)){ openSharedById(val); return; }
+  // אחרת — מתייחסים לקלט כקוד אנושי בן 6 תווים. נרמול לאותיות גדולות.
+  const code = val.toUpperCase();
+  openSharedByCode(code);
+}
+// פתיחת חידון לפי קוד אנושי: codes/{code} → shareId → openSharedById
+function openSharedByCode(code){
+  $('home-msg').textContent = 'מחפש...';
+  fdb.ref('codes/'+code).once('value').then(snap => {
+    const rec = snap.val();
+    if (!rec || !rec.shareId){
+      $('home-msg').textContent = 'לא נמצא חידון עם הקוד הזה. ודאו שהמורה שיתף את החידון ושהקוד הוקלד נכון.';
+      return;
+    }
+    openSharedById(rec.shareId);
+  }).catch(()=>{ $('home-msg').textContent = 'תקלה, נסו שוב.'; });
 }
 // snapshot של התוכן הרלוונטי לזיהוי "האם החידון השתנה מאז שקיבלתי".
 // משווים שם + שאלות בלבד (מה שמשנה למשתתף). זמן/קבוצות לא נספרים כ"שינוי תוכן".
@@ -2404,13 +2486,15 @@ function confirmAddShared(shareId, data, ov, isUpdate){
   const errLabel = isUpdate ? '✓ שמירת הגרסה המעודכנת' : '✓ הוספה לחידונים שלי';
 
   const createCopy = () => {
-    genUniqueCode().then(newCode => {
+    genUniqueCode().then(async newCode => {
+      const newDisplayCode = await genDisplayCode();   // עותק חדש — קוד-תצוגה משלו
       const copy = {
         title: (src.title || data.title || 'חידון') + suffix,
         time: src.time || 20,
         teamCount: src.teamCount || 0,
         teamNames: src.teamNames || [],
         questions: src.questions || [],
+        displayCode: newDisplayCode,
         updated: Date.now(),
         ownerEmail: myEmail,
         share: { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null },
