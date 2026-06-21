@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v62 - תיקון מקרה כיבוי-מסך (פריט 6): נוכחות עמידה דרך מאזין .info/connected שכותב presence + onDisconnect מחדש בכל חיבור חוזר. מתקן מצב שבו השחקן הדליק מסך (בלי לסרוק קוד) ונשאר מנותק כי onDisconnect כבר ירה
   v61 - פריט 10: כפתור "📲 קוד חזרה" בסרגל המנחה — פותח QR גדול + קוד כדי שמשתתף שעף יחזור למשחק. בזכות המזהה היציב (v60) החזרה משחזרת את הניקוד אוטומטית (players[id] לא נמחק, לא מאופס). הצגת הניקוד לשחקן עצמו בחזרה — לא נבנתה (החלטה פתוחה)
   v60 - תיקון באג ספירה כפולה + תשתית לפריט 10: מזהה שחקן יציב לכל משחק (localStorage לפי קוד משחק). חזרה לאותו משחק = אותו מזהה (לא נספר פעמיים, וניקוד יוכל לחזור); משחק/מכשיר אחר = מזהה נפרד (אין ירושת זהות)
   v59 - פריט 6 (שלב א): מונה נוכחות למנחה. כל שחקן רושם presence ב-Firebase + onDisconnect שמוחק אוטומטית כשעוזב. בסרגל המנחה "👥 מחוברים: X / Y" — שקט, לא קופץ, עובד גם ל-40. מצב בדיקה לא מושפע
@@ -161,7 +162,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v61</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v62</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -2148,6 +2149,25 @@ function getStablePlayerId(gameCode){
     return Math.random().toString(36).slice(2,10);
   }
 }
+
+// נוכחות עמידה: מאזין ל-.info/connected ש"נורה" בכל חיבור/חיבור-מחדש.
+// בכל חיבור חוזר (כולל אחרי כיבוי-מסך) — כותב presence מחדש ורושם onDisconnect מחדש.
+// זה מתקן את המקרה שבו onDisconnect כבר ירה ומחק את הנוכחות, והדף חוזר לחיים בלי לטעון מחדש.
+let _presenceRef = null;
+function setupPresence(code, pid){
+  try {
+    _presenceRef = fdb.ref('games/'+code+'/presence/'+pid);
+    const connRef = fdb.ref('.info/connected');
+    connRef.on('value', snap => {
+      if (snap.val() === true){
+        // החיבור פעיל (או שב לפעול) — רושמים מחדש את המחיקה-בניתוק, ואז מסמנים נוכחות
+        _presenceRef.onDisconnect().remove().then(()=>{
+          _presenceRef.set(true);
+        }).catch(()=>{ try{ _presenceRef.set(true); }catch(e){} });
+      }
+    });
+  } catch(e){}
+}
 let players = {}, seq = 0, curQ = null, answers = {}, revealed = false, hostTimer = null, qIndex = -1, qShownAt = 0;
 let bestMs = Infinity, bestName = '', maxStreak = 0, streakKing = '';
 let intermissionDone = new Set();
@@ -3079,14 +3099,9 @@ function joinGame(){
     if (meta.teamCount>0 && myTeam<0){ $('j-msg').textContent='בחרו קבוצה.'; resetBtn(); return; }
     role='player';
     myId = getStablePlayerId(code);   // מזהה יציב לאותו משחק — חזרה = אותו מזהה (פריט 6 + 10)
+    setupPresence(code, myId);        // נוכחות שמשתחזרת אוטומטית בכל חיבור חוזר (מתקן מקרה כיבוי-מסך)
     listenGame(code, () => {
       send({ t:'join', id:myId, name:myName, team:myTeam });
-      // נוכחות: כותב שאני "חי", ומגדיר מחיקה אוטומטית כשהחיבור נופל (סגירה/קריסה/נפילת רשת) — פריט 6
-      try {
-        const presRef = fdb.ref('games/'+code+'/presence/'+myId);
-        presRef.set(true);
-        presRef.onDisconnect().remove();
-      } catch(e){}
       joined=false;
       let tries=0;
       const iv=setInterval(()=>{
