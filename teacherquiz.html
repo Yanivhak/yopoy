@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v61 - פריט 10: כפתור "📲 קוד חזרה" בסרגל המנחה — פותח QR גדול + קוד כדי שמשתתף שעף יחזור למשחק. בזכות המזהה היציב (v60) החזרה משחזרת את הניקוד אוטומטית (players[id] לא נמחק, לא מאופס). הצגת הניקוד לשחקן עצמו בחזרה — לא נבנתה (החלטה פתוחה)
   v60 - תיקון באג ספירה כפולה + תשתית לפריט 10: מזהה שחקן יציב לכל משחק (localStorage לפי קוד משחק). חזרה לאותו משחק = אותו מזהה (לא נספר פעמיים, וניקוד יוכל לחזור); משחק/מכשיר אחר = מזהה נפרד (אין ירושת זהות)
   v59 - פריט 6 (שלב א): מונה נוכחות למנחה. כל שחקן רושם presence ב-Firebase + onDisconnect שמוחק אוטומטית כשעוזב. בסרגל המנחה "👥 מחוברים: X / Y" — שקט, לא קופץ, עובד גם ל-40. מצב בדיקה לא מושפע
   v58 - מסך השיתוף: "קישור השיתוף פעיל" → "🔗 החידון משותף" (מצב קבוע, לא מתג מטעה). הוסר "ביטול שיתוף" מכל המצבים (חסר ערך — העותקים בלתי-נגיעים). נשארה רק "הסרה מהספרייה" (הפעולה היחידה עם תוצאה אמיתית) + שורת הסבר גלויה + i
@@ -160,7 +161,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v60</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v61</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -545,6 +546,7 @@ input:focus{border-color:var(--gold); outline:none;}
   <button onclick="hostSkip()">⏭️ הבא</button>
   <button onclick="hostToggleMusic()" id="music-toggle">🔊 מוזיקה</button>
   <button onclick="hostToggleBg()" id="bg-toggle" style="display:none;">🖼️ רקע</button>
+  <button onclick="showReturnQR()">📲 קוד חזרה</button>
   <button onclick="hostJumpFinish()">🏁 סיום</button>
   <span id="presence-counter" style="display:none; font-size:13px; color:var(--ink-dim); align-self:center; margin-inline-start:auto; white-space:nowrap;"></span>
 </div>
@@ -2821,6 +2823,39 @@ function restartGame(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(f
 function finishToList(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; refreshMyList(); }
 // יצירת חידון חדש ישירות ממסך הסיום (אותו ניקוי מצב משחק, ואז newQuiz)
 function newQuizFromGame(){ clearInterval(hostTimer); stopGameMusic(); applyGameBg(false); $('host-bar').style.display='none'; $('solo-bar').style.display='none'; $('solo-badge').style.display='none'; $('ingame-credit').style.display='none'; newQuiz(); }
+
+// מציג overlay עם QR גדול + קוד, כדי שמשתתף שעף יוכל לחזור למשחק (פריט 10)
+function showReturnQR(){
+  const old = $('return-qr-overlay'); if (old) old.remove();
+  const code = playCode || topic;
+  if (!code) return;
+  const baseUrl = location.origin.startsWith('http') ? (location.origin + location.pathname) : '';
+  const joinUrl = baseUrl ? (baseUrl + '?game=' + code) : '';
+
+  const ov = document.createElement('div'); ov.id='return-qr-overlay';
+  ov.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.82); display:flex; align-items:center; justify-content:center; z-index:10000; padding:20px;';
+  ov.onclick = (e)=>{ if(e.target===ov) ov.remove(); };  // לחיצה ברקע סוגרת
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--card); border-radius:20px; padding:28px 26px; text-align:center; max-width:420px; width:100%;';
+
+  let html = '<div style="font-family:\'Secular One\'; font-size:24px; color:var(--gold); margin-bottom:6px;">📲 חזרה למשחק</div>';
+  html += '<div style="font-size:14px; color:var(--ink-dim); margin-bottom:18px; line-height:1.5;">מי שיצא מהמשחק — סרקו את הקוד או היכנסו עם המספר כדי לחזור עם הניקוד שנצבר.</div>';
+  if (joinUrl){
+    html += '<div style="background:#fff; padding:14px; border-radius:16px; display:inline-block; margin-bottom:16px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=2&data=' + encodeURIComponent(joinUrl) + '" style="display:block; width:230px; height:230px;" alt="QR לחזרה"></div>';
+  }
+  html += '<div style="font-size:15px; color:var(--ink-dim); margin-bottom:4px;">קוד המשחק:</div>';
+  html += '<div style="font-family:\'Secular One\'; font-size:42px; color:var(--gold); letter-spacing:6px; margin-bottom:18px;">' + code + '</div>';
+  box.innerHTML = html;
+
+  const closeBtn = document.createElement('button'); closeBtn.className='btn teal'; closeBtn.style.width='100%';
+  closeBtn.textContent = '✓ סגירה';
+  closeBtn.onclick = ()=>ov.remove();
+  box.appendChild(closeBtn);
+
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+}
 
 function saveNow(){
   if (!myStoreKey){ alert('יש להתחבר עם Google כדי לשמור.'); return; }
