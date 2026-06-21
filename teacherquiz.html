@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v73 - ליטוש UI לקוד ולשיתוף: (א) הוסרה שורת "קוד החידון" מראש העורך — כפילות מיותרת (הקוד כבר מופיע בכרטיס ובפאנל השיתוף). כל הקריאות ל-edit-code הוסרו. (ב) הוסר ה-i ליד הסבר השיתוף. במקומו כותרת מאוחדת מעל שתי דרכי השיתוף: "שתי דרכים לשתף — שתיהן יוצרות עותק אצל מי שמקבל, ואי אפשר לבטל: 📋 קוד להכתבה / 🔗 קישור ללחיצה". האזהרה על אי-אפשרות הביטול נשמרה (גלויה, בלי i). תוויות הקוד והקישור קוצרו כי הכותרת מסבירה. (ג) דיאלוג הקבלה תוקן — "קיבלתם חידון! / מישהו שיתף איתכם" היה מטעה לקוד ציבורי (לא שיתוף אישי). עכשיו ניטרלי: "הוספת חידון" + שם + מספר שאלות + "הוספה לחידונים שלי". הוסרה שורת "שותף על ידי". נוסח אחיד לשני המסלולים (קוד וקישור)
   v72 - קוד-תצוגה אנושי לחידון (6 תווים) במקום 4 ספרות: כל חידון מקבל ביצירה קוד קבוע בן 6 תווים (אותיות+ספרות בלי תווים מבלבלים, genDisplayCode), ייחודי גלובלית מול נתיב חדש codes/. זהו הקוד היחיד שהמשתמש רואה — בכרטיס וברשימה ובעורך — במקום 4-הספרות, שהן מעתה מפתח-אחסון פנימי בלבד (teachers/{key}/{4ספרות} לא השתנה — כלל קשיח). שלושה קודים נפרדים במערכת: מפתח-אחסון (4 ספרות, פנימי), קוד-תצוגה (6 תווים, קבוע, מה שהמשתמש משתף), וקוד-משחק (playCode, מתחלף בכל משחק, מה שהתלמיד מקליד). שיתוף: לחיצת "שיתוף" מציגה אזהרה (העותקים אצל המקבלים בלתי-נגיעים, אין ביטול), ואז מפרסמת ל-shared/{shareId} כרגיל וגם רושמת codes/{displayCode}→shareId (אינדקס, מצביע ל-shareId; התוכן ב-shared/). פאנל השיתוף מציג קוד בולט (העתקה) כאפשרות ראשית + קישור כאפשרות שנייה. קבלה: שדה הבית מקבל קוד 6-תווים (openSharedByCode → codes/ → openSharedById), וגם קישור/shareId גולמי עדיין עובדים כ-fallback. ensureDisplayCode — רשת ביטחון עצלה לחידון בלי קוד, רק בפתיחת החידון עצמו, לא בטעינת הרשימה (לא הופך צפייה לכתיבה גורפת). syncShareCopies הוא המקום היחיד שכותב codes/ — לכל מצב שיתוף
   v71 - תיקון התחברות Google באייפון (אומת מול יועץ GPT): באייפון signInWithPopup לא אמין (כל הדפדפנים WebKit), והנפילה ל-redirect כ-fallback יצרה מצב לא-עקבי של "לשונית שגיאה אבל מחובר". התיקון: (א) זיהוי iOS (isIOS, כולל אייפד שמתחזה ל-Mac) — באייפון signInWithRedirect *ישירות*, בלי לנסות popup קודם. מחשב/אנדרואיד — popup כרגיל. (ב) getRedirectResult מלא — מציג שגיאה ברורה למשתמש + console.error לדיבוג, במקום catch ריק. (ג) תיקון אובדן חידון-אורח: ב-redirect הדף נטען מחדש וה-quiz בזיכרון אובד. עכשיו אורח באייפון ששומר — החידון נשמר ב-sessionStorage לפני ההפניה ומשוחזר אחרי החזרה (restorePendingGuestQuiz, נקרא מ-onAuthStateChanged). הערה: הפתרון היציב המלא לבעיות Safari/ITP הוא Custom Auth Domain על דומיין משלי (לא github.io) — פרויקט עתידי
   v70 - שני שיפורים לרשימת החידונים: (א) הצמדה לראש (📌) — פריט חדש בתפריט ⋯ מצמיד חידון לראש הרשימה מעל מיון-העדכון. נעוצים מסומנים ב-📌 ליד השם. ההצמדה נשמרת בנתיב נפרד teachers_meta/{key}/pinned (נתיב חדש, לא נוגע ב-teachers/) כדי ש-saveQuiz — שעושה set על הרשומה — לא ידרוס אותה. מיון: נעוצים קודם, ובכל קבוצה לפי עדכון אחרון. (ב) חיפוש לפי שם — שדה חיפוש בראש הרשימה, מסנן לפי כותרת בלבד (לא תוכן — נמנע מרעש). מופיע רק כשיש 6+ חידונים. בכוונה לא רב-שדה/מתקדם: כותרת מכסה את רוב המקרים, והרחבה תיעשה רק על בסיס משוב אמיתי
@@ -205,7 +206,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v72</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v73</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -322,7 +323,6 @@ input:focus{border-color:var(--gold); outline:none;}
       <button class="btn teal" onclick="openImport()" style="font-size:16px;">🤖 יצירת חידון באמצעות בינה מלאכותית</button>
       <div style="font-size:13px; color:var(--ink-dim); margin-top:12px;">או בנו את החידון בעצמכם בהמשך העמוד.</div>
     </div>
-    <div style="text-align:center; font-size:13px; color:var(--ink-dim); margin-bottom:16px;">קוד החידון: <span id="edit-code" style="color:var(--gold); font-weight:700; letter-spacing:1px;">----</span></div>
 
     <div class="field">
       <label>שם החידון</label>
@@ -1131,7 +1131,6 @@ async function newQuiz(){
   resetAiMeta();             // חידון חדש — בחירות AI מתאפסות (פריט 1)
   aiCardDismissed = false;   // חידון חדש — הכרטיס יוצג שוב
   quiz.questions.push({ text:'', answers:['',''], correct:0 });  // שאלה ריקה ראשונה — לפני הרינדור, כדי לרנדר פעם אחת בלבד
-  $('edit-code').textContent = quiz.displayCode || '——';
   renderEditor();   // רינדור יחיד עם המצב הסופי (בלי רינדור כפול ובלי הבהוב)
   show('editor');
   saveQuiz();
@@ -1169,7 +1168,6 @@ function openExisting(code, data){
   if (data.aiMeta) quiz.aiMeta = data.aiMeta;   // משמרים את ה-meta באובייקט
   loadAiMeta(data.aiMeta);                       // טוענים את הבחירות לשדות (פריט 1)
   aiCardDismissed = false;   // פתיחת חידון — מאפסים; אם יש בו תוכן הכרטיס ממילא לא יוצג
-  $('edit-code').textContent = quiz.displayCode || '——';
   ensureDisplayCode();       // חידון שאין לו עדיין קוד-תצוגה — מקבל אחד (רשת ביטחון, לא מיגרציה גורפת)
   renderEditor();
   show('editor');
@@ -1185,7 +1183,6 @@ function playExisting(code, data){
     share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
   if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
-  $('edit-code').textContent = quiz.displayCode || '——';
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
   prePlay();        // עוברים למסך הכנה (מוזיקה ורקע) לפני הלובי
 }
@@ -1209,7 +1206,6 @@ function testExisting(code, data){
     share: data.share || { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null }
   };
   if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
-  $('edit-code').textContent = quiz.displayCode || '——';
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
   previewQuiz();    // עוברים ישר לבדיקה (ללא תלמידים)
 }
@@ -2037,7 +2033,6 @@ async function genDisplayCode(){
 async function ensureDisplayCode(){
   if (!quiz || quiz.displayCode) return;
   quiz.displayCode = await genDisplayCode();
-  if ($('edit-code')) $('edit-code').textContent = quiz.displayCode;  // עדכון התצוגה אחרי הקצאה עצלה
   saveQuiz();
 }
 
@@ -2079,11 +2074,12 @@ function shareStatusBox(titleText, sh){
   const t = document.createElement('span'); t.style.cssText='font-size:14px; font-weight:700; color:var(--teal);'; t.textContent=titleText;
   head.appendChild(t);
   box.appendChild(head);
-  // שורת הסבר גלויה + i לפירוט — מסבירה למה אין "ביטול שיתוף" (העותקים בלתי-נגיעים)
+  // כותרת מאוחדת לשתי דרכי השיתוף + אזהרה שאי אפשר לבטל (במקום ה-i שהוסר)
   const explain = document.createElement('div');
-  explain.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:10px; line-height:1.5;';
-  explain.innerHTML = 'השיתוף יוצר עותקים אצל מי שקיבל — אותם אי אפשר למחוק. ' +
-    '<span class="info-i" onclick="showInfo(event, \'כששיתפתם חידון, כל מי שפתח את הקישור קיבל עותק עצמאי משלו. העותקים האלה שייכים להם ולא ניתן למחוק אותם או לבטל אותם, גם אם תפסיקו לשתף. השיתוף הוא חד-פעמי מעצם טבעו — ברגע שנשלח, הוא נשלח.\')" style="cursor:pointer;">i</span>';
+  explain.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:12px; line-height:1.6;';
+  explain.innerHTML = 'שתי דרכים לשתף — שתיהן יוצרות עותק אצל מי שמקבל, ואי אפשר לבטל:' +
+    '<div style="margin-top:6px;">📋 <b style="color:var(--ink);">קוד</b> — להכתבה בעל-פה או על הלוח</div>' +
+    '<div style="margin-top:2px;">🔗 <b style="color:var(--ink);">קישור</b> — ללחיצה בוואטסאפ</div>';
   box.appendChild(explain);
 
   if (sh.mode === 'specific'){
@@ -2105,11 +2101,11 @@ function shareStatusBox(titleText, sh){
     box.appendChild(addRow);
   }
 
-  // קוד השיתוף האנושי — הדרך המומלצת לשיתוף (אפשר להכתיב בעל-פה / לכתוב על הלוח)
+  // קוד השיתוף האנושי — אפשרות ראשית
   if (quiz && quiz.displayCode){
-    const codeWrap = document.createElement('div'); codeWrap.style.cssText='margin-top:10px; text-align:center;';
+    const codeWrap = document.createElement('div'); codeWrap.style.cssText='margin-top:6px; text-align:center;';
     const codeLabel = document.createElement('div'); codeLabel.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:4px;';
-    codeLabel.textContent='קוד לשיתוף — מי שיקליד אותו יקבל עותק של החידון';
+    codeLabel.textContent='📋 קוד לשיתוף';
     codeWrap.appendChild(codeLabel);
     const codePill = document.createElement('div'); codePill.style.cssText='display:inline-flex; align-items:center; gap:10px; background:var(--card); border:1px solid rgba(255,255,255,.15); border-radius:12px; padding:8px 16px;';
     const codeTxt = document.createElement('span'); codeTxt.style.cssText="font-family:'Secular One'; font-size:26px; letter-spacing:.12em; color:var(--gold);";
@@ -2128,9 +2124,6 @@ function shareStatusBox(titleText, sh){
     copyBtn.onclick=()=>copyShareLink(copyBtn, sh.shareId);
     linkRow.appendChild(copyBtn);
     box.appendChild(linkRow);
-    const hint = document.createElement('div'); hint.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; text-align:center;';
-    hint.textContent='או שלחו קישור ללחיצה. כך או כך — המקבל מקבל עותק לעריכה.';
-    box.appendChild(hint);
   }
 
   // תת-אפשרות ספרייה (רק ב"לכולם")
@@ -2418,15 +2411,12 @@ function showSharedDialog(shareId, data){
   box.style.cssText = 'background:var(--card); border:1px solid rgba(255,255,255,.15); border-radius:18px; padding:26px 24px; max-width:380px; width:100%; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.5);';
 
   // כותרת
-  let html = '<div style="font-size:42px; margin-bottom:8px;">📩</div>';
-  html += '<div style="font-family:\'Secular One\'; font-size:22px; color:var(--gold); margin-bottom:4px;">קיבלתם חידון!</div>';
-  html += '<div style="font-size:14px; color:var(--ink-dim); margin-bottom:18px;">מישהו שיתף איתכם חידון</div>';
+  let html = '<div style="font-size:42px; margin-bottom:8px;">📥</div>';
+  html += '<div style="font-family:\'Secular One\'; font-size:22px; color:var(--gold); margin-bottom:14px;">הוספת חידון</div>';
   // כרטיס פרטים
   html += '<div style="background:rgba(255,255,255,.05); border-radius:12px; padding:16px; margin-bottom:18px; text-align:right;">';
   html += '<div style="font-size:13px; color:var(--ink-dim);">שם החידון</div>';
   html += '<div style="font-size:18px; color:var(--ink); font-weight:700; margin-bottom:10px;">' + escapeHtml(title) + '</div>';
-  html += '<div style="font-size:13px; color:var(--ink-dim);">שותף על ידי</div>';
-  html += '<div style="font-size:16px; color:var(--ink); margin-bottom:10px;">' + escapeHtml(sharerName) + '</div>';
   html += '<div style="font-size:13px; color:var(--ink-dim);">מספר שאלות</div>';
   html += '<div style="font-size:16px; color:var(--ink);">' + qCount + ' שאלות</div>';
   html += '</div>';
