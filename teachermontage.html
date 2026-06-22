@@ -150,7 +150,7 @@ const fauth = (firebase.apps && firebase.apps.length) ? firebase.auth() : null;
 <body>
 
 <!-- תג גרסה (גלובלי לכל המסכים) -->
-<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">montage v79</div>
+<div style="position:fixed; top:8px; right:10px; z-index:60; font-family:'Heebo',sans-serif; font-size:12px; color:rgba(255,255,255,.5); background:rgba(0,0,0,.35); padding:3px 9px; border-radius:8px; pointer-events:none;">montage v80</div>
 
 <!-- מסך 1: שער כניסה -->
 <div class="screen on" id="welcome">
@@ -1439,13 +1439,31 @@ function buildSlideBgChooser(initBg, initGrad, initImage){
   lbl.textContent = 'רקע השקופית';
   wrap.appendChild(lbl);
 
+  // --- שני טאבים: בחירה בין רקע צבעוני לתמונה (זו בחירה, לא צבירה) ---
+  const tabs = document.createElement('div');
+  tabs.style.cssText = 'display:flex; gap:8px; margin-bottom:12px;';
+  const tabGrad = document.createElement('button');
+  const tabImg = document.createElement('button');
+  [tabGrad, tabImg].forEach(t => { t.className = 'btn ghost'; t.style.cssText = 'flex:1; font-size:14px; padding:10px; font-weight:700;'; });
+  tabGrad.textContent = '🎨 רקע צבעוני';
+  tabImg.textContent = '🖼️ תמונה משלי';
+  tabGrad.onclick = () => { bg = 'gradient'; paint(); };
+  tabImg.onclick = () => {
+    bg = 'upload';
+    // אם אין עדיין תמונה — נפתח מיד בורר
+    if (!img){ fileInput.click(); }
+    paint();
+  };
+  tabs.appendChild(tabGrad); tabs.appendChild(tabImg);
+  wrap.appendChild(tabs);
+
   // קלט קובץ נסתר
   const fileInput = document.createElement('input');
   fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.style.display = 'none';
   fileInput.onchange = async () => {
     const f = fileInput.files && fileInput.files[0];
     fileInput.value = '';
-    if (!f) return;
+    if (!f){ paint(); return; }
     try {
       img = await fileToDataURLForSlide(f);
       bg = 'upload';
@@ -1454,9 +1472,10 @@ function buildSlideBgChooser(initBg, initGrad, initImage){
   };
   wrap.appendChild(fileInput);
 
-  // שורת בחירת gradient-ים מוכנים
+  // --- אזור א': דגימי gradient (מוצג רק כשהטאב הצבעוני פעיל) ---
+  const gradArea = document.createElement('div');
   const gradRow = document.createElement('div');
-  gradRow.style.cssText = 'display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px;';
+  gradRow.style.cssText = 'display:flex; gap:7px; flex-wrap:wrap;';
   SLIDE_GRADIENTS.forEach(g => {
     const sw = document.createElement('button');
     sw.className = 'grad-swatch';
@@ -1464,41 +1483,48 @@ function buildSlideBgChooser(initBg, initGrad, initImage){
     sw.title = g.name;
     sw.style.background = g.css;
     sw.style.backgroundSize = '300% 300%';
-    sw.onclick = () => { bg = 'gradient'; grad = g.id; paint(); };
+    sw.onclick = () => { grad = g.id; paint(); };
     gradRow.appendChild(sw);
   });
-  wrap.appendChild(gradRow);
+  gradArea.appendChild(gradRow);
+  wrap.appendChild(gradArea);
 
-  // כפתור העלאת תמונה
+  // --- אזור ב': תמונה (מוצג רק כשטאב התמונה פעיל) ---
+  const imgArea = document.createElement('div');
+  const preview = document.createElement('div');
+  preview.style.cssText = 'width:100%; height:120px; border-radius:12px; background-size:cover; background-position:center; border:1px solid rgba(255,255,255,.15); margin-bottom:10px; display:none;';
+  imgArea.appendChild(preview);
   const upBtn = document.createElement('button');
   upBtn.className = 'btn ghost';
   upBtn.style.cssText = 'width:100%; font-size:14px; padding:10px;';
   upBtn.onclick = () => { fileInput.click(); };   // תמיד פותח בורר — מאפשר החלפה
-  wrap.appendChild(upBtn);
-
-  // חיווי
-  const info = document.createElement('div');
-  info.style.cssText = 'font-size:12px; color:var(--teal); margin-top:8px; min-height:16px; text-align:center;';
-  wrap.appendChild(info);
+  imgArea.appendChild(upBtn);
+  wrap.appendChild(imgArea);
 
   function paint(){
-    // הדגשת ה-gradient הנבחר (רק אם הרקע הוא gradient)
+    // הדגשת הטאב הפעיל
+    const gOn = (bg === 'gradient');
+    tabGrad.style.background = gOn ? 'var(--gold)' : '';
+    tabGrad.style.color = gOn ? '#1a2342' : '';
+    tabImg.style.background = !gOn ? 'var(--gold)' : '';
+    tabImg.style.color = !gOn ? '#1a2342' : '';
+    // הצגת האזור המתאים בלבד
+    gradArea.style.display = gOn ? 'block' : 'none';
+    imgArea.style.display = gOn ? 'none' : 'block';
+    // הדגשת ה-gradient הנבחר
     [...gradRow.children].forEach(c => {
-      const on = (bg === 'gradient' && c.dataset.grad === grad);
+      const on = (c.dataset.grad === grad);
       c.style.outline = on ? '3px solid var(--gold)' : '2px solid rgba(255,255,255,.15)';
       c.style.transform = on ? 'scale(1.08)' : 'scale(1)';
     });
-    // מצב כפתור התמונה
-    if (bg === 'upload' && img){
-      upBtn.textContent = '📤 תמונה משלי ✓ (החלפה)';
-      upBtn.style.background = 'rgba(255,209,102,.15)';
-      upBtn.style.borderColor = 'rgba(255,209,102,.5)';
-      info.textContent = '✓ תמונה נבחרה כרקע';
+    // תצוגת התמונה
+    if (img){
+      preview.style.display = 'block';
+      preview.style.backgroundImage = 'url("' + img + '")';
+      upBtn.textContent = '🔄 החלפת התמונה';
     } else {
-      upBtn.textContent = '📤 העלאת תמונה משלי';
-      upBtn.style.background = '';
-      upBtn.style.borderColor = '';
-      info.textContent = '';
+      preview.style.display = 'none';
+      upBtn.textContent = '📤 בחירת תמונה';
     }
   }
   paint();
