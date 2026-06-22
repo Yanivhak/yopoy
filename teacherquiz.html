@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v103 - ארגון-מחדש של אזור הפעולות בעורך: היררכיה ברורה בארבעה אזורים, שיתוף קומפקטי: בעקבות משוב מפורט — היו 8+ פעולות באותו אזור בלי היררכיה, השיתוף תפס יותר מקום מההפעלה (הפוך מהחשיבות), ולא הייתה הפרדה ויזואלית בין "עריכה" ל"הפעלה". המבנה החדש: (1) ✏️ עריכת החידון — כל התוכן (שם/זמן/מבנה/שאלות/הוספת שאלה/⚙️ אפשרויות נוספות נשארות כאן). "נשמר אוטומטית ✓" הועבר מאמצע-הזרימה לשורה שקטה ליד כותרת העורך (מידע-מערכת, לא בזרימה). (2) קו מפריד חזק (zone-div) — הפרדה ויזואלית בין עריכה להפעלה, השינוי החשוב ביותר. (3) 🎮 בדיקה והפעלה — כרטיס אחד בולט (launch-card, רקע טורקיז עדין): "▶️ התחלת משחק" גדול+טורקיז, ומתחתיו "👁️ תצוגה מקדימה" כקישור משני-אך-גלוי (לא נקבר — בדיקה היא חלק מזרימת-העבודה, לא תחזוקה). (4) 🔗 שיתוף — גלוי כאזור שלישי (מנוע צמיחה, לא נקבר באקורדיון), אבל הוקטן דרמטית: renderSharePanel נכתב מחדש משורה-אחת קומפקטית — קוד + "העתקת קוד" + "העתקת קישור" בשורה אחת (במקום כרטיס ענק עם כפתור-קישור-ירוק-מלא-רוחב). אין "ביטול שיתוף" (v58 — עותקים שנלקחו בלתי-נגישים). (5) ⚙️ ניהול — אקורדיון סגור (שמירה ידנית · ספרייה · ניקוי). פלטת צבעים: ראשי=טורקיז, משני=אפור, מסוכן(ניקוי)=אדום-עדין. shareStatusBox הישן (הכרטיס הגדול) כבר לא בשימוש מהעורך
   v102 - "בניית חידון חדש" מהספרייה + תיקון: מורה מחובר נחת על מסך-כניסה במקום על הרשימה: (א) הבאג — קישור "החידונים שלי" (מהספרייה) הוביל ל-teacherquiz.html שנוחת על מסך-הבית (home), ש*נראה* כמו מסך-התחברות (כפתור Google, כניסה כאורח) למרות שהמורה כבר מחובר — כי onAuthStateChanged עדכן את תצוגת-ההתחברות אבל לא ניווט לרשימה. התיקון: onAuthStateChanged, כשהמשתמש מחובר והמסך הפעיל הוא home (ואין משחק/שיתוף/חידון-חדש ממתינים), קורא goShowList() ומעביר ישר לרשימת החידונים. מוגן: רק כש-home פעיל (לא יוצר/לובי) ורק בלי פעולה ממתינה — כך re-fire של onAuthStateChanged לא יזרוק מורה שכבר עובד בחזרה לרשימה. (ב) פיצ'ר חדש — "➕ בניית חידון חדש" בתפריט הספרייה: הספרייה מקשרת ל-teacherquiz.html?new=1; הקובץ קורא את הפרמטר, מנקה אותו מהכתובת (replaceState, כדי שרענון לא יפתח שוב), ופותח חידון חדש אחרי שההתחברות נפתרה (pendingNewQuiz + maybeStartPendingNewQuiz, נקרא מ-onAuthStateChanged). pendingNewQuiz מוצהר לפני ה-IIFE של initJoinFromURL כדי למנוע TDZ בטעינה עם ?new=1. (נדרש גם library v5)
   v101 - תפריט ניווט דינמי לכל מסך (במקום תפריט גלובלי עם הסתרה-מותנית): המשתמש זיהה שהתפריט "בנוי לא טוב" — אותו תפריט קבוע בכל הדפים, כש"החידונים שלי" מופיע גם במסך "החידונים שלי", ו"עריכה" מופיע בעורך. הבעיה: עד כה היה תפריט סטטי אחד עם תנאי-הסתרה (display:none) לכל פריט — שביר, וכל שינוי דרש עוד if. עכשיו: updateNavMenu בונה את הרשימה *מחדש* בכל מסך (nav-list מתרוקן ומתמלא דינמית), ומציג רק את היעדים שאינם המסך הנוכחי. הכללים: (א) "עריכת החידון" — רק כשיש חידון פתוח (hasQuiz) ולא כשכבר בעורך. (ב) "החידונים שלי" — בכל מסך חוץ מ-mylist. (ג) "ספרייה" — תמיד (קובץ נפרד, אין מסך-ספרייה פנימי להחריג). (ד) "יציאה למצגת" — תמיד אחרונה ומובחנת, אלא אם embed=1 (קומבו). התוצאה: בעורך התפריט מציג רק חידונים-שלי+ספרייה+יציאה (לא עריכה); ב-pregame/lobby עם חידון פתוח מציג גם עריכה; ב-mylist ו-home אין תפריט כלל. בחרתי בנייה-דינמית של תפריט-אחד ולא שכפול תפריט בכל מסך — כדי שלא יהיה צורך לעדכן 4 מקומות בכל שינוי עתידי (מקור-אמת אחד). ניקוי: קוד ה-embed הישן שהסתיר nav-exit ב-querySelector הוסר (updateNavMenu בודק embed בעצמו); הוסרו השאריות nav-edit הסטטי ו-editor-main-menu-link
   v100 - בחירת חשבון Google בכל התחברות: אחרי שתיקון ה-popup (v99) עבד, התברר ש-Google מדלג אוטומטית על מסך בחירת-החשבון ומחבר לחשבון הפעיל ("מסך לבן ואז מחובר בלי לבחור"). זה תקין אך בעייתי בבית ספר — מורים רבים מנהלים חשבון פרטי + חשבון מוסדי על אותו מכשיר, ובלי בחירה הם עלולים ליצור חידונים תחת החשבון הלא-נכון. התיקון: provider.setCustomParameters({ prompt: 'select_account' }) בשתי נקודות-ההתחברות (signInGoogle + guestSaveWithGoogle) — Google יציג תמיד את מסך בחירת-החשבון, גם אם המשתמש כבר מחובר. עלות: קליק נוסף; תועלת: מניעת בלבול "החידונים שלי נעלמו" (כי הם תחת חשבון אחר). העדפת שליטה על נוחות כי עלות הטעות גבוהה
@@ -180,6 +181,20 @@ input:focus{border-color:var(--gold); outline:none;}
 .ans-row .rem{flex:0 0 auto; background:none; border:none; color:var(--coral); cursor:pointer; font-size:18px;}
 .addans{font-size:14px; color:var(--teal); background:none; border:1px dashed rgba(46,196,182,.6); border-radius:8px; padding:7px 14px; cursor:pointer; font-family:'Heebo'; margin-top:4px;}
 .save-state{font-size:13px; color:var(--ink-dim); margin:8px 0;}
+/* ===== אזורי העורך — הפרדה ויזואלית חזקה בין עריכה / הפעלה / שיתוף / ניהול ===== */
+.zone-div{height:1px; background:rgba(255,255,255,.12); margin:28px 0 0;}
+.zone-title{display:flex; align-items:center; gap:8px; font-family:'Heebo'; font-size:13px; font-weight:800; letter-spacing:.04em; color:var(--ink-dim); text-transform:none; margin:20px 0 14px; text-align:right;}
+.zone-title::after{content:''; flex:1; height:1px; background:rgba(255,255,255,.08);}
+/* כרטיס "בדיקה והפעלה" — האזור הראשי, בולט */
+.launch-card{background:rgba(46,196,182,.07); border:1px solid rgba(46,196,182,.28); border-radius:16px; padding:20px; text-align:center;}
+.launch-card .ready{font-size:14px; color:var(--ink-dim); margin-bottom:14px;}
+.launch-card .btn.teal{font-size:19px; padding:15px 30px;}
+.launch-preview{margin-top:12px;}
+.launch-preview button{background:none; border:none; color:var(--ink-dim); font-family:'Heebo'; font-size:14px; font-weight:700; cursor:pointer; text-decoration:underline; padding:6px 12px;}
+.launch-preview button:hover{color:var(--ink);}
+/* שיתוף קומפקטי — שורה אחת */
+.share-compact{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;}
+.share-compact .codeval{font-family:'Secular One'; font-size:22px; letter-spacing:.1em; color:var(--gold);}
 .teamline{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
 .teamline input{flex:1;}
 .help{font-size:13px; color:var(--ink-dim); margin-top:8px; line-height:1.5;}
@@ -274,7 +289,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v102</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v103</span></div>
 
 <!-- תפריט ניווט — נבנה דינמית לכל מסך (updateNavMenu): מציג רק את היעדים שאינם המסך הנוכחי -->
 <div id="nav-menu">
@@ -398,7 +413,10 @@ input:focus{border-color:var(--gold); outline:none;}
 <!-- ============ עורך החידון ============ -->
 <div class="screen" id="editor">
   <div class="wrap">
-    <h2>✏️ עריכת החידון</h2>
+    <div style="display:flex; align-items:baseline; justify-content:center; gap:12px; flex-wrap:wrap;">
+      <h2 style="margin:0;">✏️ עריכת החידון</h2>
+      <span class="save-state" id="save-state" style="margin:0;">נשמר אוטומטית ✓</span>
+    </div>
     <div id="guest-editor-banner" style="display:none; background:rgba(192,57,43,.18); border:2px solid #e74c3c; border-radius:14px; padding:14px 18px; margin-bottom:18px; text-align:center;">
       <div style="font-size:16px; font-weight:800; color:#ff9a8d; margin-bottom:4px;">⚠️ מצב אורח — החידון לא נשמר</div>
       <div style="font-size:14px; color:var(--ink); margin-bottom:10px;">העבודה שלכם תימחק כשתסגרו את הדף. כדי לשמור את החידון לצמיתות ולהציג אותו שוב בעתיד — התחברו עם חשבון Google.</div>
@@ -463,29 +481,34 @@ input:focus{border-color:var(--gold); outline:none;}
       </div>
     </details>
 
-    <p class="save-state" id="save-state">נשמר אוטומטית ✓</p>
+    <!-- ═══ קו מפריד חזק: סוף עריכה, תחילת הפעלה ═══ -->
+    <div class="zone-div"></div>
 
-    <!-- בלוק הפעלה -->
-    <div class="row" style="margin-top:14px;">
+    <!-- ───── אזור 1: בדיקה והפעלה (האזור הראשי) ───── -->
+    <div class="zone-title">🎮 בדיקה והפעלה</div>
+    <div class="launch-card">
+      <div class="ready">החידון מוכן. המשתתפים יצטרפו בעזרת קוד או קישור.</div>
       <button class="btn teal" onclick="prePlay()">▶️ התחלת משחק עם הקהל</button>
-      <button class="btn" onclick="previewQuiz()" style="background:var(--violet); color:#0b0b2a;">👁️ בדיקה (ללא משתתפים)</button>
+      <div class="launch-preview">
+        <button onclick="previewQuiz()">👁️ תצוגה מקדימה (בדיקה ללא משתתפים)</button>
+      </div>
     </div>
 
-    <!-- בלוק פעולות-משנה: שמירה · שיתוף · ספרייה — שורה אחת, הסבר קצר מעל -->
-    <div style="margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08);">
-      <div style="font-size:13px; color:var(--ink-dim); line-height:1.5; text-align:center; margin-bottom:12px; max-width:440px; margin-inline:auto;">
-        שמירה נעשית אוטומטית. שיתוף — קישור לעותק עצמאי למורה אחר. ספרייה — חשיפה לכל המורים. <span class="info-i" onclick="showInfo(event, 'שיתוף: קישור שאפשר לשלוח למי שתרצו — המקבל מקבל עותק עצמאי משלו לעריכה ולמשחק, והחידון שלכם לא משתנה. ספרייה: הוספה לספרייה הציבורית הופכת את החידון לזמין לכל המורים במערכת — הם ימצאו, יעתיקו לעצמם וישחקו. אפשר להסיר בכל עת.')">i</span>
-      </div>
-      <div class="row" style="gap:8px;">
-        <button class="btn ghost sm" onclick="saveNow()">💾 שמירה</button>
-        <span id="share-panel"></span>
+    <!-- ───── אזור 2: שיתוף (מנוע צמיחה — גלוי, אך קומפקטי) ───── -->
+    <div class="zone-title">🔗 שיתוף עם מורים אחרים</div>
+    <div id="share-panel"></div>
+
+    <!-- ───── אזור 3: ניהול (אקורדיון סגור — תחזוקה) ───── -->
+    <details class="adv-box" style="margin-top:8px;">
+      <summary style="cursor:pointer; font-size:14px; font-weight:500; color:var(--ink-dim); padding:10px 14px; background:rgba(255,255,255,.04); border-radius:12px; list-style:none; display:flex; align-items:center; gap:8px;">⚙️ ניהול החידון <span style="font-size:12px; font-weight:400; color:var(--ink-dim); opacity:.7;">(שמירה, ספרייה, ניקוי)</span></summary>
+      <div style="padding-top:16px; display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <button class="btn ghost sm" onclick="saveNow()">💾 שמירה ידנית</button>
         <span id="library-panel"></span>
+        <div id="clear-all-wrap" style="display:none;">
+          <button class="btn ghost sm" onclick="clearAllQuiz()" style="color:var(--coral); font-size:13px; opacity:.85;">🗑️ ניקוי החידון והתחלה מחדש</button>
+        </div>
       </div>
-    </div>
-
-    <div id="clear-all-wrap" style="text-align:center; margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,.08); display:none;">
-      <button class="btn ghost sm" onclick="clearAllQuiz()" style="color:var(--ink-dim); font-size:13px; opacity:.8;">🗑️ ניקוי החידון והתחלה מחדש</button>
-    </div>
+    </details>
   </div>
 </div>
 
@@ -2422,14 +2445,36 @@ function renderSharePanel(){
   const sh = ensureShareObj();
   panel.innerHTML = '';
 
-  // --- מצב נוכחי ---
-  if (sh.mode === 'specific'){
-    panel.appendChild(shareStatusBox('🔒 משותף עם אנשים ספציפיים', sh));
-  } else if (sh.mode === 'public'){
-    panel.appendChild(shareStatusBox(justCopiedLink ? '✓ הועתק' : '🔗 החידון משותף', sh));
+  if (sh.mode === 'public' || sh.mode === 'specific'){
+    // משותף — שורה אחת קומפקטית: קוד + העתק-קוד + העתק-קישור (לא כרטיס גדול)
+    const wrap = document.createElement('div');
+    wrap.className = 'share-compact';
+
+    if (quiz && quiz.displayCode){
+      const code = document.createElement('span'); code.className='codeval'; code.textContent = quiz.displayCode;
+      wrap.appendChild(code);
+      const cBtn = document.createElement('button'); cBtn.className='btn ghost sm'; cBtn.textContent='העתקת קוד'; cBtn.style.cssText='padding:6px 12px; font-size:13px;';
+      cBtn.onclick=()=>{ const ok=doCopyText(quiz.displayCode); const o=cBtn.textContent; cBtn.textContent= ok?'✓ הועתק':'העתקת קוד'; setTimeout(()=>{ cBtn.textContent=o; },1400); };
+      wrap.appendChild(cBtn);
+    }
+    if (sh.shareId){
+      const lBtn = document.createElement('button'); lBtn.className='btn ghost sm'; lBtn.textContent='העתקת קישור'; lBtn.style.cssText='padding:6px 12px; font-size:13px;';
+      lBtn.onclick=()=>copyShareLink(lBtn, sh.shareId);
+      wrap.appendChild(lBtn);
+    }
+    panel.appendChild(wrap);
+
+    // שורת-משנה דקה: הסבר בלבד. אין "ביטול שיתוף" — עותקים שכבר נלקחו בלתי-נגישים, הביטול חסר ערך (v58)
+    const sub = document.createElement('div');
+    sub.style.cssText='font-size:12px; color:var(--ink-dim); text-align:center; margin-top:8px; opacity:.85;';
+    sub.textContent = 'מי שמקבל את הקוד/קישור מקבל עותק עצמאי משלו.';
+    panel.appendChild(sub);
   } else {
-    // לא משותף — שיתוף בקישור בלבד (שיתוף-מייל הוסר: יצר אשליית הגנה שקרית).
-    // הקוד של מצב 'specific' נשאר כקוד מת למקרה שנרצה להחזיר בעתיד.
+    // לא משותף — הסבר קצר + כפתור אחד קטן ליצירת קישור
+    const desc = document.createElement('div');
+    desc.style.cssText='font-size:13px; color:var(--ink-dim); text-align:center; margin-bottom:10px; line-height:1.5; max-width:420px; margin-inline:auto;';
+    desc.textContent = 'שתפו את החידון עם מורים אחרים — הם יקבלו עותק עצמאי משלהם לעריכה ולמשחק.';
+    panel.appendChild(desc);
     const row = document.createElement('div'); row.style.cssText='display:flex; justify-content:center;';
     const b2 = document.createElement('button'); b2.className='btn ghost sm'; b2.textContent='🔗 יצירת קישור שיתוף'; b2.onclick=shareToEveryone;
     row.appendChild(b2);
