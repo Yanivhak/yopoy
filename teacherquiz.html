@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v115 - נעילות-אורח עקביות: (א) בעורך הוסרו שני מתגי-הטיוטה למשתמש-אורח — טיוטות הן כלי-ארגון של "החידונים שלי", חסרות-משמעות למי שלא יכול לשמור. (ב) בתפריט ה-☰ "החידונים שלי" ו"ספרייה" מוצגים לאורח כנעולים (🔒, מעומעמים, לא-לחיצים). (ג) אוחד מנגנון-המשוב: כל פריט נעול (תפריט + קופסאות שיתוף/ספרייה בעורך) מציג הודעה-צפה אחידה "🔒 התחברו כדי לגשת" שעובדת בכל מסך (החליף את הבהוב-הבאנר מ-v114 שלא עבד בלובי/הכנה). guestLockToast החליף flashGuestBanner
+  v114 - מסך-הבית פוצל לשני מצבים לפי צורך מנטלי שונה (אורח "תן לי להתחיל" מול מחובר "איפה החידונים שלי"): מצב לא-מחובר מציג *שני כפתורים בלבד* (התחברות עם Google · כניסה כאורח) — הוסרו כותרת-המשנה, שלושת כפתורי-הפעולה ושדה-הקוד, שעברו ל#logged-in-home שמוצג רק כשמחובר. אורח נכנס ישר לעורך (כבר היה). בלי הבהוב: כל מצב מוסתר עד תגובת Firebase. נוסף שם-חשבון קבוע למעלה-במרכז (#user-badge) שנראה בכל מסך כשמחובר — מידע בלבד (לדעת באיזה חשבון, חשש v100). שורת-השם בתפריט (v113) הוסרה (מיותרת מול השם הקבוע); כפתור היציאה נשאר. בעורך-אורח שיתוף/ספרייה הוצגו נעולים (🔒, מעומעמים) במקום alert מפתיע
   v113 - המשך שיפורי מסך-הבית/אורח + יציאה-מחשבון בתפריט: (א) שורת-הסטטוס בעורך מציגה למשתמש-אורח "מצב אורח — לא נשמר" כבר מרגע הכניסה (קודם הציגה רגע "✓ נשמר אוטומטית" עד ההקלדה הראשונה — מטעה לאורח). (ב) טקסט-הביטחון "ההתחברות שומרת על המערכת בטוחה ואמינה" הועבר אל תוך אייקון i על כפתור ההתחברות (כמו ה-i בכפתור האורח), והשורה הנפרדת מתחת לכפתורים הוסרה — מסך נקי יותר, שני כפתורים מקבילים כל אחד עם i. (ג) נוסף לתפריט הניווט (☰) כפתור "🚪 יציאה מהחשבון" — רק למשתמש מחובר (לא אורח) — עם אייקון i וטקסט-צף "אפשר לצאת בכל רגע — כשתחזרו תמשיכו בדיוק מאותה נקודה.", ומעליו שורת-מצב "🟢 מחוברים כ־[שם]" שמראה את החשבון הפעיל בלי לחזור לבית (חשוב למורים עם חשבון פרטי+מוסדי, חשש v100). היציאה (signOutToHome) מתנתקת *ומנווטת לבית* — אחרת המשתמש היה נשאר תקוע בעורך בלי חשבון. הניסוח "יציאה" נבחר על פני "התנתקות" (טכני) ו"החלפת חשבון" (מרמז מעבר לחשבון אחר, בעוד הטקסט-הצף מבטיח חזרה לחשבון שלך)
   v112 - שיפורי UX במסך הבית ובמצב אורח: (א) במסך הבית כפתורי "התחברות עם Google" ו"כניסה כאורח" הוצבו זה לצד זה (flex) במקום זה-מתחת-לזה. (ב) הוחלף ה-"G" הטקסטואלי בלוגו Google האמיתי (SVG ארבע-צבעים) בתוך הכפתור. (ג) הבאנר במסך-העורך במצב אורח עוצב מחדש: היה אדום-בולט-גדול-ומאיים (rgba אדום + מסגרת אדומה 2px + כותרת ⚠️ מודגשת) — "נראה מפחיד". עכשיו קטן וברור: רקע ענבר עדין (rgba 251,188,5,.08), מסגרת דקה 1px, טקסט 13.5px, בלי כותרת-אזהרה. (ד) הטקסט שונה לנוסח מדויק יותר שמדגיש שאפשר *לבנות ולהציג* אך לא לשמור: "מצב אורח: ניתן לבנות ולהציג חידון, אך לא לשמור אותו. כשתסגרו את הדף, החידון יימחק. כדי לשמור אותו לשימוש עתידי, התחברו עם חשבון Google." (במקום "העבודה שלכם תימחק..."). (ה) כפתור התחברות קטן נשאר *תמיד* בבאנר במצב אורח. (ו) שורת-הסטטוס בראש העורך קוצרה ל"מצב אורח — לא נשמר" (הוסר "התחברו עם Google כדי לשמור" — היה מסר שמורה להתחבר בלי כפתור צמוד; הכפתור נמצא בבאנר שמתחת)
   v111 - תיקון: כניסה כללית לחידון (index → teacherquiz.html) הקפיצה אוטומטית ל"החידונים שלי", כך שמסך הבית לא היה נגיש כלל למשתמש מחובר — ואי אפשר היה להחליף חשבון (פרטי/מוסדי, חשש v100). הסיבה: שני קישורים שונים הצביעו על אותה כתובת חשופה teacherquiz.html — "חידון" מ-index (שאמור לנחות על הבית) ו"החידונים שלי" מהספרייה (שאמור לנחות על הרשימה) — וההקפצה ב-onAuthStateChanged לא יכלה להבדיל, אז הקפיצה את שניהם. התיקון: ההקפצה קורית עכשיו *רק* כשהקישור נושא ?list=1. "החידונים שלי" בספרייה עודכן ל-teacherquiz.html?list=1 (library v6) → נוחת ישר על הרשימה כמו קודם; כניסה כללית בלי הסימן נשארת על הבית, עם שליטת-החשבון. הקומבו (?embed=1) נוחת עכשיו על הבית ולא על הרשימה — אם רוצים שם רשימה ישירה צריך להוסיף &list=1 ל-SRC (נשאר להחלטה). אומת בדפדפן: בלי-סימן→בית, ?list=1→רשימה
@@ -340,7 +342,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v114</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v115</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -351,6 +353,8 @@ input:focus{border-color:var(--gold); outline:none;}
 </div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
+<!-- v115: הודעה-צפה אחידה לפריטים נעולים לאורח (תפריט + קופסאות בעורך) -->
+<div class="savetoast" id="lock-toast" style="background:#3a3a52;">🔒 התחברו כדי לגשת</div>
 <div id="game-bg"></div>
 
 <!-- ============ מסך בית ============ -->
@@ -489,7 +493,7 @@ input:focus{border-color:var(--gold); outline:none;}
       <h2 style="margin:0;">✏️ עריכת החידון</h2>
       <span class="save-state" id="save-state" style="margin:0;">✓ נשמר אוטומטית — אין צורך לשמור</span>
     </div>
-    <div style="text-align:center; margin:10px 0 4px;">
+    <div id="draft-toggle-wrap" style="text-align:center; margin:10px 0 4px;">
       <span class="draft-toggle" id="draft-toggle-top" onclick="setDraft(!(quiz&&quiz.isDraft))" title="חידון שמסומן כטיוטה יופיע בלשונית הטיוטות ולא בין החידונים">
         <span class="sw"></span><span>סימון כטיוטה</span>
       </span>
@@ -534,7 +538,7 @@ input:focus{border-color:var(--gold); outline:none;}
 
     <!-- ───── מצב החידון: טיוטה/חידון (מתג תחתון, מסונכרן עם העליון). v107: הועלה לכאן —
          מתחת ל"הוספת שאלה" ומעל אזור הפעולות (משחק/שיתוף/ספרייה), לבקשת המשתמש. ───── -->
-    <div class="draft-bottom">
+    <div class="draft-bottom" id="draft-bottom-wrap">
       <span class="dbl" id="draft-bottom-label">מצב החידון: חידון</span>
       <button id="draft-bottom-btn" onclick="setDraft(!(quiz&&quiz.isDraft))">העברה לטיוטה</button>
     </div>
@@ -944,17 +948,17 @@ function updateNavMenu(){
   // בונים את רשימת היעדים — כל יעד שאינו המסך הנוכחי
   const items = [];
   if (hasQuiz && cur !== 'editor') items.push({ kind:'btn', label:'✏️ עריכת החידון', act:"navTo('editor')" });
-  if (cur !== 'mylist') items.push({ kind:'btn', label:'🗂️ החידונים שלי', act:"navTo('mylist')" });
+  // v115: לאורח — "החידונים שלי" ו"ספרייה" נעולים (אין לו חשבון לשמור אליו). נראים אך 🔒, לחיצה→הודעה-צפה.
+  if (cur !== 'mylist') items.push({ kind:'btn', label:'🗂️ החידונים שלי', act:"navTo('mylist')", locked:isGuest, lockLabel:'🔒 החידונים שלי' });
   // ספרייה — קובץ נפרד, תמיד יעד רלוונטי (אין "מסך ספרייה" פנימי להחריג)
-  items.push({ kind:'link', label:'📚 ספרייה ציבורית', href:'teacher-library.html' });
+  items.push({ kind:'link', label:'📚 ספרייה ציבורית', href:'teacher-library.html', locked:isGuest, lockLabel:'🔒 ספרייה ציבורית' });
 
-  let html = items.map(it =>
-    it.kind === 'btn'
+  let html = items.map(it => {
+    if (it.locked) return '<button onclick="guestLockToast()" style="opacity:.5; cursor:default;">' + it.lockLabel + '</button>';
+    return it.kind === 'btn'
       ? '<button onclick="' + it.act + '">' + it.label + '</button>'
-      : '<a href="' + it.href + '" class="nav-item-link">' + it.label + '</a>'
-  ).join('');
-  // יציאה מהחשבון — רק למשתמש מחובר (לא אורח). מציג גם את שם החשבון הפעיל
-  // (חשוב למורים עם חשבון פרטי + מוסדי — לראות באיזה חשבון נמצאים בלי לחזור לבית)
+      : '<a href="' + it.href + '" class="nav-item-link">' + it.label + '</a>';
+  }).join('');
   // יציאה מהחשבון — רק למחובר. שם-החשבון עצמו מוצג קבוע למעלה (v114), אז כאן רק הפעולה.
   if (myUid && !isGuest){
     html += '<button onclick="signOutToHome()">🚪 יציאה מהחשבון <span class=\'info-i\' onclick="event.stopPropagation(); showInfo(event, \'אפשר לצאת בכל רגע — כשתחזרו תמשיכו בדיוק מאותה נקודה.\')">i</span></button>';
@@ -1111,13 +1115,12 @@ function signOutGoogle(){
 // בעורך בלי חשבון לשמור אליו. onAuthStateChanged(user=null) יעדכן את תצוגת ההתחברות בבית.
 // v114: אורח לוחץ על שיתוף/ספרייה הנעולים — במקום alert מפתיע, מהבהבים את באנר-ההתחברות
 // שבראש העורך (שם יש כפתור ההתחברות), וגוללים אליו. מצב נעול → תגובה צפויה, לא הפתעה.
-function flashGuestBanner(){
-  const b = $('guest-editor-banner');
-  if (!b) return;
-  try { b.scrollIntoView({ behavior:'smooth', block:'center' }); } catch(e){}
-  b.style.transition = 'box-shadow .2s ease';
-  b.style.boxShadow = '0 0 0 3px var(--gold)';
-  setTimeout(()=>{ b.style.boxShadow = 'none'; }, 1400);
+function guestLockToast(){
+  // v115: הודעה-צפה אחידה לכל פריט נעול לאורח (תפריט + קופסאות בעורך) — עובדת בכל מסך
+  const t = $('lock-toast'); if (!t) return;
+  t.classList.add('on');
+  clearTimeout(t._lockTimer);
+  t._lockTimer = setTimeout(()=>{ t.classList.remove('on'); }, 1800);
 }
 function signOutToHome(){
   if ($('nav-menu')) $('nav-menu').classList.remove('open');
@@ -1846,17 +1849,20 @@ function renderEditor(){
   if ($('guest-editor-banner')) $('guest-editor-banner').style.display = (isGuest ? 'block' : 'none');
   // אורח: שורת-הסטטוס מציגה "לא נשמר" כבר מהרגע הראשון (לא "נשמר אוטומטית" — לא נכון לאורח)
   if (isGuest && $('save-state')) $('save-state').textContent = 'מצב אורח — לא נשמר';
-  // v114: לאורח — שיתוף/ספרייה נעולים (נראים אך 🔒 ומעומעמים); לחיצה מפנה לבאנר-ההתחברות
+  // v114/v115: לאורח — שיתוף/ספרייה נעולים (נראים אך 🔒 ומעומעמים); לחיצה → הודעה-צפה אחידה
   const _sb = $('act-share'), _lb = $('act-library');
   if (_sb && _lb){
     if (isGuest){
       _sb.classList.add('locked'); _lb.classList.add('locked');
-      _sb.onclick = flashGuestBanner; _lb.onclick = flashGuestBanner;
+      _sb.onclick = guestLockToast; _lb.onclick = guestLockToast;
     } else {
       _sb.classList.remove('locked'); _lb.classList.remove('locked');
       _sb.onclick = openShareOverlayFromEditor; _lb.onclick = openLibraryOverlayFromEditor;
     }
   }
+  // v115: טיוטות חסרות-משמעות לאורח (אי אפשר לשמור) — מסתירים את שני מתגי-הטיוטה
+  if ($('draft-toggle-wrap')) $('draft-toggle-wrap').style.display = isGuest ? 'none' : '';
+  if ($('draft-bottom-wrap')) $('draft-bottom-wrap').style.display = isGuest ? 'none' : 'flex';
   updateAiCard();
   // פאנל השיתוף
   renderSharePanel();
