@@ -52,15 +52,15 @@ h1{font-family:'Secular One'; font-size:clamp(30px,5vw,44px); color:var(--gold);
 .toast.show{opacity:1;}
 .info-i{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.16); color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; margin-inline-start:6px; vertical-align:middle; user-select:none;}
 .info-i:hover{background:var(--teal); color:#06231f;}
-.info-pop{position:fixed; z-index:50; max-width:280px; background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);}
+.info-pop{position:fixed; z-index:210; max-width:280px; background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);}
 </style>
 </head>
 <body>
-<!-- library v7 — שם-חשבון קבוע למעלה + יציאה בתפריט (כמו דף החידונים); אין התחברות בעמוד
+<!-- library v8 — תיקון z-index של החלון-הצף (i) שהופיע מאחורי התפריט; שם-חשבון קבוע למעלה + יציאה בתפריט (כמו דף החידונים); אין התחברות בעמוד
      (מתבצעת רק בדף החידונים); לא-מחובר → תוכן מוסתר + הפניה לדף החידונים. תפריט ניווט:
      ➕ בניית חידון חדש (teacherquiz.html?new=1) · 🗂️ החידונים שלי (teacherquiz.html?list=1 — ?list=1 מקפיץ ישר לרשימה) · 🎬 יציאה למצגת.
      "ספרייה" לא בתפריט (אנחנו כאן). הסגנון זהה ל-nav-menu בקובץ teacherquiz.html. -->
-<div style="position:fixed; top:8px; left:10px; font-size:11px; color:rgba(170,180,207,.5); z-index:50;">library v7</div>
+<div style="position:fixed; top:8px; left:10px; font-size:11px; color:rgba(170,180,207,.5); z-index:50;">library v8</div>
 <!-- v7: שם-חשבון קבוע למעלה-במרכז, כמו בדף החידונים (נראה כשמחובר) -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 

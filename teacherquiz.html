@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v117 - תיקון באג ניווט-אורח (השלמה ל-v116): רצף "אורח → סיום-משחק → התחברות → goBack" נחת ב"חידונים שלי" במקום בבית-עם-האופציות. השורש: refreshMyList (שנקרא מ-finishToList ועוד) שלח *אורח* ל-home — מסך שבור עבורו (אין כפתורים, כי auth-out מוסתר ו-logged-in-home מוסתר; רק תגית-אורח) — ואיפס את navStack ל-[]. אחרי התחברות, goBack עם מחסנית ריקה נפל ל-refreshMyList→mylist. התיקון: refreshMyList לאורח → חזרה לעורך (שם הוא בונה), לא ל-home. כך האורח נשאר בזרימת-הבנייה, לא נוחת על מסך שבור, ולא נוצר מצב-המחסנית-הריקה. מחובר — ללא שינוי (refreshMyList→mylist כרגיל). בנוסף goBack עם מחסנית ריקה נופל עכשיו לבית (המרכז) ולא ל-mylist — זו הייתה הנפילה האחרונה שהשאירה את האורח-שהתחבר על הרשימה
+  v117 - תיקון z-index: החלון-הצף (i) של כפתור "יציאה מהחשבון" בתפריט הופיע *מאחורי* התפריט — .info-pop היה z-index:50 בעוד #nav-menu הוא z-index:60. הועלה ל-210. אותו תיקון גם ב-teacher-library.html (v8)
   v116 - תיקון באג: אחרי שאורח מתחבר דרך כפתור הבאנר בעורך (guestSaveWithGoogle), העורך נשאר "תקוע" במצב-אורח — שורת-הסטטוס "מצב אורח — לא נשמר", שני מתגי-הטיוטה מוסתרים, ושיתוף/ספרייה נעולים — למרות שכבר מחובר. הסיבה: הפונקציה סימנה isGuest=false ושמרה את החידון, אך *לא* רעננה את ה-UI (renderEditor) ולא את התפריט. התיקון: אחרי שמירה מוצלחת קוראים renderEditor()+updateNavMenu(), מעדכנים את הסטטוס ל"נשמר אוטומטית", ומציגים flashSaved() כמשוב גלוי. הערה: באג ה"התחברות מהמסך הראשי מקפיצה לחידונים שלי" שדווח — לא שוחזר ב-v115 (ההקפצה מותנית ב-?list=1 מאז v111; התחברות כללית נוחתת על הבית עם כל האופציות)
   v115 - נעילות-אורח עקביות: (א) בעורך הוסרו שני מתגי-הטיוטה למשתמש-אורח — טיוטות הן כלי-ארגון של "החידונים שלי", חסרות-משמעות למי שלא יכול לשמור. (ב) בתפריט ה-☰ "החידונים שלי" ו"ספרייה" מוצגים לאורח כנעולים (🔒, מעומעמים, לא-לחיצים). (ג) אוחד מנגנון-המשוב: כל פריט נעול (תפריט + קופסאות שיתוף/ספרייה בעורך) מציג הודעה-צפה אחידה "🔒 התחברו כדי לגשת" שעובדת בכל מסך (החליף את הבהוב-הבאנר מ-v114 שלא עבד בלובי/הכנה). guestLockToast החליף flashGuestBanner
   v114 - מסך-הבית פוצל לשני מצבים לפי צורך מנטלי שונה (אורח "תן לי להתחיל" מול מחובר "איפה החידונים שלי"): מצב לא-מחובר מציג *שני כפתורים בלבד* (התחברות עם Google · כניסה כאורח) — הוסרו כותרת-המשנה, שלושת כפתורי-הפעולה ושדה-הקוד, שעברו ל#logged-in-home שמוצג רק כשמחובר. אורח נכנס ישר לעורך (כבר היה). בלי הבהוב: כל מצב מוסתר עד תגובת Firebase. נוסף שם-חשבון קבוע למעלה-במרכז (#user-badge) שנראה בכל מסך כשמחובר — מידע בלבד (לדעת באיזה חשבון, חשש v100). שורת-השם בתפריט (v113) הוסרה (מיותרת מול השם הקבוע); כפתור היציאה נשאר. בעורך-אורח שיתוף/ספרייה הוצגו נעולים (🔒, מעומעמים) במקום alert מפתיע
@@ -150,7 +152,7 @@ input:focus{border-color:var(--gold); outline:none;}
 .codepill{display:inline-block; font-family:'Secular One'; font-size:30px; letter-spacing:.12em; background:var(--card); color:var(--gold); border-radius:12px; padding:8px 22px; margin:6px 0;}
 .info-i{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.16); color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; margin-inline-start:6px; vertical-align:middle; user-select:none;}
 .info-i:hover{background:var(--teal); color:#06231f;}
-.info-pop{position:fixed; z-index:50; max-width:280px; background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);}
+.info-pop{position:fixed; z-index:210; max-width:280px; background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);}
 
 /* כרטיס חידון ברשימה (מוערם — מותאם לנייד) */
 .qlcard{background:var(--card); border-radius:14px; padding:16px; text-align:right;}
@@ -343,7 +345,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v116</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v117</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -909,8 +911,11 @@ function nav(id){
 // חזרה: שולף מהמחסנית. אם ריק — נופל לרשימה (ברירת מחדל בטוחה)
 function goBack(){
   const prev = navStack.pop();
-  if (prev) show(prev);
-  else refreshMyList();
+  if (prev) { show(prev); return; }
+  // v117: מחסנית ריקה — מחובר → הבית (המרכז ב-v114, עם כל האופציות), *לא* mylist (זה היה המקור
+  // להקפצה המפתיעה לרשימה אחרי התחברות-אורח). אורח → עורך (אין לו בית שמיש ואין לו רשימה).
+  if (isGuest && quiz){ renderEditor(); show('editor'); }
+  else show('home');
 }
 
 /* ----- תפריט הניווט הקבוע ----- */
@@ -3340,6 +3345,10 @@ function confirmAddShared(shareId, data, ov, isUpdate){
 
 function refreshMyList(){
   navStack = [];   // הרשימה היא בסיס זרימת-המארח — חזרה מתאפסת כאן
+  // v117: לאורח אין "רשימת חידונים" (כלום לא נשמר), ו-home הוא מסך שבור עבורו (בלי כפתורים).
+  // לכן אורח חוזר ל*עורך* (שם הוא בונה), לא ל-home. זה גם מתקן באג: אורח נחת על home עם מחסנית
+  // ריקה, התחבר, אז goBack נפל ל-refreshMyList→mylist. עכשיו אורח נשאר בזרימת-הבנייה שלו.
+  if (isGuest){ if (quiz){ renderEditor(); show('editor'); } else { show('home'); } return; }
   if (!myStoreKey){ show('home'); return; }
   fdb.ref('teachers/'+myStoreKey).once('value').then(snap => {
     renderQuizList(snap.val() || {});
