@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
-  v104 - שלב א' משיפוץ אזור הפעולות בעורך (עיצוב אסתטי, צבע אחד): המשתמש קבע שאזור הפעולות נראה כמו "ארבעה כרטיסים אחד מתחת לשני" — עמוס, ארוך, ועם בליטות-צבע (טורקיז/זהב) ש"נראות כמו קרקס". המבנה הישן (v103) היה: zone-title "🎮 בדיקה והפעלה" + launch-card טורקיז בולט, zone-title "🔗 שיתוף" + share-panel inline, אקורדיון "⚙️ ניהול" (שמירה·ספרייה·ניקוי). המבנה החדש — שתי שורות של מלבנים אפורים *זהים* (action-grid/action-box, צבע אחד rgba(255,255,255,.06), אפס בליטות): שורה 1 = התחלת משחק · תצוגה מקדימה; שורה 2 = שיתוף עם מורים · הוספה לספרייה; ומתחת קישור-ניקוי אדום-עדין נפרד (action-clear). כפתור "שמירה ידנית" הוסר מהמסך (החלטה: ברגע שעוברים למודל-טיוטות עם תגית אקטיבית, isConfirmed-via-שמירה מאבד את תפקידו; saveNow נשאר מוגדר אך בלי טריגר-UI). שיתוף וספרייה נפתחים עכשיו כחלון צף (overlay) במקום פאנל inline: openShareOverlayFromEditor מחזר את share-modal הקיים של הרשימה (אותו מנגנון העברת-id של share-panel, אבל בלי לטעון מחדש את quiz — בעורך quiz הוא כבר האובייקט החי); openLibraryOverlayFromEditor — אם כבר בספרייה מציג חלון-סטטוס קטן עם הסרה, אחרת קורא ל-openLibraryPublishFromCard הקיים. closeShareModal תוקן לקרוא refreshMyList רק כש-currentNavScreen()==='mylist' (אחרת פתיחה מהעורך הייתה מנווטת לרשימה). הפאנלים share-panel/library-panel נשארו ב-DOM אך display:none — renderSharePanel/renderLibraryPanel עדיין נקראים מ-renderEditor וכותבים אליהם (לא נגענו בלוגיקה). הערה: זהו שלב א' בלבד — מודל הטיוטות (היפוך isConfirmed, תגית-טיוטה כפולה מסונכרנת בעורך, לשוניות חידונים/טיוטות עם מונה ומחיקה-קבוצתית ברשימה) הוא שלב ב' שטרם נבנה
+  v104 - שלב א' משיפוץ אזור הפעולות בעורך (עיצוב אסתטי, צבע אחד): המשתמש קבע שאזור הפעולות נראה כמו "ארבעה כרטיסים אחד מתחת לשני" — עמוס, ארוך, ועם בליטות-צבע (טורקיז/זהב) ש"נראות כמו קרקס". המבנה הישן (v103) היה: zone-title "🎮 בדיקה והפעלה" + launch-card טורקיז בולט, zone-title "🔗 שיתוף" + share-panel inline, אקורדיון "⚙️ ניהול" (שמירה·ספרייה·ניקוי). המבנה החדש — שתי שורות של מלבנים אפורים *זהים* (action-grid/action-box, צבע אחד rgba(255,255,255,.06), אפס בליטות): שורה 1 = התחלת משחק · תצוגה מקדימה; שורה 2 = שיתוף עם מורים · הוספה לספרייה; ומתחת קישור-ניקוי אדום-עדין נפרד (action-clear). כפתור "שמירה ידנית" הוסר מהמסך (החלטה: ברגע שעוברים למודל-טיוטות עם תגית אקטיבית, isConfirmed-via-שמירה מאבד את תפקידו; saveNow נשאר מוגדר אך בלי טריגר-UI). שיתוף וספרייה נפתחים עכשיו כחלון צף (overlay) במקום פאנל inline: openShareOverlayFromEditor מחזר את share-modal הקיים של הרשימה (אותו מנגנון העברת-id של share-panel, אבל בלי לטעון מחדש את quiz — בעורך quiz הוא כבר האובייקט החי); openLibraryOverlayFromEditor — אם כבר בספרייה מציג חלון-סטטוס קטן עם הסרה, אחרת קורא ל-openLibraryPublishFromCard הקיים. closeShareModal תוקן לקרוא refreshMyList רק כש-currentNavScreen()==='mylist' (אחרת פתיחה מהעורך הייתה מנווטת לרשימה). הפאנלים share-panel/library-panel נשארו ב-DOM אך display:none — renderSharePanel/renderLibraryPanel עדיין נקראים מ-renderEditor וכותבים אליהם (לא נגענו בלוגיקה). Note: זהו שלב א' בלבד — מודל הטיוטות (היפוך isConfirmed, תגית-טיוטה כפולה מסונכרנת בעורך, לשוניות חידונים/טיוטות עם מונה ומחיקה-קבוצתית ברשימה) הוא שלב ב' שטרם נבנה. תוספות באותה גרסה: (א) "⚙️ אפשרויות נוספות" (רקע/מוזיקה) הוסר מהעורך — אי אפשר לשמור רקע/מוזיקה (blob מקומי בלבד, לא ב-Firebase) והבחירה קורית ממילא במסך ההכנה (pregame) סמוך להפעלה; המשתמש ביקש זאת מספר פעמים. נשמרו בעורך *רק* שני ה-file-inputs המוסתרים (bg-input/music-input) כי pregame לוחץ עליהם דרך $('bg-input')/$('music-input') — הם תשתית משותפת, לא UI. כל ה-UI הגלוי הוסר (כפתורי גלריה/מכשיר, bg-chip, music-list, bg-clear); הכתיבות אליהם ב-bgChosen/clearBg/musicChosen כבר היו מוגנות ב-if($('id')) אז הן פשוט מדלגות. (ב) הודעת השמירה האוטומטית נוסחה ברור יותר — "✓ נשמר אוטומטית — אין צורך לשמור" (במקום "נשמר אוטומטית ✓") גם ב-HTML הסטטי וגם ב-2 מחרוזות ה-JS שמעדכנות את save-state — כדי שהיעדר כפתור-שמירה יהיה מובן (הכלי שומר לבד)
   v103 - ארגון-מחדש של אזור הפעולות בעורך: היררכיה ברורה בארבעה אזורים, שיתוף קומפקטי: בעקבות משוב מפורט — היו 8+ פעולות באותו אזור בלי היררכיה, השיתוף תפס יותר מקום מההפעלה (הפוך מהחשיבות), ולא הייתה הפרדה ויזואלית בין "עריכה" ל"הפעלה". המבנה החדש: (1) ✏️ עריכת החידון — כל התוכן (שם/זמן/מבנה/שאלות/הוספת שאלה/⚙️ אפשרויות נוספות נשארות כאן). "נשמר אוטומטית ✓" הועבר מאמצע-הזרימה לשורה שקטה ליד כותרת העורך (מידע-מערכת, לא בזרימה). (2) קו מפריד חזק (zone-div) — הפרדה ויזואלית בין עריכה להפעלה, השינוי החשוב ביותר. (3) 🎮 בדיקה והפעלה — כרטיס אחד בולט (launch-card, רקע טורקיז עדין): "▶️ התחלת משחק" גדול+טורקיז, ומתחתיו "👁️ תצוגה מקדימה" כקישור משני-אך-גלוי (לא נקבר — בדיקה היא חלק מזרימת-העבודה, לא תחזוקה). (4) 🔗 שיתוף — גלוי כאזור שלישי (מנוע צמיחה, לא נקבר באקורדיון), אבל הוקטן דרמטית: renderSharePanel נכתב מחדש משורה-אחת קומפקטית — קוד + "העתקת קוד" + "העתקת קישור" בשורה אחת (במקום כרטיס ענק עם כפתור-קישור-ירוק-מלא-רוחב). אין "ביטול שיתוף" (v58 — עותקים שנלקחו בלתי-נגישים). (5) ⚙️ ניהול — אקורדיון סגור (שמירה ידנית · ספרייה · ניקוי). פלטת צבעים: ראשי=טורקיז, משני=אפור, מסוכן(ניקוי)=אדום-עדין. shareStatusBox הישן (הכרטיס הגדול) כבר לא בשימוש מהעורך
   v102 - "בניית חידון חדש" מהספרייה + תיקון: מורה מחובר נחת על מסך-כניסה במקום על הרשימה: (א) הבאג — קישור "החידונים שלי" (מהספרייה) הוביל ל-teacherquiz.html שנוחת על מסך-הבית (home), ש*נראה* כמו מסך-התחברות (כפתור Google, כניסה כאורח) למרות שהמורה כבר מחובר — כי onAuthStateChanged עדכן את תצוגת-ההתחברות אבל לא ניווט לרשימה. התיקון: onAuthStateChanged, כשהמשתמש מחובר והמסך הפעיל הוא home (ואין משחק/שיתוף/חידון-חדש ממתינים), קורא goShowList() ומעביר ישר לרשימת החידונים. מוגן: רק כש-home פעיל (לא יוצר/לובי) ורק בלי פעולה ממתינה — כך re-fire של onAuthStateChanged לא יזרוק מורה שכבר עובד בחזרה לרשימה. (ב) פיצ'ר חדש — "➕ בניית חידון חדש" בתפריט הספרייה: הספרייה מקשרת ל-teacherquiz.html?new=1; הקובץ קורא את הפרמטר, מנקה אותו מהכתובת (replaceState, כדי שרענון לא יפתח שוב), ופותח חידון חדש אחרי שההתחברות נפתרה (pendingNewQuiz + maybeStartPendingNewQuiz, נקרא מ-onAuthStateChanged). pendingNewQuiz מוצהר לפני ה-IIFE של initJoinFromURL כדי למנוע TDZ בטעינה עם ?new=1. (נדרש גם library v5)
   v101 - תפריט ניווט דינמי לכל מסך (במקום תפריט גלובלי עם הסתרה-מותנית): המשתמש זיהה שהתפריט "בנוי לא טוב" — אותו תפריט קבוע בכל הדפים, כש"החידונים שלי" מופיע גם במסך "החידונים שלי", ו"עריכה" מופיע בעורך. הבעיה: עד כה היה תפריט סטטי אחד עם תנאי-הסתרה (display:none) לכל פריט — שביר, וכל שינוי דרש עוד if. עכשיו: updateNavMenu בונה את הרשימה *מחדש* בכל מסך (nav-list מתרוקן ומתמלא דינמית), ומציג רק את היעדים שאינם המסך הנוכחי. הכללים: (א) "עריכת החידון" — רק כשיש חידון פתוח (hasQuiz) ולא כשכבר בעורך. (ב) "החידונים שלי" — בכל מסך חוץ מ-mylist. (ג) "ספרייה" — תמיד (קובץ נפרד, אין מסך-ספרייה פנימי להחריג). (ד) "יציאה למצגת" — תמיד אחרונה ומובחנת, אלא אם embed=1 (קומבו). התוצאה: בעורך התפריט מציג רק חידונים-שלי+ספרייה+יציאה (לא עריכה); ב-pregame/lobby עם חידון פתוח מציג גם עריכה; ב-mylist ו-home אין תפריט כלל. בחרתי בנייה-דינמית של תפריט-אחד ולא שכפול תפריט בכל מסך — כדי שלא יהיה צורך לעדכן 4 מקומות בכל שינוי עתידי (מקור-אמת אחד). ניקוי: קוד ה-embed הישן שהסתיר nav-exit ב-querySelector הוסר (updateNavMenu בודק embed בעצמו); הוסרו השאריות nav-edit הסטטי ו-editor-main-menu-link
@@ -425,7 +425,7 @@ input:focus{border-color:var(--gold); outline:none;}
   <div class="wrap">
     <div style="display:flex; align-items:baseline; justify-content:center; gap:12px; flex-wrap:wrap;">
       <h2 style="margin:0;">✏️ עריכת החידון</h2>
-      <span class="save-state" id="save-state" style="margin:0;">נשמר אוטומטית ✓</span>
+      <span class="save-state" id="save-state" style="margin:0;">✓ נשמר אוטומטית — אין צורך לשמור</span>
     </div>
     <div id="guest-editor-banner" style="display:none; background:rgba(192,57,43,.18); border:2px solid #e74c3c; border-radius:14px; padding:14px 18px; margin-bottom:18px; text-align:center;">
       <div style="font-size:16px; font-weight:800; color:#ff9a8d; margin-bottom:4px;">⚠️ מצב אורח — החידון לא נשמר</div>
@@ -466,30 +466,11 @@ input:focus{border-color:var(--gold); outline:none;}
     <div id="q-list"></div>
     <button class="btn ghost" onclick="addQuestion()" style="margin-top:6px;">➕ הוספת שאלה</button>
 
-    <details class="adv-box" style="margin-top:20px;">
-      <summary style="cursor:pointer; font-size:14px; font-weight:500; color:var(--ink-dim); padding:10px 14px; background:rgba(255,255,255,.04); border-radius:12px; list-style:none; display:flex; align-items:center; gap:8px;">⚙️ אפשרויות נוספות <span style="font-size:12px; font-weight:400; color:var(--ink-dim); opacity:.7;">(רקע, מוזיקה)</span></summary>
-      <div style="padding-top:16px;">
-
-
-        <div class="field">
-          <label>רקע למסך החידון <span class="info-i" onclick="showInfo(event, 'אפשר לבחור רקע מוכן מהגלריה (נטען מיד), או להעלות תמונה מהמכשיר (לא נשמרת, צריך לבחור מחדש בכל פעם). בזמן המשחק יש כפתור רקע שמאפשר להוריד את הרקע אם הוא מפריע לקריאה.')">i</span></label>
-          <button class="btn ghost sm" onclick="openBgGallery()" id="bg-gallery-btn" style="width:100%;">🎨 בחירת רקע מהגלריה</button>
-          <button class="btn ghost sm" onclick="$('bg-input').click()" id="bg-btn" style="width:100%; margin-top:8px;">🖼️ בחירת תמונת רקע מהמכשיר</button>
-          <input type="file" id="bg-input" accept="image/*,.heic,.heif" style="display:none" onchange="bgChosen(this.files)">
-          <div id="bg-chip" style="display:none; align-items:center; gap:10px; justify-content:center; margin-top:10px;"></div>
-          <button class="btn ghost sm" onclick="clearBg()" id="bg-clear" style="width:100%; margin-top:8px; display:none;">↩️ חזרה לרקע הכחול</button>
-        </div>
-
-        <div class="field">
-          <label>מוזיקת רקע <span class="info-i" onclick="showInfo(event, 'אפשר לבחור מוזיקה מהגלריה המובנית, או להעלות קובץ מהמכשיר (לא נשמר, צריך לבחור מחדש בכל פעם). המוזיקה מתנגנת בשקט בזמן החידון, ויש כפתור להשתקה בזמן המשחק.')">i</span></label>
-          <button class="btn ghost sm" onclick="openMusicGallery()" style="width:100%;">🎼 בחירת מוזיקה מהגלריה</button>
-          <button class="btn ghost sm" onclick="$('music-input').click()" id="music-btn" style="width:100%; margin-top:8px;">🎵 בחירת מוזיקה מהמכשיר</button>
-          <input type="file" id="music-input" accept="audio/*" multiple style="display:none" onchange="musicChosen(this.files)">
-          <div id="music-list" style="display:flex; flex-direction:column; gap:6px; margin-top:8px; font-size:14px;"></div>
-        </div>
-
-      </div>
-    </details>
+    <!-- v104: "אפשרויות נוספות" (רקע/מוזיקה) הוסר מהעורך — אי אפשר לשמור רקע/מוזיקה (blob מקומי בלבד),
+         והבחירה קורית ממילא במסך ההכנה (pregame) סמוך להפעלה. נשמרים כאן רק שני ה-file-inputs המוסתרים
+         כי pregame לוחץ עליהם ($('bg-input')/$('music-input')) — הם התשתית המשותפת, לא UI של העורך. -->
+    <input type="file" id="bg-input" accept="image/*,.heic,.heif" style="display:none" onchange="bgChosen(this.files)">
+    <input type="file" id="music-input" accept="audio/*" multiple style="display:none" onchange="musicChosen(this.files)">
 
     <!-- ═══ קו מפריד חזק: סוף עריכה, תחילת הפעלה ═══ -->
     <div class="zone-div"></div>
@@ -2366,7 +2347,7 @@ function saveQuiz(){
   // teachers/ הוא מקור האמת היחיד
   const payload = Object.assign({}, quiz, { updated: Date.now(), ownerEmail: myEmail });
   fdb.ref('teachers/'+myStoreKey+'/'+editCode).set(payload).then(() => {
-    $('save-state').textContent = 'נשמר אוטומטית ✓';
+    $('save-state').textContent = '✓ נשמר אוטומטית — אין צורך לשמור';
   }).catch(() => {
     $('save-state').textContent = 'תקלה בשמירה';
   });
@@ -4201,7 +4182,7 @@ function saveNow(){
   quiz.isConfirmed = true;   // שמירה ידנית = אישור מפורש
   saveQuiz();
   $('save-state').textContent = 'נשמר ✓';
-  setTimeout(()=>{ $('save-state').textContent = 'נשמר אוטומטית ✓'; }, 1500);
+  setTimeout(()=>{ $('save-state').textContent = '✓ נשמר אוטומטית — אין צורך לשמור'; }, 1500);
 }
 
 /* מצב בדיקה: המורה עובר על השאלות בעצמו, בלי תלמידים ובלי Firebase */
