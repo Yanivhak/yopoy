@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v99 - תיקון התחברות Google באייפון: redirect→popup (היפוך החלטת v71, אומת מול תיעוד Firebase יוני 2026): המשתמש דיווח שבאייפון ההתחברות נשברה — "דף לבן וחזרה לחידון בלי להתחבר", בלי שגיאה. מהמחשב עבד. אבחון: זו בעיית Safari ITP ידועה (firebase-js-sdk issues #6716, #7583 מתארים את הסימפטום מילה-במילה) — signInWithRedirect חוזר בלי session כי Safari חוסם את ה-third-party cookie בין yanivhak.github.io ל-teachers-6e0bb.firebaseapp.com. v71 בחר redirect *בגלל* ש-popup "לא אמין", אבל זה היה הפוך: ההמלצה הרשמית של Firebase לבעיה הזו היא דווקא signInWithPopup (לא תלוי third-party cookies — החלון הראשי לא עוזב את הדומיין). popup עובד באייפון כל עוד authDomain נשאר ברירת-המחדל firebaseapp.com (issue #7443) — וזה המצב כאן. השינוי: (א) signInGoogle — באייפון עכשיו signInWithPopup, בלי נפילה ל-redirect (redirect הוא מה ששבור שם); הודעות שגיאה ספציפיות (popup-blocked/closed/אחר) שכולן מפנות גם לכניסה עם מייל. מחשב/אנדרואיד — ללא שינוי (popup עם נפילה ל-redirect, ש*כן* עובד שם). (ב) guestSaveWithGoogle — אוחד: גם אייפון popup כמו מחשב; כיוון שאין יותר reload, ה-branch של sessionStorage לאייפון הוסר (restorePendingGuestQuiz נשאר כרשת-ביטחון). getRedirectResult ו-isIOS נשארו (נחוצים לנפילת-redirect במחשב). פתרון Custom Auth Domain (דומיין משלי) נשאר עתידי — אם popup ייכשל, הוא הצעד הבא; אך לפי המקורות popup הוא הפתרון הסביר והמיידי כאן, בלי דומיין
   v98 - מקבץ תיקוני UI (9 פריטים) — תפריט ניווט, פעולות בעורך, ומסך ההכנה: (1) כפתור התפריט מציג "סגירה" כשפתוח, "ניווט" כשסגור (nav-toggle-label מתעדכן ב-toggleNavMenu). (2) "יציאה לבניית מצגת" הפך לקונטקסט בהיר וחצי-כבוי (ללא רקע/מסגרת, opacity .55, פונט דק) — לא בולט. (3) תפריט הניווט מוסתר לגמרי במסך "החידונים שלי" (updateNavMenu מחריג גם mylist) — לכל חידון יש תפריט-אפשרויות משלו, והפעולה היחידה ("בניית חידון חדש") בולטת ממילא. (4) שלושת פריטי-הניווט (עריכה/חידונים שלי/ספרייה) באותו צבע אחיד (nav-item-link זהה ל-nav-list button); רק היציאה-למצגת מובחנת. (5) שמירה·שיתוף·ספרייה אוחדו לשורה אחת עם הסבר קצר מעל (במקום שלושה בלוקים עם כותרות); המילה "ציבורית" הוסרה מהכפתור (בהסבר); הכפתורים (renderSharePanel/renderLibraryPanel) הוקטנו ל-ghost sm לא-מתוחים. (6) המרת HEIC בבחירת רקע — קודם בחירת תמונת-אייפון כרקע נתנה מסך שחור; עכשיו bgChosen מזהה HEIC/HEIF (isHeicFile), טוען את heic-to.js (אותה ספרייה כמו במונטאז') וממיר ל-JPEG לפני ההצגה, עם הודעת התקדמות/שגיאה בשורת-הסטטוס; נוסף .heic,.heif ל-accept של bg-input. (7) כפתור פתיחת/סגירת אזור הרקע-ומוזיקה במסך ההכנה הוגדל (summary 18px/800, padding גדול). (8) במסך ההכנה: בחירת רקע ובחירת מוזיקה — כל אחת בשורה אחת עם שני כפתורים זה-לצד-זה (display:grid 1fr 1fr — flex-wrap לא עבד בגלל cascade של .row); "מחשב"→"מכשיר" בכל המקומות (5 הופעות) כי המורה עשוי להיות בטלפון/טאבלט. (9) הכפתורים פושטו ל"🎨 מהגלריה"/"📁 מהמכשיר", ומתחת כל זוג שורת-סטטוס (pg-bg-status/pg-music-status) שמראה מה נבחר ("✓ נבחר: X · הסרה") או "לא נבחר" — נוהל ע"י updatePgMediaStatus (עטוף ב-try נגד TDZ); נוסף bgLabel ו-clearAllMusic
   v97 - ניקוי וסידור כפתורים ב"חידונים שלי" ובעורך (המשך הפרדת ניווט/פעולה): (א) "חידונים שלי" — כפתור "→ חזרה" הוסר לגמרי (הוביל ל-home שהוא מסך-התחברות שאף אחד לא חוזר אליו; הרשימה היא בסיס הזרימה, אין לאן לחזור ממנה). "➕ בניית חידון חדש" נשאר בולט בראש — הוא פעולה ראשית, לא ניווט, ולכן לא נכנס לתפריט. (ב) עורך — "→ חזרה" התחתון הוסר (ניווט, כבר קיים בתפריט-הניווט מ-v95). (ג) עורך — הכפתורים "🔗 יצירת קישור שיתוף" ו"📚 הוספה לספרייה הציבורית" היו btn teal sm עם width:100% (מתוחים לרוחב מלא, נראו ענקיים); הוקטנו ל-btn ghost sm קומפקטיים וממורכזים, אחידים עם "💾 שמירה". "🗑️ ניקוי" נשאר כפי שהיה (דק ומאופק). הפעולות הראשיות (▶️ התחלת משחק, 👁️ בדיקה) נשארו בולטות. (ד) כפתור התפריט (nav-toggle) הוגדל מעט (15px/800, padding גדול יותר). עיקרון מנחה: תפריט-הניווט נשאר רזה (ניווט בלבד) — פעולות לא נדחסות אליו; הן נשארות במסך אך מסודרות וקומפקטיות. מיזוג פעולות-לתפריט נדחה במכוון כי היה מחזיר את ערבוב ניווט/פעולה
   v96 - תצוגת רקע חיה במסך ההכנה (pregame) — המורה רואה את הרקע לפני המשחק, לא מגלה אותו תוך-כדי: הבעיה — המורה בחר רקע ב-pregame לפי *שם* בלבד ("🌌 חלל"), בלי לראות אותו, וראה את הבחירה לראשונה רק כשהמשחק כבר רץ מול הכיתה. אם לא מצא חן — היה תקוע. עכשיו: ברגע שבוחרים רקע ב-pregame, אלמנט game-bg (אותו אלמנט מסך-מלא z-index:0 ששימש במשחק, כולל אותו overlay כהה rgba(5,8,15,.70)) נדלק *מיד* מאחורי כרטיסי-ההכנה — תצוגה מקדימה באותם תנאים בדיוק כמו במשחק. המורה רואה, ואם לא מתאים — מחליף *שם*, לפני שהתחיל ולפני שתלמיד מסתכל. previewBgIfPregame() מדליק/מכבה את התצוגה לפי הרקע הפעיל, נקרא מ-bgChosen/setGalleryBg/clearBg/prePlay. תווית "👁️ זו תצוגה מקדימה — ככה הרקע ייראה במשחק" (pg-preview-note) מופיעה רק כשיש רקע פעיל. show() מכבה את game-bg במעבר למסך שאינו pregame/משחק (bgScreens) — כדי שהרקע לא ידלוף לעורך/רשימה; hostStart מדליק שוב למשחק האמיתי. אומת: נדלק בבחירה, כבה ביציאה לעורך/רשימה, נשאר במשחק. הנימוק — זה פותר את "התחרטתי על הרקע" *לפני* המשחק (בטוח), במקום להוסיף החלפת-רקע תוך-כדי-משחק חי (שהיה זורק מצטרפים / יוצר שני-מצבים-פעילים — סיכון גדול לתרחיש שכמעט לא קורה). בלובי אפשר לחזור צעד אחד ל-pregame (v95, בלי לזרוק מצטרפים) ולהחליף שם
@@ -270,7 +271,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v98</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v99</span></div>
 
 <!-- תפריט ניווט קבוע (ניווט A) — מופיע בכל מסכי-הניווט, מוסתר במסכי-משחק חיים -->
 <div id="nav-menu">
@@ -962,10 +963,26 @@ function isIOS(){
 
 function signInGoogle(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  // באייפון: redirect ישירות (popup לא אמין ב-WebKit). אחרת: popup עם נפילה ל-redirect.
+  // הערה חשובה (אומת מול תיעוד Firebase, יוני 2026): באייפון signInWithRedirect נשבר בגלל
+  // Safari ITP — הדף חוזר בלי session ובלי שגיאה ("דף לבן וחזרה למסך"). הפתרון הרשמי של Firebase
+  // הוא signInWithPopup, שלא תלוי ב-third-party cookies כי החלון הראשי לא עוזב את הדומיין שלנו.
+  // popup עובד באייפון כל עוד ה-authDomain נשאר ברירת-המחדל (teachers-6e0bb.firebaseapp.com).
+  // באייפון אין נפילה ל-redirect — כי redirect הוא בדיוק מה ששבור שם.
   if (isIOS()){
-    $('home-msg').textContent = 'מעביר אתכם להתחברות...';
-    fauth.signInWithRedirect(provider).catch(()=>{ $('home-msg').textContent = 'ההתחברות נכשלה. נסו שוב, או המשיכו עם מייל.'; });
+    $('home-msg').textContent = 'פותח חלון התחברות...';
+    fauth.signInWithPopup(provider).then(() => {
+      $('home-msg').textContent = '';
+    }).catch(err => {
+      const code = err && err.code ? err.code : '';
+      console.error('iOS popup sign-in error:', code, err && err.message);
+      if (code === 'auth/popup-blocked'){
+        $('home-msg').textContent = 'הדפדפן חסם את חלון ההתחברות. אפשרו חלונות קופצים לאתר, או היכנסו עם מייל.';
+      } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request'){
+        $('home-msg').textContent = 'ההתחברות בוטלה. נסו שוב, או היכנסו עם מייל.';
+      } else {
+        $('home-msg').textContent = 'ההתחברות נכשלה. נסו שוב, או היכנסו עם מייל.';
+      }
+    });
     return;
   }
   $('home-msg').textContent = 'פותח חלון התחברות...';
@@ -986,20 +1003,11 @@ function signOutGoogle(){
 }
 
 // אורח שמסיים משחק ורוצה לשמור — מתחבר ואז שומר את החידון הנוכחי.
-// באייפון ההתחברות היא redirect (הדף נטען מחדש), לכן שומרים את החידון ב-sessionStorage
-// לפני ההפניה, ומשחזרים אחרי החזרה (ראו restorePendingGuestQuiz).
+// עכשיו גם באייפון זה popup (לא redirect) — הדף לא נטען מחדש, אז החידון בזיכרון נשמר ישירות
+// בכל הפלטפורמות, בלי צורך ב-sessionStorage. (restorePendingGuestQuiz נשאר כרשת-ביטחון.)
 const PENDING_GUEST_KEY = 'pendingGuestQuiz';
 function guestSaveWithGoogle(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  if (isIOS()){
-    // שומרים את החידון שנבנה כאורח לפני שהדף נהרס ב-redirect
-    if (editCode && quiz){
-      try { sessionStorage.setItem(PENDING_GUEST_KEY, JSON.stringify({ code: editCode, quiz: quiz })); } catch(e){}
-    }
-    fauth.signInWithRedirect(provider).catch(()=>{ alert('ההתחברות נכשלה. נסו שוב.'); });
-    return;
-  }
-  // מחשב/אנדרואיד: popup — הדף לא נטען מחדש, החידון בזיכרון נשמר ישירות
   fauth.signInWithPopup(provider).then((res) => {
     const user = res.user;
     myUid = user.uid;
@@ -1020,8 +1028,13 @@ function guestSaveWithGoogle(){
         $('guest-save-box').innerHTML = '<div style="font-size:15px; color:var(--coral);">תקלה בשמירה. נסו שוב מאוחר יותר.</div>';
       });
     }
-  }).catch(()=>{
-    alert('כדי לשמור צריך להתחבר. אם ההתחברות נחסמה, נסו שוב.');
+  }).catch((err)=>{
+    const code = err && err.code ? err.code : '';
+    if (code === 'auth/popup-blocked'){
+      alert('הדפדפן חסם את חלון ההתחברות. אפשרו חלונות קופצים לאתר ונסו שוב.');
+    } else {
+      alert('כדי לשמור צריך להתחבר. אם ההתחברות נחסמה, נסו שוב.');
+    }
   });
 }
 
