@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v92 - מסך ההכנה לפני משחק (pregame) עוצב מחדש — התחלה קודם, עיצוב מקופל: עד כה המסך הציג כותרת עם שם החידון (שנראתה כמו מסך *יצירה*) ומעליה 6 כפתורי רקע/מוזיקה גדולים *לפני* כפתור ההמשך — מה שגרם למורה לעצור ולתהות "אני חייב לבחור משהו? אם לא אבחר מוזיקה זה יישמע מוזר?". המסך ערבב שתי החלטות (התחל משחק / עצב משחק) כשרוב המורים הגיעו רק כדי להתחיל. עכשיו: (א) כותרת "מוכנים להתחיל?" (שאלה שמובילה לפעולה, לא שם החידון). (ב) שורת מידע קטנה "החידון [שם] מוכן · N שאלות. אפשר להתחיל מיד" — מאשרת מוכנות. (ג) כפתור "▶️ התחלת המשחק" גדול (20px) — הפעולה היחידה הבולטת. (ד) הרקע והמוזיקה קופלו ל-details "🎨 רקע ומוזיקה (לא חובה)", סגור כברירת מחדל, מתחת לכפתור ההתחלה. ברירת המחדל היא עכשיו התחלה; העיצוב הוא בחירה אופציונלית מודעת. הנימוק לאי-העברה לעורך: הרקע/מוזיקה הם blob מקומי (URL.createObjectURL) שחי רק בסשן הנוכחי ולא נשמר ב-Firebase — לכן הבחירה *חייבת* לקרות סמוך להפעלה ולא יכולה לשבת בעריכה (שנפתחת מחדש בכל פעם). אותם handlers בדיוק (openBgGallery/bg-input/music-input המשותפים עם העורך) — שונה רק ה-layout. prePlay מאכלס pregame-title (שם החידון, עכשיו תת-כותרת זהובה) + pregame-qcount (מספר שאלות)
   v91 - סרגל המנחה במשחק הומר לתפריט נגלל (כמו במונטאז'), לתיקון בעיית הטלפון: עד כה סרגל המנחה היה שורה אופקית אחת של 5-6 כפתורים (host-bar) שגלשה מעבר לרוחב הטלפון — מונה הנוכחות "👥 מחוברים: X/Y", שהיה הרכיב האחרון בשורה, נדחף החוצה והוסתר מאחורי הכפתורים. עכשיו מבנה חדש (host-menu) בפינה ימין-למטה: (א) שורה קבועה תמיד-גלויה — מונה הנוכחות (מקוצר ל"👥 X/Y") + כפתור "📲 קוד חזרה" + כפתור "☰ תפריט ▾". (ב) הרשימה הנגללת (host-controls) נפתחת מעל השורה בלחיצה על "תפריט", ומכילה: הבא / מוזיקה / רקע / חיזוקים / סיום. נפתחת סגורה כברירת מחדל (מסך נקי בזמן המשחק), נסגרת/נפתחת עם סיבוב החץ. החלטות עיצוב: (1) המונה נשאר תמיד-גלוי ולא נכנס לתפריט — זה מידע שהמנחה צריך לראות תמיד (אם תלמיד נפל), לא פעולה. (2) כפתור "קוד חזרה" נשאר גלוי וקבוע ליד המונה (לא קופץ לפי-צורך) — קפיצת כפתור באמצע שאלה היא בדיוק ההסחה ש-v88 בא לתקן; במקום זה *המונה* מצהיב (טקסט כהה + רקע/מסגרת זהובים) כשמישהו חסר, והכפתור היציב כבר שם. (3) כפתור התפריט כהה כברירת מחדל — זהוב שמור להתראת המונה בלבד. הטרייד-אוף המודע: מצב המתגים (מוזיקה דולקת/כבויה, חיזוקים פעיל/כבוי) מוסתר עד פתיחת התפריט — מקובל כי מגדירים אותם פעם אחת בתחילת המשחק. host-bar הישן נשמר רק למצב-בדיקה (solo-bar) שהוא קצר ולא גולש. כל קריאות $('host-bar') ב-JS עודכנו ל-$('host-menu'); נוספה toggleHostMenu()
   v90 - רציפות ויזואלית בין שתי נקודות-הכניסה ל-AI: עד כה כרטיס ה-AI (חידון ריק) היה טורקיז עם הטקסט "יצירת חידון באמצעות בינה מלאכותית", והכפתור (חידון עם תוכן) היה סגול עם "עריכת חידון באמצעות AI" — צבע שונה וניסוח שונה גרמו לכך שהמשתמש לא בהכרח הבין שזו אותה פעולה. עכשיו שניהם זהים: אותו אייקון (🤖), אותו צבע (טורקיז/teal), ואותו ניסוח "...באמצעות AI" — נבדלים רק בפועל (יצירת/עריכת) שמשקף את ההקשר. כותרת חלון ה-AI עצמו (openImport) נשארה עם "בינה מלאכותית" המלא (כותרת פורמלית, הקשר אחר)
   v89 - הסרה מהספרייה ישירות מהרשימה: עד כה בכרטיס ברשימה הפריט "📚 נמצא בספרייה" היה מושבת — אי אפשר היה להסיר מהספרייה בלי להיכנס לעורך. עכשיו כשהחידון בספרייה, הפריט בתפריט ⋯ הוא "✕ הסרה מהספרייה" פעיל (אדום), עם אישור ברור ("להסיר את החידון X מהספרייה הציבורית? ... החידון עצמו יישאר אצלכם ברשימה"). removeFromLibraryCard מסיר לפי ה-libraryId של אותה רשומה וכותב את share בחזרה ל-teachers/{key}/{code}/share. המשתמש מסיר רק את הרשומה שלו (הסרה-כאדמין-לכולם היא מנגנון נפרד). כך יש שליטה מלאה מהמקום שבו כל החידונים מופיעים, בלי מעבר לעריכה
@@ -242,7 +243,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v91</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v92</span></div>
 <div id="fw"><div class="fwtext" id="fw-text"></div></div>
 <div class="savetoast" id="save-toast">✓ החידון נשמר</div>
 <div id="game-bg"></div>
@@ -467,27 +468,37 @@ input:focus{border-color:var(--gold); outline:none;}
 <!-- ============ הכנה לפני משחק (מוזיקה ורקע) ============ -->
 <div class="screen" id="pregame">
   <div class="wrap">
-    <h2 id="pregame-title">לפני שמתחילים</h2>
-    <p class="sub">המוזיקה ותמונת הרקע לא נשמרות עם החידון, אז אפשר לבחור אותן עכשיו (לא חובה).</p>
+    <h2>מוכנים להתחיל?</h2>
+    <p class="sub" style="margin-bottom:8px;">החידון <b id="pregame-title" style="color:var(--gold);"></b> מוכן<span id="pregame-qcount"></span>. אפשר להתחיל מיד.</p>
 
-    <div class="field">
-      <label>תמונת רקע (לא חובה)</label>
-      <button class="btn ghost sm" onclick="openBgGallery()" style="width:100%;">🎨 בחירת רקע מהגלריה</button>
-      <button class="btn ghost sm" onclick="$('bg-input').click()" id="pg-bg-btn" style="width:100%; margin-top:8px;">🖼️ בחירת תמונת רקע מהמחשב</button>
-      <button class="btn ghost sm" onclick="clearBg(); $('pg-bg-btn').textContent='🖼️ בחירת תמונת רקע מהמחשב';" style="width:100%; margin-top:8px;">↩️ בלי תמונת רקע</button>
+    <!-- הפעולה הראשית — כפתור התחלה גדול ובולט -->
+    <div class="row" style="margin-top:22px;">
+      <button class="btn teal" onclick="goPlay()" style="font-size:20px; padding:16px 36px;">▶️ התחלת המשחק</button>
     </div>
 
-    <div class="field">
-      <label>מוזיקת רקע (לא חובה)</label>
-      <button class="btn ghost sm" onclick="openMusicGallery()" style="width:100%;">🎼 בחירת מוזיקה מהגלריה</button>
-      <button class="btn ghost sm" onclick="$('music-input').click()" id="pg-music-btn" style="width:100%; margin-top:8px;">🎵 בחירת מוזיקה מהמחשב</button>
-      <div id="pg-music-list" style="font-size:14px; color:var(--ink-dim); margin-top:8px;"></div>
-    </div>
+    <!-- רקע ומוזיקה — לא חובה, מקופל, סגור כברירת מחדל. אותם handlers כמו בעורך -->
+    <details class="adv-box" style="margin-top:18px; text-align:right;">
+      <summary style="cursor:pointer; font-size:14px; font-weight:500; color:var(--ink-dim); padding:11px 16px; background:rgba(255,255,255,.04); border-radius:12px; list-style:none; display:flex; align-items:center; gap:8px;">🎨 רקע ומוזיקה <span style="font-size:12px; font-weight:400; opacity:.7;">(לא חובה)</span></summary>
+      <div style="padding-top:16px;">
+        <p style="font-size:13px; color:var(--ink-dim); line-height:1.5; margin:0 0 14px;">הרקע והמוזיקה מתאימים את אווירת המשחק. הם לא נשמרים עם החידון, אז בוחרים אותם כאן לפני כל הפעלה.</p>
 
-    <div class="row" style="margin-top:20px;">
-      <button class="btn teal" onclick="goPlay()">▶️ המשך — קוד וברקוד למשחק</button>
-    </div>
-    <div class="row" style="margin-top:10px;">
+        <div class="field">
+          <label>תמונת רקע</label>
+          <button class="btn ghost sm" onclick="openBgGallery()" style="width:100%;">🎨 בחירת רקע מהגלריה</button>
+          <button class="btn ghost sm" onclick="$('bg-input').click()" id="pg-bg-btn" style="width:100%; margin-top:8px;">🖼️ בחירת תמונת רקע מהמחשב</button>
+          <button class="btn ghost sm" onclick="clearBg(); $('pg-bg-btn').textContent='🖼️ בחירת תמונת רקע מהמחשב';" style="width:100%; margin-top:8px;">↩️ בלי תמונת רקע</button>
+        </div>
+
+        <div class="field">
+          <label>מוזיקת רקע</label>
+          <button class="btn ghost sm" onclick="openMusicGallery()" style="width:100%;">🎼 בחירת מוזיקה מהגלריה</button>
+          <button class="btn ghost sm" onclick="$('music-input').click()" id="pg-music-btn" style="width:100%; margin-top:8px;">🎵 בחירת מוזיקה מהמחשב</button>
+          <div id="pg-music-list" style="font-size:14px; color:var(--ink-dim); margin-top:8px;"></div>
+        </div>
+      </div>
+    </details>
+
+    <div class="row" style="margin-top:14px;">
       <button class="btn ghost sm" onclick="refreshMyList()">→ חזרה לרשימה</button>
     </div>
   </div>
@@ -1375,7 +1386,10 @@ function playExisting(code, data){
 }
 
 function prePlay(){
-  $('pregame-title').textContent = quiz.title || 'לפני שמתחילים';
+  $('pregame-title').textContent = quiz.title || 'שלכם';
+  // מספר השאלות — שורת מידע קטנה שמאשרת שהחידון מוכן
+  const qc = $('pregame-qcount');
+  if (qc){ const n = quiz.questions ? quiz.questions.length : 0; qc.textContent = n ? (' · ' + n + (n===1 ? ' שאלה' : ' שאלות')) : ''; }
   // עדכון תצוגת כפתורים לפי מה שכבר נבחר
   $('pg-bg-btn').textContent = bgUrl ? '🖼️ תמונת רקע נבחרה ✓ (לחיצה מחליפה)' : '🖼️ בחירת תמונת רקע מהמחשב';
   $('pg-music-list').textContent = musicList.length ? ('נבחרו ' + musicList.length + ' שירים') : '';
