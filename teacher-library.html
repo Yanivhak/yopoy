@@ -53,14 +53,15 @@ h1{font-family:'Secular One'; font-size:clamp(30px,5vw,44px); color:var(--gold);
 </style>
 </head>
 <body>
-<!-- library v4 — תפריט ניווט (זהה לחידון) מחליף את כפתור "חזרה": במקום לנחש מאיפה הגעת
-     (goBackSmart, שהיה מסבך כשמגיעים מכמה יעדים), יעדים מפורשים: 🗂️ החידונים שלי + 🎬 יציאה למצגת.
+<!-- library v5 — תפריט ניווט (זהה לחידון) מחליף את כפתור "חזרה". יעדים מפורשים במקום ניחוש:
+     ➕ בניית חידון חדש (דרך teacherquiz.html?new=1) · 🗂️ החידונים שלי · 🎬 יציאה למצגת.
      "ספרייה" לא בתפריט (אנחנו כאן). הסגנון זהה ל-nav-menu בקובץ teacherquiz.html. -->
-<div style="position:fixed; top:8px; left:10px; font-size:11px; color:rgba(170,180,207,.5); z-index:50;">library v4</div>
+<div style="position:fixed; top:8px; left:10px; font-size:11px; color:rgba(170,180,207,.5); z-index:50;">library v5</div>
 
-<!-- תפריט ניווט — זהה לחידון. בספרייה היעדים הם: חידונים שלי + יציאה למצגת (לא "ספרייה" כי אנחנו כאן) -->
+<!-- תפריט ניווט — זהה לחידון. בספרייה היעדים הם: חידון חדש + חידונים שלי + יציאה למצגת (לא "ספרייה" כי אנחנו כאן) -->
 <div id="nav-menu">
   <div id="nav-list">
+    <a href="teacherquiz.html?new=1" class="nav-item-link">➕ בניית חידון חדש</a>
     <a href="teacherquiz.html" class="nav-item-link">🗂️ החידונים שלי</a>
     <a href="index.html" class="nav-exit">🎬 יציאה לבניית מצגת</a>
   </div>

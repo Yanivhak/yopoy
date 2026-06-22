@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v102 - "בניית חידון חדש" מהספרייה + תיקון: מורה מחובר נחת על מסך-כניסה במקום על הרשימה: (א) הבאג — קישור "החידונים שלי" (מהספרייה) הוביל ל-teacherquiz.html שנוחת על מסך-הבית (home), ש*נראה* כמו מסך-התחברות (כפתור Google, כניסה כאורח) למרות שהמורה כבר מחובר — כי onAuthStateChanged עדכן את תצוגת-ההתחברות אבל לא ניווט לרשימה. התיקון: onAuthStateChanged, כשהמשתמש מחובר והמסך הפעיל הוא home (ואין משחק/שיתוף/חידון-חדש ממתינים), קורא goShowList() ומעביר ישר לרשימת החידונים. מוגן: רק כש-home פעיל (לא יוצר/לובי) ורק בלי פעולה ממתינה — כך re-fire של onAuthStateChanged לא יזרוק מורה שכבר עובד בחזרה לרשימה. (ב) פיצ'ר חדש — "➕ בניית חידון חדש" בתפריט הספרייה: הספרייה מקשרת ל-teacherquiz.html?new=1; הקובץ קורא את הפרמטר, מנקה אותו מהכתובת (replaceState, כדי שרענון לא יפתח שוב), ופותח חידון חדש אחרי שההתחברות נפתרה (pendingNewQuiz + maybeStartPendingNewQuiz, נקרא מ-onAuthStateChanged). pendingNewQuiz מוצהר לפני ה-IIFE של initJoinFromURL כדי למנוע TDZ בטעינה עם ?new=1. (נדרש גם library v5)
   v101 - תפריט ניווט דינמי לכל מסך (במקום תפריט גלובלי עם הסתרה-מותנית): המשתמש זיהה שהתפריט "בנוי לא טוב" — אותו תפריט קבוע בכל הדפים, כש"החידונים שלי" מופיע גם במסך "החידונים שלי", ו"עריכה" מופיע בעורך. הבעיה: עד כה היה תפריט סטטי אחד עם תנאי-הסתרה (display:none) לכל פריט — שביר, וכל שינוי דרש עוד if. עכשיו: updateNavMenu בונה את הרשימה *מחדש* בכל מסך (nav-list מתרוקן ומתמלא דינמית), ומציג רק את היעדים שאינם המסך הנוכחי. הכללים: (א) "עריכת החידון" — רק כשיש חידון פתוח (hasQuiz) ולא כשכבר בעורך. (ב) "החידונים שלי" — בכל מסך חוץ מ-mylist. (ג) "ספרייה" — תמיד (קובץ נפרד, אין מסך-ספרייה פנימי להחריג). (ד) "יציאה למצגת" — תמיד אחרונה ומובחנת, אלא אם embed=1 (קומבו). התוצאה: בעורך התפריט מציג רק חידונים-שלי+ספרייה+יציאה (לא עריכה); ב-pregame/lobby עם חידון פתוח מציג גם עריכה; ב-mylist ו-home אין תפריט כלל. בחרתי בנייה-דינמית של תפריט-אחד ולא שכפול תפריט בכל מסך — כדי שלא יהיה צורך לעדכן 4 מקומות בכל שינוי עתידי (מקור-אמת אחד). ניקוי: קוד ה-embed הישן שהסתיר nav-exit ב-querySelector הוסר (updateNavMenu בודק embed בעצמו); הוסרו השאריות nav-edit הסטטי ו-editor-main-menu-link
   v100 - בחירת חשבון Google בכל התחברות: אחרי שתיקון ה-popup (v99) עבד, התברר ש-Google מדלג אוטומטית על מסך בחירת-החשבון ומחבר לחשבון הפעיל ("מסך לבן ואז מחובר בלי לבחור"). זה תקין אך בעייתי בבית ספר — מורים רבים מנהלים חשבון פרטי + חשבון מוסדי על אותו מכשיר, ובלי בחירה הם עלולים ליצור חידונים תחת החשבון הלא-נכון. התיקון: provider.setCustomParameters({ prompt: 'select_account' }) בשתי נקודות-ההתחברות (signInGoogle + guestSaveWithGoogle) — Google יציג תמיד את מסך בחירת-החשבון, גם אם המשתמש כבר מחובר. עלות: קליק נוסף; תועלת: מניעת בלבול "החידונים שלי נעלמו" (כי הם תחת חשבון אחר). העדפת שליטה על נוחות כי עלות הטעות גבוהה
   v99 - תיקון התחברות Google באייפון: redirect→popup (היפוך החלטת v71, אומת מול תיעוד Firebase יוני 2026): המשתמש דיווח שבאייפון ההתחברות נשברה — "דף לבן וחזרה לחידון בלי להתחבר", בלי שגיאה. מהמחשב עבד. אבחון: זו בעיית Safari ITP ידועה (firebase-js-sdk issues #6716, #7583 מתארים את הסימפטום מילה-במילה) — signInWithRedirect חוזר בלי session כי Safari חוסם את ה-third-party cookie בין yanivhak.github.io ל-teachers-6e0bb.firebaseapp.com. v71 בחר redirect *בגלל* ש-popup "לא אמין", אבל זה היה הפוך: ההמלצה הרשמית של Firebase לבעיה הזו היא דווקא signInWithPopup (לא תלוי third-party cookies — החלון הראשי לא עוזב את הדומיין). popup עובד באייפון כל עוד authDomain נשאר ברירת-המחדל firebaseapp.com (issue #7443) — וזה המצב כאן. השינוי: (א) signInGoogle — באייפון עכשיו signInWithPopup, בלי נפילה ל-redirect (redirect הוא מה ששבור שם); הודעות שגיאה ספציפיות (popup-blocked/closed/אחר) שכולן מפנות גם לכניסה עם מייל. מחשב/אנדרואיד — ללא שינוי (popup עם נפילה ל-redirect, ש*כן* עובד שם). (ב) guestSaveWithGoogle — אוחד: גם אייפון popup כמו מחשב; כיוון שאין יותר reload, ה-branch של sessionStorage לאייפון הוסר (restorePendingGuestQuiz נשאר כרשת-ביטחון). getRedirectResult ו-isIOS נשארו (נחוצים לנפילת-redirect במחשב). פתרון Custom Auth Domain (דומיין משלי) נשאר עתידי — אם popup ייכשל, הוא הצעד הבא; אך לפי המקורות popup הוא הפתרון הסביר והמיידי כאן, בלי דומיין
@@ -273,7 +274,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </head>
 <body>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v101</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v102</span></div>
 
 <!-- תפריט ניווט — נבנה דינמית לכל מסך (updateNavMenu): מציג רק את היעדים שאינם המסך הנוכחי -->
 <div id="nav-menu">
@@ -1098,6 +1099,19 @@ fauth.onAuthStateChanged(user => {
     restorePendingGuestQuiz();
     // אם נכנסו דרך קישור שיתוף — מטפלים בו עכשיו
     handlePendingShare();
+    // אם נכנסו מהספרייה עם ?new=1 — פותחים חידון חדש עכשיו (אחרי שההתחברות נפתרה)
+    maybeStartPendingNewQuiz();
+    // מורה מחובר שטוען את הדף ונמצא על מסך-הבית (התחברות) — מועבר ישר לרשימת החידונים שלו.
+    // כך קישור "החידונים שלי" (מהספרייה/קומבו) לא נוחת על מסך-כניסה אלא על הרשימה עצמה.
+    // מוגן: רק אם המסך הפעיל הוא home, ואין פעולה ממתינה אחרת (משחק/שיתוף/חידון-חדש) שכבר ניווטה.
+    if (!pendingNewQuiz && !pendingShareId){
+      const homeOn = $('home') && $('home').classList.contains('on');
+      const params2 = new URLSearchParams(location.search);
+      const joiningGame = params2.get('game');
+      if (homeOn && !joiningGame){
+        goShowList();   // טוען ומציג את רשימת החידונים
+      }
+    }
   } else {
     myUid = null; myAuthName = ''; myEmail = ''; myEmailKey = ''; myStoreKey = '';
     if (!isGuest){
@@ -4237,6 +4251,25 @@ function soloFinish(){
 /* ---- שחקן ---- */
 let myName='', myTeam=-1, joined=false, pTimer=null, sentThisQ=false, lastPick=-1;
 
+// פותח חידון חדש אם המתינים לכך (מ-?new=1) והמשתמש כבר מחובר. נקרא מ-onAuthStateChanged ומ-init.
+// מוצהר לפני ה-IIFE של initJoinFromURL כדי שלא תהיה TDZ כשהדף נטען עם ?new=1.
+let pendingNewQuiz = false;
+function maybeStartPendingNewQuiz(){
+  if (!pendingNewQuiz) return;
+  if (!myStoreKey) return;   // עוד לא מחובר — נחכה ל-onAuthStateChanged
+  pendingNewQuiz = false;
+  newQuiz();
+}
+function clearNewParamFromUrl(){
+  try {
+    const url = new URL(location.href);
+    if (url.searchParams.has('new')){
+      url.searchParams.delete('new');
+      history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    }
+  } catch(e){}
+}
+
 (function initJoinFromURL(){
   const params = new URLSearchParams(location.search);
   // בתוך הקומבו (embed=1) מסתירים את הקישור לתפריט הראשי במסך הבית (לקומבו יש סרגל משלו).
@@ -4258,6 +4291,13 @@ let myName='', myTeam=-1, joined=false, pTimer=null, sentThisQ=false, lastPick=-
     // אם המשתמש כבר מחובר (onAuthStateChanged כבר רץ) — מטפלים מיד.
     // אחרת, handlePendingShare ייקרא מתוך onAuthStateChanged כשההתחברות תושלם.
     if (myUid && myStoreKey) handlePendingShare();
+  }
+  // ?new=1 (מהספרייה: "בניית חידון חדש") — פותח חידון חדש אחרי שההתחברות תיפתר.
+  // צריך להמתין ל-auth כי newQuiz דורש משתמש מחובר; הדגל ייבדק ב-onAuthStateChanged.
+  if (params.get('new') === '1'){
+    pendingNewQuiz = true;
+    clearNewParamFromUrl();   // מנקים מהכתובת כדי שרענון לא יפתח שוב חידון חדש
+    if (myUid && myStoreKey) maybeStartPendingNewQuiz();
   }
 })();
 
