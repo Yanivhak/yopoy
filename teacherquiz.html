@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v139 - שורת-הרגעה מתחת לכותרת מסך ה-AI: "אין חובה למלא את כל השדות — מה שתשאירו ריק פשוט לא ייכנס להנחיה". נכון טכנית (כל השדות מותנים ב-buildImportPrompt — ריק לא נכנס לפרומפט) ומונע מהמורה לחשוב שהוא חייב למלא נושא+גיל+מאפיינים+מטרה+קושי ולהירתע. ממוקמת כתיבה טורקיז עדינה אחרי תת-הכותרת. אומת: node --check + איזון-תגיות
   v138 - שתי תוספות למסך ה-AI: (1) שדה "רמת קושי" (בחירה יחידה: קלה / בינונית / מאתגרת, ברירת-מחדל בינונית) ליד "כמה שאלות/תשובות" — תמיד גלוי. כל רמה מתורגמת בפרומפט למשפט-הנחיה (למשל "מאתגרת" → "שאלות מאתגרות שדורשות ידע מעמיק וחשיבה"). נשמר ב-aiMeta (diff) ונטען עם החידון; חידונים ישנים בלי השדה מקבלים "בינונית". (2) שורת-תזכורת שמופיעה רק כשמתג-הקובץ (v137) מסומן: "📎 זכרו: צרפו את הקובץ בכלי ה-AI יחד עם הפרומפט" — כי המתג קודם הוסיף הוראה לפרומפט (ל-AI) אך לא הזכיר למורה לצרף בפועל. onchange של המתג מציג/מסתיר אותה. בנוסף, הדוגמה "רמת קושי גבוהה" הוסרה מהסבר שדה-ההערה (כי עכשיו יש שדה ייעודי). אומת: node --check + איזון-תגיות
   v137 - מסך ה-AI, צירוף קובץ: (1) נוסף מתג "📎 אצרף קובץ בכלי ה-AI" ליד שדה ההערה. הבעיה שנפתרה — הפרומפט בנוי בהנחה שהוא עומד לבד ("צור חידון בנושא X"); מורה שמצרף PDF ב-ChatGPT ומדביק את הפרומפט קיבל שני דברים שלא מדברים זה עם זה, וה-AI היה עלול לבנות חידון כללי ולהתעלם מהקובץ בשקט. עכשיו, כשהמתג מסומן, buildImportPrompt מוסיף שורה מפורשת: "מצורף קובץ... בנה את השאלות על בסיס תוכן הקובץ; הנושא והמאפיינים כהקשר בלבד" — שמפנה את ה-AI לקובץ ופותרת את התנגשות הנושא-מול-קובץ. כשלא מסומן — הפרומפט נשאר בדיוק כשהיה (השורה מותנית). המצב לא נשמר ב-aiMeta (בחירה לכל ייצוא). (2) עודכן ההסבר של שדה ההערה החופשית — מכוון עכשיו להקשר קצר (כמה מילים על החברה/האירוע, נושא, דגש) ומפנה לצירוף-קובץ לחומר ארוך כמו דף-סיכום, כדי שמורים לא יפתו להדביק מבחן שלם לתוך פרומפט (יוצא גרוע). אומת: node --check + איזון-תגיות
   v136 - שתי משימות: (1) רקע yopoy כאופציה בבחירת-הרקע שלפני המשחק (pregame) — נוסף כפריט הראשון בגלריית-הרקעים (BG_GALLERY) בשם "✨ yopoy". זהו זוהר ה-hero (זהב/טורקיז/סגול על נייבי) אך בשקיפות מוגברת (~.30 במקום ~.10) כדי שישרוד את שכבת-ההכהיה של 70% שמעל game-bg — כך הוא נראה כמו ה-hero *אחרי* ההכהיה, וקריאוּת טקסט-השאלה נשמרת (כיוון א'). מתנהג כמו כל רקע-גלריה: תצוגה מקדימה חיה ב-pregame, כיבוי/הדלקה במשחק, לא נשמר ב-Firebase. (2) מירכוז ההודעות בטלפון — .screen עבר מ-min-height:100vh ל-100vh+100dvh: ב-100vh נכלל האזור שמאחורי שורת-הכתובת של דפדפן-הנייד, אז התוכן "ממורכז" ירד לשליש התחתון של המסך הנראה; 100dvh (גובה-תצוגה דינמי) ממרכז נכון. חל על כל מסכי-התלמיד והמנחה. אומת: node --check + איזון-תגיות
@@ -448,7 +449,7 @@ input:focus{border-color:var(--gold); outline:none;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v138</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v139</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -2363,9 +2364,10 @@ function openImport(){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:580px; width:100%; text-align:right; margin:auto;';
   box.innerHTML =
     '<div style="font-family:\'Secular One\'; font-size:24px; color:var(--gold); margin-bottom:6px;">🤖 ' + (quizHasRealContent() ? 'עריכת חידון באמצעות בינה מלאכותית' : 'יצירת חידון באמצעות בינה מלאכותית') + '</div>' +
-    '<div style="font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;">' +
+    '<div style="font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:8px;">' +
     'בחרו את סוג החידון ואת הפרטים, העתיקו את הטקסט המוכן לכלי בינה מלאכותית (ChatGPT, Claude, Gemini ועוד), והדביקו כאן בחזרה את התשובה. המערכת תבנה את החידון לבד.' +
-    '</div>';
+    '</div>' +
+    '<div style="font-size:13px; color:var(--ink); background:rgba(46,196,182,.10); border:1px solid rgba(46,196,182,.22); border-radius:9px; padding:8px 12px; line-height:1.55; margin-bottom:14px;">💡 אין חובה למלא את כל השדות — מה שתשאירו ריק פשוט לא ייכנס להנחיה.</div>';
 
   const refresh = ()=>{ $('imp-prompt').value = buildImportPrompt(); };
 
