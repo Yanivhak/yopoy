@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v134 - יישור רקע ה-hero להיות זהה ל-index: ב-v133 הרקע היה דומה אך לא זהה ל-index, ולכן נראה שונה. הפערים שתוקנו: (א) נוספה ויניטה (body::after) — הצללה כהה בקצוות (radial transparent 55% → rgba(0,0,0,.45)) שממסגרת ומעמיקה; היעדרה ב-v133 גרם לזוהר להגיע עד הקצוות ולהיראות שטוח. (ב) נוספו 4 אורבים צפים גלובליים (.o1-.o4: טורקיז/זהב/סגול/אלמוג, position:fixed, z-index:0) הזהים ל-index; אורבי ה-hero הייעודיים של המסך הלא-מחובר (.ho-orb) הוסרו כדי שלא ייכפלו — האורבים הגלובליים מכסים גם אותו. (ג) יושרו ההפרשים הזעירים: מיקום הזוהר הזהב (8%→12%), גודל בסיס הגרדיאנט (900→800), ומסכת רשת-הנקודות — כולם לערכי index המדויקים. נוסף overflow-x:hidden + position:relative ל-body (כמו ב-index). כעת רקע ה-quiz זהה ביט-לביט ל-index ול-hero. אומת: node --check + איזון-תגיות
   v133 - רקע ה-hero גלובלי: הרקע הכללי (body) הוחלף מהנייבי הכחול-שטוח לרקע ה-hero של yopoy — זוהר זהב/טורקיז/סגול (שלוש שכבות radial-gradient עדינות) מעל בסיס נייבי, עם רשת-נקודות דקה (body::before, z-index:0) שדועכת בקצוות. background-attachment:fixed כדי שהרקע יישאר יציב בגלילה בעורך. חל על כל המסכים השקופים: עורך, רשימת-חידונים, לובי, מסך-שאלה ומסך-חשיפה של המנחה, פודיום, ומסכי-השאלה של השחקן. מסכי-התלמיד הממותגים (.pbrand מ-v131) שומרים על הרקע הייעודי שלהם; ה-hero של המסך הלא-מחובר (auth-out) שומר על ה-orbs שלו (לא נוספו orbs גלובליים כדי לא לכפול). גיבוי v132 נשמר לפני השינוי (ניסיון — אם יוצא עמוס מאחורי המשבצות/העורך חוזרים אליו). אומת: node --check + איזון-תגיות
   v132 - תזמון חיזוקים מול לוח-ביניים: בחשיפת השאלה שמיד אחריה מגיע לוח ("הסתכלו ללוח") — לא נשלח חיזוק כלל, כך שהתלמיד מקבל אירוע אחד בלבד באותו רגע (לוח), במקום מחמאה ולוח שמתחלפים בכמה שניות ואף אחד מהם לא נקלט. התנאי ב-revealQ זהה לתנאי שמפעיל את הלוח ב-nextQ, רק נבדק צעד אחד מוקדם יותר (qIndex+1). selectReinforcements לא נקרא בחשיפה כזו — לכן המכסה לא נצרכת והתלמידים נשארים זכאים לחשיפה הבאה שאינה לוח; מודל-המכסה מפצה את עצמו, בלי שינוי ב-DIVISOR. השפעה: בחידון 14+ שאלות אין שינוי במכסה (~2 לכל אחד); בחידון קצר חלק יקבלו 1 (בתוך הטולרנס). אומת: node --check + איזון-תגיות
   v131 - מסכי-תלמיד ממותגים (yopoy/QuizPlay): ארבעת מסכי-התלמיד עוצבו מחדש בשפת ה-hero (lockup של yopoy מעל 🧠 + QuizPlay בזוהר זהב, על רקע הזוהר הצבעוני זהב/טורקיז/סגול עם נקודות-מרקם ואורבים, מחלקה .pbrand). (1) פתיחה (pwait): "היי, [שם]! עוד רגע מתחילים" — הברכה האישית נקבעת ב-playerMsg על welcome לפי myName. (2) המתנה (player-wait overlay): "רגע אחד… המנחה יצא לרגע — תיכף ממשיכים". (3) סיום (pfin/showPFin): "תודה רבה, [שם]! ❤️ היה כיף — נתראה במשחק הבא" + ניקוד עמום ("צברת X נקודות"), בלי מיקום ובלי מדליה (כדי שלא ישוו). (4) חדש — נקטע (pcut): "נראה שהמשחק נקטע 😕 / תודה ששיחקת — נתראה בפעם הבאה". התרחישים: מנחה שנעלם → נשאר על "תיכף ממשיכים" (בלי ניחושי-טיימר); מנחה שחזר ולחץ ✕ (dismissResumeBanner) → נשלחת הודעת 'interrupted' ל-games/{code}/messages והתלמידים התקועים עוברים ל-pcut; מנחה שסיים את החידון → מסך-הסיום הממותג. אומת: node --check + איזון-תגיות
@@ -128,19 +129,28 @@
 }
 *{box-sizing:border-box;}
 html,body{margin:0; padding:0; min-height:100%;}
-body{font-family:'Heebo',sans-serif; color:var(--ink); min-height:100vh;
-  /* v133: רקע ה-hero (זוהר זהב/טורקיז/סגול) מחליף את הנייבי השטוח — גלובלי לכל המסכים */
+body{font-family:'Heebo',sans-serif; color:var(--ink); min-height:100vh; overflow-x:hidden; position:relative;
+  /* v134: רקע ה-hero — זהה לחלוטין ל-index (זוהר + ויניטה + אורבים) */
   background:
-    radial-gradient(900px 600px at 78% 8%, rgba(255,209,102,.10), transparent 60%),
-    radial-gradient(820px 560px at 18% 92%, rgba(46,196,182,.09), transparent 62%),
+    radial-gradient(900px 600px at 78% 12%, rgba(255,209,102,.10), transparent 60%),
+    radial-gradient(820px 560px at 18% 88%, rgba(46,196,182,.09), transparent 62%),
     radial-gradient(680px 520px at 50% 50%, rgba(141,141,242,.06), transparent 70%),
-    radial-gradient(1200px 900px at 50% 0%, #131f3a 0%, var(--bg2) 45%, var(--bg1) 100%);
+    radial-gradient(1200px 800px at 50% 0%, #131f3a 0%, var(--bg2) 45%, var(--bg1) 100%);
   background-attachment:fixed;}
-/* v133: רשת-נקודות עדינה (חלק מרקע ה-hero) — z-index:0, מאחורי כל המסכים (.screen ב-z-index:2) */
+/* v134: רשת-נקודות (זהה ל-index) */
 body::before{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
   background-image:radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px); background-size:26px 26px;
-  -webkit-mask-image:radial-gradient(ellipse 92% 82% at 50% 45%, #000 38%, transparent 80%);
-          mask-image:radial-gradient(ellipse 92% 82% at 50% 45%, #000 38%, transparent 80%);}
+  -webkit-mask-image:radial-gradient(ellipse 90% 80% at 50% 45%, #000 35%, transparent 78%);
+          mask-image:radial-gradient(ellipse 90% 80% at 50% 45%, #000 35%, transparent 78%);}
+/* v134: ויניטה — הצללה כהה בקצוות (זהה ל-index; זה מה שחסר ועשה את ההבדל) */
+body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:radial-gradient(ellipse 75% 65% at 50% 45%, transparent 55%, rgba(0,0,0,.45) 100%);}
+/* v134: 4 אורבים צפים גלובליים (זהה ל-index). מחליפים את אורבי ה-hero של auth-out (שהוסרו) */
+.orb{position:fixed; border-radius:50%; filter:blur(8px); z-index:0; pointer-events:none; opacity:.5;}
+.o1{width:14px; height:14px; background:var(--teal); top:22%; inset-inline-start:14%; box-shadow:0 0 30px 8px rgba(46,196,182,.5);}
+.o2{width:10px; height:10px; background:var(--gold); top:70%; inset-inline-start:22%; box-shadow:0 0 26px 7px rgba(255,209,102,.5);}
+.o3{width:12px; height:12px; background:var(--violet); top:20%; inset-inline-end:16%; box-shadow:0 0 28px 8px rgba(141,141,242,.5);}
+.o4{width:9px; height:9px; background:#f0a08c; top:74%; inset-inline-end:18%; box-shadow:0 0 24px 7px rgba(240,160,140,.5);}
 .screen{display:none; min-height:100vh; padding:24px; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; z-index:2;}
 .screen.on{display:flex;}
 .wrap{width:100%; max-width:680px;}
@@ -434,6 +444,7 @@ input:focus{border-color:var(--gold); outline:none;}
 </style>
 </head>
 <body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="orb o4"></div>
 <div id="player-wait" class="pbrand" style="display:none; position:fixed; inset:0; z-index:9998; align-items:center; justify-content:center; padding:34px 24px; text-align:center;">
   <div class="porb po1"></div><div class="porb po2"></div><div class="porb po3"></div>
   <div class="pwrap" style="max-width:360px;">
@@ -455,7 +466,7 @@ input:focus{border-color:var(--gold); outline:none;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v133</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v134</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -480,7 +491,6 @@ input:focus{border-color:var(--gold); outline:none;}
 
     <!-- v119: hero למצב לא-מחובר (yopoy) -->
     <div id="auth-out" style="display:none;">
-      <span class="ho-orb ho-o1"></span><span class="ho-orb ho-o2"></span><span class="ho-orb ho-o3"></span><span class="ho-orb ho-o4"></span>
       <div class="ho-stage">
         <h1 class="ho-brand"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
         <div class="ho-hero-teaser">בונה חידונים</div>
