@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v133 - רקע ה-hero גלובלי: הרקע הכללי (body) הוחלף מהנייבי הכחול-שטוח לרקע ה-hero של yopoy — זוהר זהב/טורקיז/סגול (שלוש שכבות radial-gradient עדינות) מעל בסיס נייבי, עם רשת-נקודות דקה (body::before, z-index:0) שדועכת בקצוות. background-attachment:fixed כדי שהרקע יישאר יציב בגלילה בעורך. חל על כל המסכים השקופים: עורך, רשימת-חידונים, לובי, מסך-שאלה ומסך-חשיפה של המנחה, פודיום, ומסכי-השאלה של השחקן. מסכי-התלמיד הממותגים (.pbrand מ-v131) שומרים על הרקע הייעודי שלהם; ה-hero של המסך הלא-מחובר (auth-out) שומר על ה-orbs שלו (לא נוספו orbs גלובליים כדי לא לכפול). גיבוי v132 נשמר לפני השינוי (ניסיון — אם יוצא עמוס מאחורי המשבצות/העורך חוזרים אליו). אומת: node --check + איזון-תגיות
+  v132 - תזמון חיזוקים מול לוח-ביניים: בחשיפת השאלה שמיד אחריה מגיע לוח ("הסתכלו ללוח") — לא נשלח חיזוק כלל, כך שהתלמיד מקבל אירוע אחד בלבד באותו רגע (לוח), במקום מחמאה ולוח שמתחלפים בכמה שניות ואף אחד מהם לא נקלט. התנאי ב-revealQ זהה לתנאי שמפעיל את הלוח ב-nextQ, רק נבדק צעד אחד מוקדם יותר (qIndex+1). selectReinforcements לא נקרא בחשיפה כזו — לכן המכסה לא נצרכת והתלמידים נשארים זכאים לחשיפה הבאה שאינה לוח; מודל-המכסה מפצה את עצמו, בלי שינוי ב-DIVISOR. השפעה: בחידון 14+ שאלות אין שינוי במכסה (~2 לכל אחד); בחידון קצר חלק יקבלו 1 (בתוך הטולרנס). אומת: node --check + איזון-תגיות
+  v131 - מסכי-תלמיד ממותגים (yopoy/QuizPlay): ארבעת מסכי-התלמיד עוצבו מחדש בשפת ה-hero (lockup של yopoy מעל 🧠 + QuizPlay בזוהר זהב, על רקע הזוהר הצבעוני זהב/טורקיז/סגול עם נקודות-מרקם ואורבים, מחלקה .pbrand). (1) פתיחה (pwait): "היי, [שם]! עוד רגע מתחילים" — הברכה האישית נקבעת ב-playerMsg על welcome לפי myName. (2) המתנה (player-wait overlay): "רגע אחד… המנחה יצא לרגע — תיכף ממשיכים". (3) סיום (pfin/showPFin): "תודה רבה, [שם]! ❤️ היה כיף — נתראה במשחק הבא" + ניקוד עמום ("צברת X נקודות"), בלי מיקום ובלי מדליה (כדי שלא ישוו). (4) חדש — נקטע (pcut): "נראה שהמשחק נקטע 😕 / תודה ששיחקת — נתראה בפעם הבאה". התרחישים: מנחה שנעלם → נשאר על "תיכף ממשיכים" (בלי ניחושי-טיימר); מנחה שחזר ולחץ ✕ (dismissResumeBanner) → נשלחת הודעת 'interrupted' ל-games/{code}/messages והתלמידים התקועים עוברים ל-pcut; מנחה שסיים את החידון → מסך-הסיום הממותג. אומת: node --check + איזון-תגיות
   v130 - השהיה למסך-ההמתנה (בליפ-רשת רגעי לא מקפיץ): ב-v129 מסך "תיכף נחזור" קפץ ברגע שנוכחות-המארח נעלמה — כך גם ניתוק רגעי של המחשב/מקרן היה מקפיץ חלון לכל התלמידים. עכשיו: כשהנוכחות-החיה נעלמת מופעל טיימר של 8 שניות, והמסך מופיע רק אם המארח עדיין נעדר אחריו (clearTimeout מבטל ברגע שהמארח חוזר, כשמגיעה שאלה, ובסיום). כך בליפ קצר נבלע בשקט, ורק נפילה אמיתית (סגירת-לשונית/בטריה) מציגה את ההודעה. צד-המורה לא הושפע: חלון-השחזור ממילא קופץ רק בטעינת-דף, לא במהלך משחק, אז בליפ לא מקפיץ למורה דבר. אומת: node --check + איזון-תגיות
   v129 - מסך-המתנה לתלמידים כשהמארח נופל: עד כה כשהמארח נפל, התלמידים פשוט קפאו בלי לדעת מה קורה. עכשיו: המארח כותב "נוכחות-חיה" ל-Firebase (games/{code}/hostAlive) עם onDisconnect שמסיר אותה אוטומטית כשהחיבור נופל ומתחדשת בכל חיבור חוזר (setupHostAlive, אותה תבנית כמו setupPresence). כל תלמיד מאזין לצומת הזה (בתוך listenGame, ענף שאינו-מארח): נעלמה הנוכחות → מוצג מסך מלא "רגע אחד… נא לא לצאת — המשחק תיכף ימשיך". חזרה (המארח שב/שוחזר) → המסך נעלם, וכשמגיעה שאלה הם ממשיכים. הפעלה ב-hostStart וב-resumeHostGame; כיבוי מסודר (cancel ל-onDisconnect) ב-hostFinish וב-endGameSession כדי שסיום-משחק רגיל לא יקפיץ את המסך. שמירות: showPQ מאפס את דגל-הסיום (קריטי ל"התחלה מחדש" שבו התלמיד לא מצטרף-מחדש), קבלת end מסמנת סיום ומורידה את המסך, joinGame מאפס דגלים בהצטרפות חדשה. הערה: מסך-ההמתנה מופיע אחרי שה-onDisconnect של Firebase מזהה ניתוק (מיידי בסגירת-טאב, ~עשרות שניות בנפילת-רשת). אומת: node --check + איזון-תגיות
   v128 - שאלת-החזרה הפכה לחלון-קופץ במרכז + "לא" סוגר את המשחק: עד כה ההצעה להמשיך הופיעה כרצועה דקה למעלה (קל לפספס), וכפתור ה"לא" רק הסיר את המצביע. עכשיו: (א) ההצעה היא חלון-קופץ ממורכז ("לחזור למשחק?") עם שם החידון — בולט וברור, אותו אלמנט resume-banner הפך מ-top-bar ל-overlay (display:flex). (ב) "חזרה למשחק" הוא כפתור ראשי גדול ובולט; "לא, לסגור את המשחק" הוא קישור-טקסט קטן ומשני מתחתיו — כדי שלא ייסגר משחק חי בלחיצה-רפלקס. (ג) "לא" מנקה עכשיו גם את צילום-המצב (games/{code}/hostState), לא רק את המצביע — המשחק נסגר לחלוטין ואינו ניתן לשחזור (אם רוצים לשחק שוב, מתחילים מחדש). אומת: node --check + איזון-תגיות
@@ -125,7 +128,19 @@
 }
 *{box-sizing:border-box;}
 html,body{margin:0; padding:0; min-height:100%;}
-body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, var(--bg2) 45%, var(--bg1) 100%); color:var(--ink); min-height:100vh;}
+body{font-family:'Heebo',sans-serif; color:var(--ink); min-height:100vh;
+  /* v133: רקע ה-hero (זוהר זהב/טורקיז/סגול) מחליף את הנייבי השטוח — גלובלי לכל המסכים */
+  background:
+    radial-gradient(900px 600px at 78% 8%, rgba(255,209,102,.10), transparent 60%),
+    radial-gradient(820px 560px at 18% 92%, rgba(46,196,182,.09), transparent 62%),
+    radial-gradient(680px 520px at 50% 50%, rgba(141,141,242,.06), transparent 70%),
+    radial-gradient(1200px 900px at 50% 0%, #131f3a 0%, var(--bg2) 45%, var(--bg1) 100%);
+  background-attachment:fixed;}
+/* v133: רשת-נקודות עדינה (חלק מרקע ה-hero) — z-index:0, מאחורי כל המסכים (.screen ב-z-index:2) */
+body::before{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px); background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(ellipse 92% 82% at 50% 45%, #000 38%, transparent 80%);
+          mask-image:radial-gradient(ellipse 92% 82% at 50% 45%, #000 38%, transparent 80%);}
 .screen{display:none; min-height:100vh; padding:24px; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; z-index:2;}
 .screen.on{display:flex;}
 .wrap{width:100%; max-width:680px;}
@@ -381,6 +396,31 @@ input:focus{border-color:var(--gold); outline:none;}
 .ptimer{height:10px; background:rgba(255,255,255,.12); border-radius:6px; overflow:hidden; margin-bottom:18px;}
 .ptimer i{display:block; height:100%; width:100%; background:var(--gold);}
 .big-emoji{font-size:58px; margin:0;}
+/* v131: מסכי-תלמיד ממותגים (פתיחה/המתנה/סיום/נקטע) — בצבעי yopoy (זוהר זהב/טורקיז/סגול) */
+.pbrand{
+  background:
+    radial-gradient(700px 480px at 80% 6%, rgba(255,209,102,.12), transparent 60%),
+    radial-gradient(640px 460px at 16% 92%, rgba(46,196,182,.10), transparent 62%),
+    radial-gradient(520px 440px at 50% 52%, rgba(141,141,242,.07), transparent 70%),
+    radial-gradient(1200px 800px at 50% 0%, #131f3a 0%, var(--bg2) 45%, var(--bg1) 100%);
+}
+.pbrand::before{
+  content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px); background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(ellipse 90% 80% at 50% 42%, #000 35%, transparent 80%);
+          mask-image:radial-gradient(ellipse 90% 80% at 50% 42%, #000 35%, transparent 80%);
+}
+.porb{position:absolute; border-radius:50%; filter:blur(8px); z-index:0; pointer-events:none; opacity:.5;}
+.porb.po1{width:13px; height:13px; background:var(--teal); top:18%; inset-inline-start:15%; box-shadow:0 0 28px 8px rgba(46,196,182,.5);}
+.porb.po2{width:10px; height:10px; background:var(--gold); top:80%; inset-inline-end:17%; box-shadow:0 0 24px 7px rgba(255,209,102,.5);}
+.porb.po3{width:9px; height:9px; background:#9a9af5; top:78%; inset-inline-start:20%; box-shadow:0 0 22px 6px rgba(141,141,242,.45);}
+.pbrand .pwrap{position:relative; z-index:1;}
+.pbrand-lock{margin:0 0 30px;}
+.pbrand-top{font-size:14px; color:var(--ink-dim); margin:0 0 14px; letter-spacing:.02em;}
+.pbrand-title{font-family:'Secular One'; font-size:26px; color:var(--ink); margin:0 0 12px; line-height:1.3;}
+.pbrand-sub{font-size:17px; color:var(--ink); font-weight:600; line-height:1.5; margin:0;}
+.pbrand-dim{margin-top:22px; font-size:13px; color:#6c7798;}
+.pbrand-foot{margin-top:30px; font-size:12px; color:#6c7798; letter-spacing:.04em;}
 
 .leadrow{display:flex; justify-content:space-between; background:var(--card); border-radius:12px; padding:12px 18px; margin-bottom:8px; font-size:18px; max-width:520px; width:100%;}
 .leadrow .rank{color:var(--gold); font-weight:900; margin-left:10px;}
@@ -394,11 +434,13 @@ input:focus{border-color:var(--gold); outline:none;}
 </style>
 </head>
 <body>
-<div id="player-wait" style="display:none; position:fixed; inset:0; z-index:9998; background:rgba(5,8,15,.93); align-items:center; justify-content:center; padding:24px; text-align:center;">
-  <div>
-    <div style="font-size:54px; margin-bottom:14px;">⏳</div>
-    <div style="font-family:'Secular One'; font-size:23px; color:var(--gold,#f5c518); margin-bottom:10px;">רגע אחד…</div>
-    <div style="font-size:17px; color:var(--ink); line-height:1.6;">נא לא לצאת — המשחק תיכף ימשיך 🙂</div>
+<div id="player-wait" class="pbrand" style="display:none; position:fixed; inset:0; z-index:9998; align-items:center; justify-content:center; padding:34px 24px; text-align:center;">
+  <div class="porb po1"></div><div class="porb po2"></div><div class="porb po3"></div>
+  <div class="pwrap" style="max-width:360px;">
+    <h1 class="ho-brand ho-brand-sm pbrand-lock"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
+    <div class="pbrand-title">רגע אחד… ⏳</div>
+    <div class="pbrand-sub">המנחה יצא לרגע — תיכף ממשיכים!</div>
+    <div class="pbrand-dim">אל תצאו, תכף חוזר 🙂</div>
   </div>
 </div>
 <div id="resume-banner" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(5,8,15,.82); align-items:center; justify-content:center; padding:20px;">
@@ -413,7 +455,7 @@ input:focus{border-color:var(--gold); outline:none;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v130</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v133</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -837,11 +879,13 @@ input:focus{border-color:var(--gold); outline:none;}
 </div>
 
 <!-- ============ שחקן: המתנה ============ -->
-<div class="screen" id="pwait">
+<div class="screen pbrand" id="pwait">
+  <div class="porb po1"></div><div class="porb po2"></div><div class="porb po3"></div>
   <div class="pwrap">
-    <p class="big-emoji">✅</p>
-    <h2 id="pwait-title">אתם בפנים!</h2>
-    <p class="sub">חכו שהמנחה יתחיל. תראו את השאלות כאן.</p>
+    <h1 class="ho-brand ho-brand-sm pbrand-lock"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
+    <div class="pbrand-title" id="pwait-greet">היי! 👋</div>
+    <div class="pbrand-sub">עוד רגע מתחילים 🎯</div>
+    <div class="pbrand-dim">ממתינים שהמנחה יתחיל…</div>
   </div>
 </div>
 
@@ -883,11 +927,25 @@ input:focus{border-color:var(--gold); outline:none;}
 </div>
 
 <!-- ============ שחקן: סיום ============ -->
-<div class="screen" id="pfin">
+<div class="screen pbrand" id="pfin">
+  <div class="porb po1"></div><div class="porb po2"></div><div class="porb po3"></div>
   <div class="pwrap">
-    <p class="big-emoji" id="pfin-emoji">🎓</p>
-    <h2 id="pfin-rank">סיימתם!</h2>
-    <p class="sub" id="pfin-pts"></p>
+    <h1 class="ho-brand ho-brand-sm pbrand-lock"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
+    <div class="pbrand-title" id="pfin-thanks">תודה רבה! ❤️</div>
+    <div class="pbrand-sub">היה כיף — נתראה במשחק הבא 🎉</div>
+    <div class="pbrand-dim" id="pfin-pts"></div>
+  </div>
+</div>
+
+<!-- ============ שחקן: המשחק נקטע (המנחה לחץ ✕) ============ -->
+<div class="screen pbrand" id="pcut">
+  <div class="porb po1"></div><div class="porb po2"></div><div class="porb po3"></div>
+  <div class="pwrap">
+    <h1 class="ho-brand ho-brand-sm pbrand-lock"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
+    <div class="pbrand-top">המנחה לא חזר</div>
+    <div class="pbrand-title">נראה שהמשחק נקטע 😕</div>
+    <div class="pbrand-sub">תודה ששיחקת — נתראה בפעם הבאה ❤️</div>
+    <div class="pbrand-dim">אפשר לסגור את החלון</div>
   </div>
 </div>
 
@@ -4379,8 +4437,15 @@ function revealQ(){
     requestAnimationFrame(()=>{ row.querySelector('.fill').style.width = (dist[o.i]/denom*100)+'%'; });
   });
 
-  // חיזוקים אישיים: בוחרים מי מקבל, ומצרפים מפה אישית להודעת ה-reveal
-  const reinforceMap = selectReinforcements(reinforceEligibles, qIndex, quiz.questions.length);
+  // חיזוקים אישיים: בוחרים מי מקבל, ומצרפים מפה אישית להודעת ה-reveal.
+  // v132: אם השאלה הבאה תפתח לוח-ביניים — לא שולחים חיזוק בחשיפה הזו בכלל (אותו
+  // תנאי כמו ב-nextQ, צעד אחד מוקדם). כך התלמיד מקבל רק "הסתכלו ללוח" — דבר אחד בכל
+  // פעם. selectReinforcements לא נקרא, אז המכסה לא נצרכת והתלמידים נשארים זכאים
+  // לחשיפה הבאה שאינה לוח (מודל-המכסה מפצה את עצמו, בלי לגעת ב-DIVISOR).
+  const _nextIdx = qIndex + 1;
+  const _boardNext = !intermissionDone.has(_nextIdx) && Object.keys(players).length > 0 &&
+                     _nextIdx > 0 && _nextIdx % 4 === 0 && (quiz.questions.length - _nextIdx) >= 2;
+  const reinforceMap = _boardNext ? {} : selectReinforcements(reinforceEligibles, qIndex, quiz.questions.length);
   if (Object.keys(reinforceMap).length) sfxStreak();   // צליל קצר כשיש חיזוק
   // עדכון רצף/תוצאות לשחקנים + חיזוק אישי לכל נמען
   send({ t:'rev', i:seq, correctIdx: curQ.correct, correctText, scores: scoreboard(), reinforce: reinforceMap });
@@ -4666,6 +4731,8 @@ function showResumeBanner(code, title){
 }
 function dismissResumeBanner(){
   const b = $('resume-banner'); if (b) b.style.display = 'none';
+  // v131: מודיעים לתלמידים המחוברים שהמשחק נקטע (הם תקועים על "תיכף ממשיכים")
+  if (_resumeCode){ try { fdb.ref('games/'+_resumeCode+'/messages').push({ t:'interrupted', from:'host-close', ts:Date.now() }); } catch(e){} }
   // v128: "לא" = סגירת המשחק — מנקים גם את צילום-המצב מ-Firebase, לא רק את המצביע
   if (_resumeCode){ try { fdb.ref('games/'+_resumeCode+'/hostState').remove().catch(()=>{}); } catch(e){} }
   clearActiveGamePointer();
@@ -5042,12 +5109,13 @@ function joinGame(){
 }
 
 function playerMsg(m){
-  if (m.t==='welcome' && m.id===myId){ joined=true; show('pwait'); }
+  if (m.t==='welcome' && m.id===myId){ joined=true; if($('pwait-greet')) $('pwait-greet').textContent = myName ? ('היי, '+myName+'! 👋') : 'היי! 👋'; show('pwait'); }
   if (m.t==='q'){ showPQ(m); }
   if (m.t==='look'){ show('plook'); }
   if (m.t==='rev'){ showFeedback(m); }
   if (m.t==='end'){ _playerGameEnded = true; clearTimeout(_hostGoneTimer); hidePlayerWait(); showPFin(m); }
   if (m.t==='welcomeback' && m.id===myId && m.msg){ showReinforceToast(m.msg, '👋'); }
+  if (m.t==='interrupted'){ _playerGameEnded = true; clearTimeout(_hostGoneTimer); hidePlayerWait(); show('pcut'); }   // v131: המנחה לחץ ✕
 }
 
 function showPQ(m){
@@ -5101,12 +5169,9 @@ function showFeedback(m){
 }
 function showPFin(m){
   const me=(m.scores||[]).find(s=>s.id===myId);
-  if (me){
-    const rank = m.scores.findIndex(s=>s.id===myId)+1;
-    $('pfin-emoji').textContent = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'🎓';
-    $('pfin-rank').textContent = 'סיימתם במקום ' + rank + '!';
-    $('pfin-pts').textContent = me.score + ' נקודות · ' + me.correct + ' תשובות נכונות';
-  } else { $('pfin-rank').textContent='המשחק הסתיים!'; }
+  // v131: מסך-סיום ממותג — שם אישי, בלי מיקום, ניקוד עמום (כדי שלא ישוו)
+  if ($('pfin-thanks')) $('pfin-thanks').textContent = myName ? ('תודה רבה, '+myName+'! ❤️') : 'תודה רבה! ❤️';
+  if ($('pfin-pts')) $('pfin-pts').textContent = me ? ('צברת ' + me.score + ' נקודות') : '';
   show('pfin');
 }
 
