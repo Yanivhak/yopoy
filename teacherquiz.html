@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v138 - שתי תוספות למסך ה-AI: (1) שדה "רמת קושי" (בחירה יחידה: קלה / בינונית / מאתגרת, ברירת-מחדל בינונית) ליד "כמה שאלות/תשובות" — תמיד גלוי. כל רמה מתורגמת בפרומפט למשפט-הנחיה (למשל "מאתגרת" → "שאלות מאתגרות שדורשות ידע מעמיק וחשיבה"). נשמר ב-aiMeta (diff) ונטען עם החידון; חידונים ישנים בלי השדה מקבלים "בינונית". (2) שורת-תזכורת שמופיעה רק כשמתג-הקובץ (v137) מסומן: "📎 זכרו: צרפו את הקובץ בכלי ה-AI יחד עם הפרומפט" — כי המתג קודם הוסיף הוראה לפרומפט (ל-AI) אך לא הזכיר למורה לצרף בפועל. onchange של המתג מציג/מסתיר אותה. בנוסף, הדוגמה "רמת קושי גבוהה" הוסרה מהסבר שדה-ההערה (כי עכשיו יש שדה ייעודי). אומת: node --check + איזון-תגיות
+  v137 - מסך ה-AI, צירוף קובץ: (1) נוסף מתג "📎 אצרף קובץ בכלי ה-AI" ליד שדה ההערה. הבעיה שנפתרה — הפרומפט בנוי בהנחה שהוא עומד לבד ("צור חידון בנושא X"); מורה שמצרף PDF ב-ChatGPT ומדביק את הפרומפט קיבל שני דברים שלא מדברים זה עם זה, וה-AI היה עלול לבנות חידון כללי ולהתעלם מהקובץ בשקט. עכשיו, כשהמתג מסומן, buildImportPrompt מוסיף שורה מפורשת: "מצורף קובץ... בנה את השאלות על בסיס תוכן הקובץ; הנושא והמאפיינים כהקשר בלבד" — שמפנה את ה-AI לקובץ ופותרת את התנגשות הנושא-מול-קובץ. כשלא מסומן — הפרומפט נשאר בדיוק כשהיה (השורה מותנית). המצב לא נשמר ב-aiMeta (בחירה לכל ייצוא). (2) עודכן ההסבר של שדה ההערה החופשית — מכוון עכשיו להקשר קצר (כמה מילים על החברה/האירוע, נושא, דגש) ומפנה לצירוף-קובץ לחומר ארוך כמו דף-סיכום, כדי שמורים לא יפתו להדביק מבחן שלם לתוך פרומפט (יוצא גרוע). אומת: node --check + איזון-תגיות
+  v136 - שתי משימות: (1) רקע yopoy כאופציה בבחירת-הרקע שלפני המשחק (pregame) — נוסף כפריט הראשון בגלריית-הרקעים (BG_GALLERY) בשם "✨ yopoy". זהו זוהר ה-hero (זהב/טורקיז/סגול על נייבי) אך בשקיפות מוגברת (~.30 במקום ~.10) כדי שישרוד את שכבת-ההכהיה של 70% שמעל game-bg — כך הוא נראה כמו ה-hero *אחרי* ההכהיה, וקריאוּת טקסט-השאלה נשמרת (כיוון א'). מתנהג כמו כל רקע-גלריה: תצוגה מקדימה חיה ב-pregame, כיבוי/הדלקה במשחק, לא נשמר ב-Firebase. (2) מירכוז ההודעות בטלפון — .screen עבר מ-min-height:100vh ל-100vh+100dvh: ב-100vh נכלל האזור שמאחורי שורת-הכתובת של דפדפן-הנייד, אז התוכן "ממורכז" ירד לשליש התחתון של המסך הנראה; 100dvh (גובה-תצוגה דינמי) ממרכז נכון. חל על כל מסכי-התלמיד והמנחה. אומת: node --check + איזון-תגיות
+  v135 - החזרת הרקע הגלובלי לנייבי השטוח (גלגול-לאחור של v133/v134): בבדיקה, רקע ה-hero (הזוהר) הפריע בחידון החי — על הקיר ובמיוחד על מסכי-הטלפון של התלמיד (מסכי-השאלה). לכן ה-body חזר לרקע הנייבי השקט המקורי (radial יחיד), הוסרו body::before/::after (נקודות+ויניטה) ו-4 האורבים הגלובליים, ואורבי ה-hero (.ho-orb) הוחזרו למסך הלא-מחובר (auth-out) כמו קודם. מסכי-התלמיד הממותגים (.pbrand מ-v131) ותזמון-החיזוקים (v132) נשמרו כפי שהם. הזוהר יוצע בהמשך כאופציה אופציונלית בבחירת-הרקע שלפני המשחק (pregame), לא כברירת-מחדל גלובלית. אומת: node --check + איזון-תגיות
   v134 - יישור רקע ה-hero להיות זהה ל-index: ב-v133 הרקע היה דומה אך לא זהה ל-index, ולכן נראה שונה. הפערים שתוקנו: (א) נוספה ויניטה (body::after) — הצללה כהה בקצוות (radial transparent 55% → rgba(0,0,0,.45)) שממסגרת ומעמיקה; היעדרה ב-v133 גרם לזוהר להגיע עד הקצוות ולהיראות שטוח. (ב) נוספו 4 אורבים צפים גלובליים (.o1-.o4: טורקיז/זהב/סגול/אלמוג, position:fixed, z-index:0) הזהים ל-index; אורבי ה-hero הייעודיים של המסך הלא-מחובר (.ho-orb) הוסרו כדי שלא ייכפלו — האורבים הגלובליים מכסים גם אותו. (ג) יושרו ההפרשים הזעירים: מיקום הזוהר הזהב (8%→12%), גודל בסיס הגרדיאנט (900→800), ומסכת רשת-הנקודות — כולם לערכי index המדויקים. נוסף overflow-x:hidden + position:relative ל-body (כמו ב-index). כעת רקע ה-quiz זהה ביט-לביט ל-index ול-hero. אומת: node --check + איזון-תגיות
   v133 - רקע ה-hero גלובלי: הרקע הכללי (body) הוחלף מהנייבי הכחול-שטוח לרקע ה-hero של yopoy — זוהר זהב/טורקיז/סגול (שלוש שכבות radial-gradient עדינות) מעל בסיס נייבי, עם רשת-נקודות דקה (body::before, z-index:0) שדועכת בקצוות. background-attachment:fixed כדי שהרקע יישאר יציב בגלילה בעורך. חל על כל המסכים השקופים: עורך, רשימת-חידונים, לובי, מסך-שאלה ומסך-חשיפה של המנחה, פודיום, ומסכי-השאלה של השחקן. מסכי-התלמיד הממותגים (.pbrand מ-v131) שומרים על הרקע הייעודי שלהם; ה-hero של המסך הלא-מחובר (auth-out) שומר על ה-orbs שלו (לא נוספו orbs גלובליים כדי לא לכפול). גיבוי v132 נשמר לפני השינוי (ניסיון — אם יוצא עמוס מאחורי המשבצות/העורך חוזרים אליו). אומת: node --check + איזון-תגיות
   v132 - תזמון חיזוקים מול לוח-ביניים: בחשיפת השאלה שמיד אחריה מגיע לוח ("הסתכלו ללוח") — לא נשלח חיזוק כלל, כך שהתלמיד מקבל אירוע אחד בלבד באותו רגע (לוח), במקום מחמאה ולוח שמתחלפים בכמה שניות ואף אחד מהם לא נקלט. התנאי ב-revealQ זהה לתנאי שמפעיל את הלוח ב-nextQ, רק נבדק צעד אחד מוקדם יותר (qIndex+1). selectReinforcements לא נקרא בחשיפה כזו — לכן המכסה לא נצרכת והתלמידים נשארים זכאים לחשיפה הבאה שאינה לוח; מודל-המכסה מפצה את עצמו, בלי שינוי ב-DIVISOR. השפעה: בחידון 14+ שאלות אין שינוי במכסה (~2 לכל אחד); בחידון קצר חלק יקבלו 1 (בתוך הטולרנס). אומת: node --check + איזון-תגיות
@@ -129,29 +133,8 @@
 }
 *{box-sizing:border-box;}
 html,body{margin:0; padding:0; min-height:100%;}
-body{font-family:'Heebo',sans-serif; color:var(--ink); min-height:100vh; overflow-x:hidden; position:relative;
-  /* v134: רקע ה-hero — זהה לחלוטין ל-index (זוהר + ויניטה + אורבים) */
-  background:
-    radial-gradient(900px 600px at 78% 12%, rgba(255,209,102,.10), transparent 60%),
-    radial-gradient(820px 560px at 18% 88%, rgba(46,196,182,.09), transparent 62%),
-    radial-gradient(680px 520px at 50% 50%, rgba(141,141,242,.06), transparent 70%),
-    radial-gradient(1200px 800px at 50% 0%, #131f3a 0%, var(--bg2) 45%, var(--bg1) 100%);
-  background-attachment:fixed;}
-/* v134: רשת-נקודות (זהה ל-index) */
-body::before{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-  background-image:radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px); background-size:26px 26px;
-  -webkit-mask-image:radial-gradient(ellipse 90% 80% at 50% 45%, #000 35%, transparent 78%);
-          mask-image:radial-gradient(ellipse 90% 80% at 50% 45%, #000 35%, transparent 78%);}
-/* v134: ויניטה — הצללה כהה בקצוות (זהה ל-index; זה מה שחסר ועשה את ההבדל) */
-body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-  background:radial-gradient(ellipse 75% 65% at 50% 45%, transparent 55%, rgba(0,0,0,.45) 100%);}
-/* v134: 4 אורבים צפים גלובליים (זהה ל-index). מחליפים את אורבי ה-hero של auth-out (שהוסרו) */
-.orb{position:fixed; border-radius:50%; filter:blur(8px); z-index:0; pointer-events:none; opacity:.5;}
-.o1{width:14px; height:14px; background:var(--teal); top:22%; inset-inline-start:14%; box-shadow:0 0 30px 8px rgba(46,196,182,.5);}
-.o2{width:10px; height:10px; background:var(--gold); top:70%; inset-inline-start:22%; box-shadow:0 0 26px 7px rgba(255,209,102,.5);}
-.o3{width:12px; height:12px; background:var(--violet); top:20%; inset-inline-end:16%; box-shadow:0 0 28px 8px rgba(141,141,242,.5);}
-.o4{width:9px; height:9px; background:#f0a08c; top:74%; inset-inline-end:18%; box-shadow:0 0 24px 7px rgba(240,160,140,.5);}
-.screen{display:none; min-height:100vh; padding:24px; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; z-index:2;}
+body{font-family:'Heebo',sans-serif; background:radial-gradient(1200px 700px at 75% -10%, #16223f 0%, var(--bg2) 45%, var(--bg1) 100%); color:var(--ink); min-height:100vh;}
+.screen{display:none; min-height:100vh; min-height:100dvh; padding:24px; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; z-index:2;}  /* v136: 100dvh ממרכז את ההודעות בטלפון (100vh כלל את האזור שמאחורי שורת-הכתובת והוריד אותן לשליש התחתון) */
 .screen.on{display:flex;}
 .wrap{width:100%; max-width:680px;}
 h1{font-family:'Secular One'; font-size:clamp(30px,5vw,52px); margin:0 0 6px; color:var(--gold);}
@@ -444,7 +427,6 @@ input:focus{border-color:var(--gold); outline:none;}
 </style>
 </head>
 <body>
-<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="orb o4"></div>
 <div id="player-wait" class="pbrand" style="display:none; position:fixed; inset:0; z-index:9998; align-items:center; justify-content:center; padding:34px 24px; text-align:center;">
   <div class="porb po1"></div><div class="porb po2"></div><div class="porb po3"></div>
   <div class="pwrap" style="max-width:360px;">
@@ -466,7 +448,7 @@ input:focus{border-color:var(--gold); outline:none;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v134</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v138</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -491,6 +473,7 @@ input:focus{border-color:var(--gold); outline:none;}
 
     <!-- v119: hero למצב לא-מחובר (yopoy) -->
     <div id="auth-out" style="display:none;">
+      <span class="ho-orb ho-o1"></span><span class="ho-orb ho-o2"></span><span class="ho-orb ho-o3"></span><span class="ho-orb ho-o4"></span>
       <div class="ho-stage">
         <h1 class="ho-brand"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
         <div class="ho-hero-teaser">בונה חידונים</div>
@@ -2062,7 +2045,7 @@ function addQuestion(){
 }
 
 /* ===== יצירת חידון באמצעות בינה מלאכותית ===== */
-let impQCount = 10, impACount = 4;
+let impQCount = 10, impACount = 4, impDiff = 'בינונית';
 let impTopics = new Set(), impGoals = new Set();
 let impAge = '', impTraits = new Set();
 let impTrack = 'study';        // 'study' = לימודים, 'fun' = פעילות וגיבוש
@@ -2083,7 +2066,8 @@ function collectAiMeta(){
     goalFree: ($('imp-goal-free') ? $('imp-goal-free').value.trim() : ''),
     note: impNote,
     qCount: impQCount,
-    aCount: impACount
+    aCount: impACount,
+    diff: impDiff
   };
 }
 // טוען בחירות שמורות בחזרה למשתני המצב (כשפותחים חידון קיים)
@@ -2097,13 +2081,14 @@ function loadAiMeta(m){
   impNote    = m.note || '';
   impQCount  = m.qCount || 10;
   impACount  = m.aCount || 4;
+  impDiff    = m.diff || 'בינונית';
   // השדות החופשיים נשמרים לאובייקט זמני שייקרא בעת בניית החלון
   impFreeCache = { topic: m.topicFree||'', age: m.ageFree||'', trait: m.traitFree||'', goal: m.goalFree||'' };
 }
 // איפוס לערכי ברירת מחדל (חידון חדש)
 function resetAiMeta(){
   impTrack='study'; impTopics=new Set(); impAge=''; impTraits=new Set();
-  impGoals=new Set(); impNote=''; impQCount=10; impACount=4;
+  impGoals=new Set(); impNote=''; impQCount=10; impACount=4; impDiff='בינונית';
   impFreeCache = { topic:'', age:'', trait:'', goal:'' };
 }
 let impFreeCache = { topic:'', age:'', trait:'', goal:'' };  // ערכי השדות החופשיים שנטענו מחידון קיים
@@ -2195,9 +2180,15 @@ function buildImportPrompt(){
   if (age) p += (impTrack==='fun' ? ' קהל היעד: ' : ' שכבת הגיל: ') + age + '.';
   if (traits.length) p += ' מאפייני המשתתפים: ' + traits.join(', ') + '. התאם את רמת השאלות, אורך הניסוח ומורכבות התשובות בהתאם.';
   if (goals.length) p += ' מטרת החידון: ' + goals.join(', ') + '. התאם את אופי החידון למטרה.';
+  // v138: רמת קושי
+  const diffMap = { 'קלה':'שאלות פשוטות וברורות ברמת ידע בסיסית', 'בינונית':'רמת קושי בינונית', 'מאתגרת':'שאלות מאתגרות שדורשות ידע מעמיק וחשיבה' };
+  if (impDiff) p += ' רמת הקושי של השאלות: ' + (diffMap[impDiff]||impDiff) + '.';
   if (impTrack==='fun') p += ' החידון נועד לפעילות חברתית — שמור על אווירה קלילה ומהנה.';
   const noteTxt = ($('imp-note') ? $('imp-note').value.trim() : impNote.trim());
   if (noteTxt) p += ' הערה נוספת חשובה: ' + noteTxt + '.';
+  // v137: אם המורה יצרף קובץ בכלי ה-AI — מורים ל-AI לבנות על בסיסו (פותר את ההתנגשות נושא-מול-קובץ).
+  const attachOn = ($('imp-attach') ? $('imp-attach').checked : false);
+  if (attachOn) p += ' שימו לב: מצורף קובץ (דף מידע/סיכום/תוכן). בנה את השאלות על בסיס תוכן הקובץ המצורף; הנושא והמאפיינים שצוינו משמשים כהקשר וכיוון בלבד.';
   p += ' חשוב מאוד — החידון מוצג על הלוח והמשתתפים עונים מהטלפון, אז הקיצור קריטי:' +
        ' כל שאלה קצרה וישירה, עד 20 מילים (מקסימום מוחלט 25 מילים).' +
        ' כל תשובה קצרה ותמציתית — רצוי שורה אחת, מילה או ביטוי קצר ולא משפט שלם.' +
@@ -2437,7 +2428,8 @@ function openImport(){
   const sel = document.createElement('div'); sel.style.cssText='display:flex; gap:18px; flex-wrap:wrap; margin:16px 0 6px;';
   sel.innerHTML =
     '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">כמה שאלות?</div><div id="imp-q-row" style="display:flex; gap:6px;"></div></div>' +
-    '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">כמה תשובות?</div><div id="imp-a-row" style="display:flex; gap:6px;"></div></div>';
+    '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">כמה תשובות?</div><div id="imp-a-row" style="display:flex; gap:6px;"></div></div>' +
+    '<div><div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">רמת קושי</div><div id="imp-diff-row" style="display:flex; gap:6px;"></div></div>';
   box.appendChild(sel);
 
   // ===== פריט 5: רשימת השאלות הקיימות (רק בעריכת חידון שיש בו שאלות) =====
@@ -2452,13 +2444,25 @@ function openImport(){
   const noteLabel = document.createElement('div'); noteLabel.style.cssText='font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;';
   noteLabel.textContent='הערה חופשית (לא חובה)';
   const noteSub = document.createElement('div'); noteSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:7px; line-height:1.5;';
-  noteSub.textContent='משהו שתרצו להוסיף להנחיה — לדוגמה: "הקפד על רמת קושי גבוהה" או "התמקד בעיקר בשנות ה-90".';
+  noteSub.textContent='הקשר קצר להנחיה — לדוגמה: "כמה מילים על החברה/האירוע", "התמקד בפרק 3", או "כלול שאלה על נושא מסוים". לחומר ארוך כמו דף-סיכום — עדיף לצרף קובץ (ראו מטה).';
   const noteInp = document.createElement('textarea'); noteInp.id='imp-note';
   noteInp.style.cssText='width:100%; height:62px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:9px 12px; font-family:Heebo; font-size:14px; resize:vertical;';
   noteInp.value = impNote;
   noteInp.oninput = ()=>{ impNote = noteInp.value; $('imp-prompt').value = buildImportPrompt(); };
   noteWrap.appendChild(noteLabel); noteWrap.appendChild(noteSub); noteWrap.appendChild(noteInp);
   box.appendChild(noteWrap);
+
+  // ===== v137: מתג צירוף-קובץ בכלי ה-AI =====
+  const atWrap = document.createElement('div'); atWrap.style.cssText='margin:12px 0 4px; background:rgba(46,196,182,.08); border:1px solid rgba(46,196,182,.25); border-radius:10px; padding:11px 13px;';
+  const atLab = document.createElement('label'); atLab.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; font-size:14px; color:var(--ink); font-weight:700;';
+  const atChk = document.createElement('input'); atChk.type='checkbox'; atChk.id='imp-attach'; atChk.style.cssText='width:18px; height:18px; accent-color:var(--teal); cursor:pointer; flex:0 0 auto;';
+  atChk.onchange = ()=>{ if($('imp-prompt')) $('imp-prompt').value = buildImportPrompt(); const _r=$('imp-attach-remind'); if(_r) _r.style.display = atChk.checked ? 'block' : 'none'; };
+  const atTxt = document.createElement('span'); atTxt.textContent='📎 אצרף קובץ בכלי ה-AI (דף מידע, סיכום ועוד)';
+  atLab.appendChild(atChk); atLab.appendChild(atTxt); atWrap.appendChild(atLab);
+  const atSub = document.createElement('div'); atSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;';
+  atSub.textContent='סמנו אם בכוונתכם לצרף קובץ ב-ChatGPT/Claude/Gemini — והפרומפט יורה ל-AI לבנות את השאלות על בסיס תוכן הקובץ. (את הקובץ עצמו מצרפים שם, לא כאן.)';
+  atWrap.appendChild(atSub);
+  box.appendChild(atWrap);
 
   // ===== שלבים ממוספרים =====
   const hr1 = document.createElement('div'); hr1.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:18px 0 14px;'; box.appendChild(hr1);
@@ -2475,6 +2479,10 @@ function openImport(){
   const copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת הפרומפט'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
   copyBtn.onclick = ()=>{ promptBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(()=>copyBtn.textContent='📋 העתקת הפרומפט',1500); };
   box.appendChild(copyBtn);
+  // v138: תזכורת לצרף את הקובץ — מופיעה רק כשמתג-הקובץ מסומן
+  const atRemind = document.createElement('div'); atRemind.id='imp-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-8px 0 16px; font-size:14px; color:var(--ink); line-height:1.5;';
+  atRemind.textContent='📎 זכרו: צרפו את הקובץ בכלי ה-AI יחד עם הפרומפט — הדביקו את הפרומפט וצרפו את הקובץ באותה הודעה.';
+  box.appendChild(atRemind);
 
   // שלב 2
   const step2 = document.createElement('div'); step2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; step2.textContent='שלב 2 — שלחו לבינה המלאכותית';
@@ -2521,6 +2529,14 @@ function openImport(){
     if(n===impACount){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
     b.onclick=()=>{ impACount=n; [...aRow.children].forEach(c=>{c.style.background='';c.style.color='';}); b.style.background='var(--gold)'; b.style.color='#1a2342'; refresh(); };
     aRow.appendChild(b);
+  });
+  // v138: כפתורי רמת-קושי (בחירה יחידה, ברירת-מחדל בינונית)
+  const dRow = $('imp-diff-row');
+  if (dRow) ['קלה','בינונית','מאתגרת'].forEach(lv=>{
+    const b=document.createElement('button'); b.className='btn ghost sm'; b.textContent=lv;
+    if(lv===impDiff){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
+    b.onclick=()=>{ impDiff=lv; [...dRow.children].forEach(c=>{c.style.background='';c.style.color='';}); b.style.background='var(--gold)'; b.style.color='#1a2342'; refresh(); };
+    dRow.appendChild(b);
   });
   if (quizHasRealContent()) renderImpQuestionList();   // רינדור ראשוני של רשימת השאלות (פריט 5)
   refresh();
@@ -3964,6 +3980,9 @@ function hostToggleBg(){
 
 /* גלריית רקעים מצוירים (CSS) — נטענים מיד, לא נשברים, לא תלויים באינטרנט */
 const BG_GALLERY = [
+  // v136: רקע yopoy — הזוהר של ה-hero, אך בשקיפות מוגברת (~.30) כדי שישרוד את שכבת-ההכהיה 70%
+  // של game-bg ויראה כמו ה-hero *אחרי* ההכהיה. הקריאוּת של טקסט השאלה נשמרת (ההכהיה נשארת).
+  { name:'✨ yopoy', css:'radial-gradient(700px 520px at 78% 14%, rgba(255,209,102,.30), transparent 60%), radial-gradient(640px 480px at 18% 86%, rgba(46,196,182,.26), transparent 62%), radial-gradient(560px 440px at 50% 50%, rgba(141,141,242,.20), transparent 70%), radial-gradient(1200px 800px at 50% 0%, #15223f 0%, #0a1020 50%, #05080f 100%)' },
   { name:'🌊 ים', css:'linear-gradient(180deg, #2b6cb0 0%, #2c9fd6 45%, #63cde8 100%)' },
   { name:'🌌 חלל', css:'radial-gradient(circle at 30% 20%, #3b2f6b 0%, #1a1640 45%, #06030f 100%)' },
   { name:'🌲 טבע', css:'linear-gradient(180deg, #2f855a 0%, #48bb78 55%, #9ae6b4 100%)' },
