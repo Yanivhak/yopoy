@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v151.12 - שני תיקונים: (1) מתג הקראת-התלמידים הוסר מהסרגל-החי — הקראת-תלמידים נקבעת רק מראש במסך-ההכנה (מונע שינוי מצב/זמן/ניקוד באמצע משחק; מתג ההקראה-לחדר של המנחה, ערוץ 1, נשאר). (2) באג "קפיצה" ברמקול-הטלפון: speechSynthesis.cancel() (בלחיצת הפסק/הפעל) הפעיל את ה-onend של החלק המדובר, שקידם את השרשור לחלק הבא (שאלה→תשובות וכו') במקום לעצור. תוקן עם אסימון-הפעלה (_speakSeq): עצירה/הפעלה-חדשה מבטלות את השרשור הקודם, אז cancel באמת עוצר וההפעלה מתחילה נקייה. אומת: node --check + איזון-תגיות.
   v151.11 - תיקון השורש האמיתי לבאג-ההגדרות: ה-welcome נשלח לשחקן-מצטרף כבר בלובי (כשהוא סורק), אבל speedBonusOn (וגם sttsHostOn/roomTtsOn) נקראו מהמתגים רק ב-hostStart ("התחל שאלות") — שקורה אחרי שהשחקן הצטרף. אז ה-welcome נשלח עם הערך הישן/ברירת-המחדל, לא עם המתג הנוכחי. תוקן: מתגי-ההכנה נקראים כבר בכניסה ללובי (goPlay), כך שמה שבמתג = מה שהשחקן מקבל. hostStart קורא שוב (עקבי). השחזור לא מושפע (קורא מ-hostState). אומת: node --check + איזון-תגיות.
   v151.10 - תיקון באג-הסנכרון (אפשרות א): כשיוצאים ממשחק ב"סגירה" (לא דרך כפתור-יציאה) המשחק נשאר פעיל ב-Firebase, וההגדרות הישנות (בונוס/הקראה) נטענו מחדש בשחזור ודרסו שינויים חדשים. תוקן: discardStaleGame() מוחק את ה-hostState של המשחק הישן ואת המצביע ברגע שמתחילים משחק חדש (firstEntry בכניסה ללובי), ומסתיר הצעת-שחזור ישנה. כך כל התחלת משחק חדש נקייה עם ההגדרות הנוכחיות. השחזור ("חזרה למשחק") נשמר למקרה-אסון אמיתי שבו לא מתחילים משחק חדש. אומת: node --check + איזון-תגיות.
   v151.9 - תיקון ניסוח: "אין מדידת-זמן" היה שגוי (הזמן כן נמדד — יש טיימר). שונה ל"אין בונוס על מהירות / קחו את הזמן שאתם צריכים" בקופסת-הלובי וברמז-השאלה. (באג-הסנכרון של מסך-ההכנה — אבחון נמסר, תיקון בנפרד כי נוגע במנגנון-השחזור.) אומת: node --check + איזון-תגיות.
@@ -513,7 +514,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v151.11</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v151.12</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -1068,7 +1069,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
     <button onclick="hostToggleMusic()" id="music-toggle" style="display:none;">🔇 השתקת מוזיקה</button>
     <button onclick="hostToggleBg()" id="bg-toggle" style="display:none;">🙈 הסתרת רקע</button>
     <button onclick="toggleTtsBtn()" id="tts-toggle" style="display:none;">🔇 בטל הקראה</button>
-    <button onclick="toggleStudentTts()" id="stts-host-toggle" style="display:none;">🔇 בטל הקראת-תלמידים</button>
+    <!-- v151.12: מתג הקראת-תלמידים הוסר מהסרגל-החי — נקבע רק מראש במסך-ההכנה (מונע שינוי מצב/זמן/ניקוד באמצע משחק) -->
     <button onclick="toggleReinforce()" id="reinforce-toggle">🌟 חיזוקים פעילים</button>
     <button onclick="hostJumpFinish()">🏁 סיום</button>
   </div>
@@ -4061,6 +4062,7 @@ function applyStudentTts(on){
     studentTtsActive = false;
     document.body.classList.remove('tts-student');
     refreshSttsMuteBtn();
+    _speakSeq++;   // v151.12: מבטל את הסשן לפני cancel (מונע קפיצת-שרשור)
     try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){}
     showReinforceToast('ההקראה כובתה', '🔇');
   }
@@ -4079,13 +4081,16 @@ function toggleStudentSpeak(){
     unlockSpeech();
     if (curQ && $('pq') && $('pq').classList.contains('on')) studentSpeak(curQ);
   } else {
+    _speakSeq++;   // v151.12: מבטל את הסשן — ה-onend של cancel לא יקדם את השרשור
     try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){}
   }
   refreshSttsMuteBtn();
 }
 // v151: הקראה אוטומטית בטלפון-התלמיד — חיווי 'השאלה היא' / 'התשובות הן'
+let _speakSeq = 0;   // v151.12: אסימון-הפעלה — cancel/הפעלה-חדשה מבטלים שרשור קודם (מונע "קפיצה" שאלה↔תשובות)
 function studentSpeak(m){
   if (!window.speechSynthesis || !m) return;
+  const myseq = ++_speakSeq;
   try {
     const synth = window.speechSynthesis;
     let v = ttsVoice;
@@ -4098,14 +4103,14 @@ function studentSpeak(m){
     let i = 0, guard = null;
     function step(){
       clearTimeout(guard);
-      if (i >= parts.length) return;
+      if (myseq !== _speakSeq || i >= parts.length) return;   // הופעלה הפעלה חדשה / נעצר → לא ממשיכים
       const idx = i;
       const u = new SpeechSynthesisUtterance(parts[idx]);
       u.lang = 'he-IL'; if (v) u.voice = v; u.rate = 0.7;   // v151.6: הואט מ-0.9
-      u.onend = function(){ if (i === idx){ i++; setTimeout(step, 220); } };
-      u.onerror = function(){ if (i === idx){ i++; setTimeout(step, 220); } };
-      guard = setTimeout(function(){ if (i === idx){ i++; step(); } }, Math.max(2600, parts[idx].length * 230));
-      try { synth.speak(u); } catch(e){ if (i === idx){ i++; setTimeout(step, 220); } }
+      u.onend = function(){ if (myseq === _speakSeq && i === idx){ i++; setTimeout(step, 220); } };
+      u.onerror = function(){ if (myseq === _speakSeq && i === idx){ i++; setTimeout(step, 220); } };
+      guard = setTimeout(function(){ if (myseq === _speakSeq && i === idx){ i++; step(); } }, Math.max(2600, parts[idx].length * 230));
+      try { synth.speak(u); } catch(e){ if (myseq === _speakSeq && i === idx){ i++; setTimeout(step, 220); } }
     }
     setTimeout(step, 80);
   } catch(e){}
