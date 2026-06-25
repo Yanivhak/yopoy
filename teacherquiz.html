@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v152.5 - תיקון שני שורשים בהקראות-הנגישות (v152.4): (1) מסך-פתיחה לא הופיע במצב "לכולם" — הוא נקרא רק ב-applyStudentTts (כשהמנחה מתחיל), והשאלה הראשונה דרסה אותו מיד. תוקן: הודעת welcome נושאת כעת ttsAll=(sttsHostOn && ttsMode==='all'); התלמיד מציג את מסך-הפתיחה כבר בלובי אם iAmTtsStudent (ספציפי) או m.ttsAll (כללי) — בדיוק כמו שספציפי כבר עבד. (2) הקראת-הסיום שתקה בשני המצבים — היא נקראה לפני show('pfin'), ושורת-ה-cancel של show ("יציאה ממסך-שאלה → עצירת הקראה", v152.2) דרסה את ההקראה שזה-עתה התחילה. תוקן: speakText של הסיום עבר ל*אחרי* show('pfin') ועטוף ב-setTimeout(160) — ה-cancel של show רץ קודם, ואז הסיום מוקרא נקי. אובחן מול דיווח: "המנחה יצא" עבד (הולך ל-showPlayerWait ישירות, לא דרך show) בעוד הסיום שתק — מה שהצביע על show כאשם. מצב רגיל/בלי-הקראה: ללא שינוי. אומת: node --check + איזון-תגיות. דורש אימות-מכשיר.
   v152.4 - הקראות-נגישות לתלמיד-הקראה (לכולם + ספציפי): (1) מסך-פתיחה — overlay גדול "געו במסך כדי להפעיל את ההקראה ⭐" עם אנימציית-אצבע (👆 פועם ב-CSS). מופיע בספציפי בהצטרפות (welcome+iAmTtsStudent), ב-'all' כשההקראה מופעלת (applyStudentTts). נגיעה → פותחת אודיו (studentTtsActive, חובה ב-iOS) ומקריאה "היי <שם>, אין בונוס על מהירות, אין צורך למהר". יורד בנגיעה / אחרי 6ש' / כשמגיעה שאלה (showPQ). once-guard. (2) הקראת-סיום — "תודה רבה <שם>, היה כיף, נתראה במשחק הבא" ב-showPFin. (3) שלוש הקראות-אמצע, כל אחת עם קירור 5 דק' עצמאי (לא קשורות זו לזו): "עוד רגע תחזרו" (חזרה-ממסך-כבוי), "עוד רגע המנחה יחזור" (מנחה נפל), "המשחק נקטע" (✕). מנוע: speakText (utterance בודד, קול עברי, rate 0.85) + speakMiddleOnce (מפתח+חותמת-זמן). מחמאות נשארו ויזואליות (הקראתן הייתה מתנגשת עם הקראת-השאלה). מצב רגיל/בלי-הקראה: אפס שינוי (הכל מגודר ב-studentTtsOn / speechSynthesis). אומת: node --check + איזון-תגיות. דורש אימות-מכשיר: כל ההקראות + הנגיעה לפתיחת-אודיו ב-iOS לא נבדקות בסביבה.
   v152.3 - תיקון מצב-הקראה "ספציפי": מתג-ההקראה החי של המנחה לא השפיע על תלמידי-הקוד — כיבוי לא כיבה אותם (כי המאזין היה snap||iAmTtsStudent, וה-iAmTtsStudent המקומי החזיק אותם דלוקים תמיד), והדלקה-מחדש הייתה מדליקה את כולם (ttsStudents=true). תוקן בדגל-Firebase שני: writeStudentTts מפצל לפי ttsMode — 'all'→ttsStudents (כל המשתתפים), 'some'→ttsStudentsSome (רק תלמידי-הקוד). מאזין-התלמיד שומע את שני הדגלים ומחשב: הקראה = ttsStudents || (iAmTtsStudent && ttsStudentsSome). כך המתג שולט גם בספציפיים: כיבוי מכבה אותם, הדלקה מדליקה רק אותם. נקודות-הקריאה (hostStart/שחזור) מעבירות את המצב הגולמי. מצב 'all' לא הושפע (הנוסחה זהה: ttsStudentsSome תמיד false שם). ניקוי המאזין השני ב-detachGameListeners. אומת: node --check + איזון-תגיות. דורש אימות-מכשיר: הזרימה החיה לא נבדקת בסביבה.
   v152.2 - שלושה תיקונים: (1) רמז-המהירות במסך-השאלה ריק כשהבונוס כבוי (כולל מצב-הקראה, לכולם וספציפי) — קודם הופיע "אין בונוס על מהירות" שחזר בטעות ב-v151.14 (הוסר ב-v151.8, ראה שם); אותו מידע כבר בקופסת-הלובי. נשאר "מהירות שווה נקודות!" רק כשהבונוס דלוק. (2) הקראת-התלמיד נעצרת ביציאה ממסך-השאלה (נקודה אחת ב-show: _speakSeq++ + cancel) — קודם המשיכה למסך הבא בעת תשובה/מעבר-שאלה/יציאה. (3) חזרה אחרי כיבוי-מסך: handler ל-visibilitychange — כשהמסך חוזר לפעולה והתלמיד באמצע משחק (ולא על מסך-שאלה פעיל), מוצג מסך-המתנה "עוד רגע תחזור למשחק" (שימוש-חוזר ב-player-wait מ-v129, עם הודעה ייעודית דרך pw-sub), שיורד אוטומטית כשמגיעה השאלה הבאה (showPQ) או הסיום (end) — בלי שחזור-מצב ובלי נגיעה בזרימת-ההודעות. אומת: node --check + איזון-תגיות. דורש אימות-מכשיר: הזרימה החיה (Firebase/אודיו) לא נבדקת בסביבה.
@@ -534,7 +535,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v152.4</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v152.5</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -4065,7 +4066,7 @@ function hostMsg(m){
         send({ t:'welcomeback', id:m.id, msg: pickReinforce('welcome') });
       }
     }
-    send({ t:'welcome', id:m.id, speedOn: speedBonusOn });   // v151.6: כדי שהשחקן יידע בלובי אם נמדד זמן
+    send({ t:'welcome', id:m.id, speedOn: speedBonusOn, ttsAll: (sttsHostOn && ttsMode === 'all') });   // v151.6/v152.5: speedOn + ttsAll (כדי שתלמיד-כללי יקבל מסך-פתיחה כבר בלובי)
   }
   if (m.t === 'ans' && m.i === seq && !revealed){
     if (players[m.id] && !answers[m.id]){
@@ -5710,7 +5711,7 @@ function joinGame(){
 }
 
 function playerMsg(m){
-  if (m.t==='welcome' && m.id===myId){ joined=true; if($('pwait-greet')) $('pwait-greet').textContent = myName ? ('היי, '+myName+'! 👋') : 'היי! 👋'; if($('pwait-notime')) $('pwait-notime').style.display = (m.speedOn === false) ? 'block' : 'none'; show('pwait'); if (iAmTtsStudent) showTtsOpening(); }   // v152.4: ספציפי — מסך-פתיחה לתלמיד-הקראה
+  if (m.t==='welcome' && m.id===myId){ joined=true; if($('pwait-greet')) $('pwait-greet').textContent = myName ? ('היי, '+myName+'! 👋') : 'היי! 👋'; if($('pwait-notime')) $('pwait-notime').style.display = (m.speedOn === false) ? 'block' : 'none'; show('pwait'); if (iAmTtsStudent || m.ttsAll) showTtsOpening(); }   // v152.4/v152.5: מסך-פתיחה בלובי — ספציפי (iAmTtsStudent) או כללי (m.ttsAll)
   if (m.t==='q'){ showPQ(m); }
   if (m.t==='look'){ show('plook'); }
   if (m.t==='rev'){ showFeedback(m); }
@@ -5775,8 +5776,8 @@ function showPFin(m){
   // v131: מסך-סיום ממותג — שם אישי, בלי מיקום, ניקוד עמום (כדי שלא ישוו)
   if ($('pfin-thanks')) $('pfin-thanks').textContent = myName ? ('תודה רבה, '+myName+'! ❤️') : 'תודה רבה! ❤️';
   if ($('pfin-pts')) $('pfin-pts').textContent = me ? ('צברת ' + me.score + ' נקודות') : '';
-  if (_ttsOpeningDone && !_spokeClosing){ _spokeClosing = true; speakText(myName ? ('תודה רבה ' + myName + ', היה כיף, נתראה במשחק הבא') : 'תודה רבה, היה כיף, נתראה במשחק הבא'); }   // v152.4: הקראת-סיום
   show('pfin');
+  if (_ttsOpeningDone && !_spokeClosing){ _spokeClosing = true; setTimeout(() => speakText(myName ? ('תודה רבה ' + myName + ', היה כיף, נתראה במשחק הבא') : 'תודה רבה, היה כיף, נתראה במשחק הבא'), 160); }   // v152.5: אחרי show('pfin') + השהיה — אחרת ה-cancel של show (יציאה ממסך-שאלה) דרס את ההקראה
 }
 
 /* אזהרה לפני יציאה — רק לאורח שכבר בנה לפחות שאלה אחת (כדי לא לאבד עבודה לא שמורה) */
