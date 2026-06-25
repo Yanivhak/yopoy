@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v151.2 - תיקון: כפתור-ההקראה של התלמיד לא הופיע כלל. הסיבה: כלל-CSS #stts-mute{display:none}, והפונקציה ניסתה להציג עם display='' — ש'' לא מבטל כלל-CSS (רק inline). תוקן ל-display='block' מפורש. בנוסף refreshSttsMuteBtn נקרא בכל showPQ לחיזוק. אומת: node --check + איזון-תגיות.
   v151.1 - תיקון הקראת-תלמיד לנייד (אייפון/אנדרואיד): באייפון getVoices ריק עד אינטראקציה ואפל חוסמת הקראה-אוטומטית בלי נגיעה — אז הכפתור הוסתר ושום דבר לא הוקרא. תוקן: (א) כפתור-הרמקול תמיד מופיע כשההקראה דלוקה (בלי תלות בזיהוי-קול מראש); (ב) דגם "נגיעה-להפעלה" — נגיעה אחת מעירה את הקול ומקריאה את השאלה הנוכחית (עוקף חסימת-אפל), ומאז כל שאלה אוטומטית; נגיעה נוספת משתיקה (studentTtsActive); (ג) הקול נבחר בזמן-אמת עם נפילה ל-lang=he-IL; (ד) unlockSpeech שקט (volume 0) בנגיעה לפתיחת-אודיו ב-iOS. אנדרואיד עובד חלק עוד יותר (אין חסימה). אצל המארח — ללא שינוי. דורש אימות-מכשיר. אומת: node --check + איזון-תגיות.
   v151 - ערוץ 2: הקראה בטלפון-התלמיד + מצב-קריאוּת-מוגברת (מצב "לכולם"). מתג-מארח חדש (pregame + תפריט-חי) "📱 הקראה בטלפוני המשתתפים" כותב games/{code}/ttsStudents; כל טלפון-תלמיד מאזין (תבנית hostAlive). נדלק → (א) הקראה אוטומטית בכל שאלה: "השאלה היא: [...]. התשובות הן: [...]" (cancel+השהיה כמו ערוץ 1, רק אם יש קול עברי במכשיר); (ב) מצב-קריאוּת-מוגברת אוטומטי (body.tts-student): שאלה 28px, תשובות 23px עם גבול בהיר, מילוי בהיר יותר, ריווח גדול, וסימון ✓ לנבחר; (ג) כפתור-השתקה גדול לתלמיד (מקומי — משתיק אודיו, הוויזואל נשאר); (ד) הודעה ויזואלית + רטט אם נתמך. נשמר ב-hostState לשחזור. v152 בנפרד: קוד-הקראה לתלמידים ספציפיים + אזהרת-אוזניות. אומת: node --check + איזון-תגיות.
   v150.4 - מיקום כפתור-ההקראה במסך-החשיפה: היה גבוה (מתחת לתשובה הנכונה). הועבר לתחתית, לשורה אחת עם "ממשיכים" — 🔊 משמאל, "ממשיכים" מימין, שניהם ממורכזים כזוג ברוחב הפסים (לפי משוב + צילום-מסך). כשההקראה כבויה, "ממשיכים" ממורכז לבד כמו קודם. אומת: node --check + איזון-תגיות.
@@ -495,7 +496,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v151.1</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v151.2</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -4035,7 +4036,7 @@ function applyStudentTts(on){
 }
 function refreshSttsMuteBtn(){
   const b = $('stts-mute'); if (!b) return;
-  b.style.display = (studentTtsOn && window.speechSynthesis) ? '' : 'none';
+  b.style.display = (studentTtsOn && window.speechSynthesis) ? 'block' : 'none';   // v151.2: 'block' מפורש מבטל את כלל ה-CSS display:none ('' לא מבטל)
   b.textContent = studentTtsActive ? '🔇 השתקת הקראה' : '🔊 הפעלת הקראה';
 }
 function unlockSpeech(){
@@ -5504,6 +5505,7 @@ function showPQ(m){
   clearTimeout(pTimer);
   pTimer=setTimeout(()=>{ if(!sentThisQ){ sentThisQ=true; $('pq-grid').querySelectorAll('button').forEach(b=>b.disabled=true); } }, m.dur*1000);
   if (studentTtsOn && studentTtsActive) studentSpeak(m);   // v151.1: אוטומטי רק אחרי שהתלמיד הפעיל בנגיעה
+  refreshSttsMuteBtn();   // v151.2: ודא שכפתור-ההפעלה מוצג במסך-השאלה
   show('pq');
 }
 
