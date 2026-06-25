@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v152.2 - שלושה תיקונים: (1) רמז-המהירות במסך-השאלה ריק כשהבונוס כבוי (כולל מצב-הקראה, לכולם וספציפי) — קודם הופיע "אין בונוס על מהירות" שחזר בטעות ב-v151.14 (הוסר ב-v151.8, ראה שם); אותו מידע כבר בקופסת-הלובי. נשאר "מהירות שווה נקודות!" רק כשהבונוס דלוק. (2) הקראת-התלמיד נעצרת ביציאה ממסך-השאלה (נקודה אחת ב-show: _speakSeq++ + cancel) — קודם המשיכה למסך הבא בעת תשובה/מעבר-שאלה/יציאה. (3) חזרה אחרי כיבוי-מסך: handler ל-visibilitychange — כשהמסך חוזר לפעולה והתלמיד באמצע משחק (ולא על מסך-שאלה פעיל), מוצג מסך-המתנה "עוד רגע תחזור למשחק" (שימוש-חוזר ב-player-wait מ-v129, עם הודעה ייעודית דרך pw-sub), שיורד אוטומטית כשמגיעה השאלה הבאה (showPQ) או הסיום (end) — בלי שחזור-מצב ובלי נגיעה בזרימת-ההודעות. אומת: node --check + איזון-תגיות. דורש אימות-מכשיר: הזרימה החיה (Firebase/אודיו) לא נבדקת בסביבה.
   v152.1 - קוד-ההקראה עבר למסך-ההכנה (פרטי): קודם הוצג בלובי (חשוף לכל הכיתה על המקרן) — באג. עכשיו: כשבוחרים "תלמידים מסוימים", מספר קוד-ההקראה מוצג במסך-ההכנה בלבד (פרטי, לפני שיתוף-המסך), בלי שום כתיבה ל-Firebase שם (רק מספר — אפס נגיעה במנגנון-הזיכרון/discardStaleGame). הקישור ל-Firebase (games/{ttsCode}/meta={ttsFor:playCode}) נכתב רק כשהמשחק מתחיל (בלובי). הקוד-הרגיל מובטח שונה מקוד-ההקראה. ניקוי: releaseTtsCode ביציאה ממסך-ההכנה (דרך show, choke-point יחיד) ובהחלפת-מצב, ו-endGameSession. בלובי מוצג רק הקוד-הרגיל. אומת: node --check + איזון-תגיות.
   v152 - הקראה לתלמידים מסוימים (קוד-הקראה נפרד): במסך-ההכנה, בבחירת הקראה, אפשר לבחור "כל המשתתפים" (הקיים) או "תלמידים מסוימים בלבד". במצב "מסוימים": בלובי מופיע קוד-הקראה שני (games/{ttsCode}/meta={ttsFor:playCode}) לצד הקוד הרגיל; תלמיד שמצטרף עם קוד-ההקראה מופנה לאותו משחק ומסומן מקומית (iAmTtsStudent) — רק הוא מקבל אודיו+ויזואל-מוגבר. הפריבילגיה-לכל-המשחק (ttsStudents) נכתבת רק במצב 'all'; ב-'some' התלמיד מקבל פריבילגיה מקומית (המאזין: snap||iAmTtsStudent). זמן/בונוס/הודעה זהים בשני המצבים (sttsHostOn — 30+, בונוס מבוטל). אזהרת-אוזניות במסך-ההכנה. ניקוי קוד-ההקראה ב-endGameSession; ttsMode נשמר/משוחזר ב-hostState. אומת: node --check + איזון-תגיות.
   v151.15 - שלב 1 מתוך הקראה-לתלמידים-מסוימים (v152 בבנייה): מסך-ההכנה — כשמדליקים "הקראה בטלפוני המשתתפים" מופיעה תת-בחירה: "כל המשתתפים" (ברירת-מחדל, המצב הקיים) או "תלמידים מסוימים בלבד" (קוד-הקראה נפרד), עם אזהרת-אוזניות. זהו רק ה-UI — מצב "מסוימים" עדיין לא מחובר לצד-השרת (כרגע מתנהג כמו "לכולם"); החיבור (קוד-הקראה + צד-תלמיד) הוא שלב 2. אומת: node --check + איזון-תגיות.
@@ -503,7 +504,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   <div class="pwrap" style="max-width:360px;">
     <h1 class="ho-brand ho-brand-sm pbrand-lock"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
     <div class="pbrand-title">רגע אחד… ⏳</div>
-    <div class="pbrand-sub">המנחה יצא לרגע — תיכף ממשיכים!</div>
+    <div class="pbrand-sub" id="pw-sub">המנחה יצא לרגע — תיכף ממשיכים!</div>
     <div class="pbrand-dim">אל תצאו, תכף חוזר 🙂</div>
   </div>
 </div>
@@ -519,7 +520,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v152.1</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v152.2</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -1172,6 +1173,8 @@ document.addEventListener('click', closeInfo);
 function show(id){
   // v152.1: יציאה ממסך-ההכנה בלי התחלת-משחק (לא ללובי) → שחרור קוד-ההקראה (אין יתומים)
   if (id !== 'pregame' && id !== 'lobby' && $('pregame') && $('pregame').classList.contains('on')) releaseTtsCode();
+  // v152.2: יציאה ממסך-השאלה → עצירת הקראת-התלמיד (לא ממשיכה למסך הבא — תשובה/מעבר/יציאה)
+  try { if (id !== 'pq' && $('pq') && $('pq').classList.contains('on')){ _speakSeq++; if (window.speechSynthesis) speechSynthesis.cancel(); } } catch(e){}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $(id).classList.add('on');
   updateNavMenu();
@@ -3956,8 +3959,17 @@ function teardownHostAlive(){
   _hostAliveNodeRef = null;
 }
 // מסך-ההמתנה בצד-התלמיד
-function showPlayerWait(){ const w=$('player-wait'); if (w) w.style.display='flex'; }
+function showPlayerWait(msg){ const w=$('player-wait'); if (!w) return; const s=$('pw-sub'); if (s) s.textContent = msg || 'המנחה יצא לרגע — תיכף ממשיכים!'; w.style.display='flex'; }
 function hidePlayerWait(){ const w=$('player-wait'); if (w) w.style.display='none'; }
+// v152.2: חזרה אחרי כיבוי-מסך — כשהמסך חוזר לפעולה והתלמיד באמצע משחק (לא על מסך-שאלה פעיל),
+// מציגים "עוד רגע תחזור". המסך יורד אוטומטית כשמגיעה השאלה הבאה (showPQ) או הסיום (end).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && role === 'player' && topic && curQ && !_playerGameEnded
+      && !($('pq') && $('pq').classList.contains('on'))){
+    try { _speakSeq++; if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){}   // v152.2: כיבוי כל הקראה שנשארה תקועה לפני הכיבוי — השאלה הבאה תקריא נקי
+    showPlayerWait('עוד רגע תחזור למשחק… 🙂');
+  }
+});
 function listenGame(code, onReady, skipBefore){
   detachGameListeners();   // v118: ניקוי מאזיני-משחק קודמים לפני רישום חדש
   topic = code;
@@ -5643,7 +5655,7 @@ function showPQ(m){
   if (m.num && m.total) $('pq-progress').textContent = 'שאלה ' + m.num + ' מתוך ' + m.total;
   else $('pq-progress').textContent = '';
   $('pq-text').textContent = m.text;
-  $('pq-hint').textContent = (m.speedOn === false) ? 'אין בונוס על מהירות, קחו את הזמן 🙂' : 'מהירות שווה נקודות!';   // v149/v151.6/v151.9/v151.14: הוסר "לחיצה אחת = תשובה" (מיותר)
+  $('pq-hint').textContent = (m.speedOn === false) ? '' : 'מהירות שווה נקודות!';   // v149/v151.6/v151.9/v151.14/v152.2: ריק כשהבונוס כבוי (כולל הקראה) — אותו מידע כבר בקופסת-הלובי
   const grid=$('pq-grid'); grid.innerHTML='';
   m.options.forEach(o => {
     const b=document.createElement('button'); b.className='pbtn'; b.textContent=o.txt;
