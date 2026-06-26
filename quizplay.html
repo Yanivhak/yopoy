@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v160 - סרגל-המנחה המלא בבדיקה (1:1, לבקשת יניב — בדיקה זהה לחלוטין למשחק): עד כה הבדיקה הסתירה את #host-menu והציגה סרגל מצומצם משלה (solo-bar). עכשיו previewQuiz מציג את #host-menu האמיתי עצמו (אותו רכיב — מתחזק את עצמו), עם כל הכפתורים: ⏭️ הבא, מוזיקה, רקע, הקראה-לחדר, חיזוקים, 🏁 סיום, ☰ תפריט. הסרגל-המצומצם (solo-bar) ירד. כדי שהכפתורים יעבדו בבדיקה בלי לגעת במשחק החי, הוספתי הסתעפות-solo בפונקציות-המנחה: nextQ→soloNextQ, hostSkip→soloReveal/soloNextQ, hostJumpFinish→soloFinish (כולן: `if (solo){…;return;}` בראש, אז המשחק החי לא מושפע). כך גם כפתור-ההמשך הוא ה-hr-next האמיתי ("ממשיכים ◂") במקום כפתור-סולו ייעודי. כפתורים שאין להם משמעות בבדיקה מסומנים: "📲 קוד חזרה" → showToast("פעיל רק במשחק אמיתי") + מעומעם (body.mock-on); presence-counter מוסתר (אין משתתפים). יציאה מהבדיקה: דרך 🏁 סיום → soloFinish → מסך-הסיום (hfin-solo-actions, חזרה/בדיקה-שוב) — 1:1 עם המשחק (גם הוא יוצא דרך הסיום), כי "← חזרה לעריכה" היה בסרגל-המצומצם שירד. הערה: כפתור הקראת-תלמידים (stts-host-toggle) נשאר מוסתר בבדיקה (אודיו-לתלמיד לא מדומה במוק) — אם יידרש, יוצג מסומן. אומת: node --check + איזון-תגיות + רינדור + סימולציה.
   v159 - הבדיקה הפכה ל"המשחק משחק את עצמו" (לבקשת יניב — הדמיה 1:1 אמיתית): המנחה מנהל מהצד שלו בלבד (לוחץ "לשאלה הבאה"), ולא עונה. לוח-התשובות-הידני שהיה מתחת למסך-המנחה — ירד. במקומו, כשעולה שאלה, השחקן-המדומה "עונה" לבד (_soloAutoAnswer) אחרי השהיה רנדומלית קצרה (1.5–3.7ש', כמו שחקן שחושב): הכפתור-בטלפון נצבע (.sel), הטלפון עובר ל"התשובה נקלטה", ואז חשיפה-אוטומטית — בדיוק כמו במשחק האמיתי, שבו allPresentAnswered→revealQ מפעיל חשיפה ~600ms אחרי שכולם ענו. כך מסך-המחשב נשאר 1:1 למסך-המנחה, הטלפון 1:1 למסך-השחקן, והמנחה צופה במשחק שלו רץ ומנהל את הקצב. הבחירה: נטייה קלה לנכון (~60%) במקום אקראי-אחיד — אחרת עם 4 אפשרויות זה כמעט תמיד טעות ולא היו נראים רצפים/זיקוקים/מגוון-חיזוקים; הניקוד/רצף/חיזוקים מחושבים על התשובה-הזו, אז יש מגוון אותנטי (לפעמים רצף וזיקוק, לפעמים טעות ואיפוס). כפתורי-הטלפון כבר לא disabled (נראים פעילים כמו אצל שחקן, רק לא לחיצים — המנחה לא לוחץ עליהם). טיימר-הזמן נשאר כרשת-ביטחון (חשיפה בתום הזמן אם משום-מה לא נענה). הערה: מסך-השחקן (pq) כולל סרגל-זמן משלו (pq-bar) — הוא מופיע בטלפון, 1:1; הסרגל-הגדול והטיימר-העגול הם של מסך-המנחה (במסך-המחשב, כבר 1:1). אומת: node --check + איזון-תגיות + רינדור + סימולציה מלאה עם צילומים.
   v158 - טלפון-מוק בבדיקה (פיצ'ר-דגל — אף בונה-חידונים ברשת לא מראה את צד-המשתתף לצד מסך-המנחה בזמן בדיקה): מסגרת-טלפון בצד-שמאל שמשקפת 1:1 את חוויית-המשתתף, בזמן שמסך-המנחה נשאר ראשי. הגישה (אפשרות א, "שלד מהאמיתי"): buildMockPhone משכפל (cloneNode) את מסכי-המשתתף האמיתיים — pq (שאלה), psent ("התשובה נקלטה"), plook ("הסתכלו ללוח"), ו-rtoast (חיזוק) — אל תוך המסגרת, עם קידומת mk- לכל id (למניעת כפילות), הסרת interactivity (תצוגה-בלבד). כך המבנה+העיצוב מסתנכרנים אוטומטית עם כל שינוי עתידי במסך-האמיתי; רק לוגיקת-המילוי (syncMockQuestion/syncMockReinforce) נפרדת, ומתועדת בבלוק-תחזוקה בולט בראש קוד-המוק (אם תשתנה לוגיקת-התצוגה — מוסרת הערה ידנית מה לעדכן). סנכרון צעד-צעד: שאלה→הטלפון מראה התקדמות+טיימר+טקסט+רמז+כפתורים; המנחה עונה במסך-הראשי→הטלפון מראה "התשובה נקלטה"; הפסקה (כל 4 שאלות, אותו תנאי כמו במשחק)→הטלפון מראה "הסתכלו ללוח" (soloNextQ פוצל ל-_soloRenderQ + שלב-הפסקה). חיזוקים אמיתיים: selectReinforcements קיבל פרמטר includeMe (ברירת-מחדל off — המשחק החי לא נגע, '_me' עדיין מסונן שם), וב-soloReveal רץ האלגוריתם האמיתי על השחקן-המדומה (eligibility זהה ל-revealQ: improve/streak) → הודעת-חיזוק נוחתת בטלפון בקצב הטבעי (START_CAP+MIN_GAP). הסתייגות כנה: סוגי-חיזוק שמשווים לשחקנים אחרים (hard וכו') לא יֵצאו עם שחקן יחיד; כל האישיים כן. בטוח לחלוטין: solo-בלבד, מסכים משוכפלים (ה-pq/psent/plook/rtoast האמיתיים לא נגעו), המוק נמחק ביציאה (endGameSession לכל מסלולי-העריכה/רשימה, ו-soloFinish לפודיום). אומת: node --check + איזון-תגיות + רינדור + צילומי-מסך של המוק בכל מצב.
   v157 - שתי תוספות-חוויה (שתיהן לא נוגעות בזרימת-המשחק החי): (א) פיצ'ר-הקובץ ב-AI עבר לרבים-ידידותי — המתג, תת-הטקסט, התזכורת, והפרומפט אומרים עכשיו "קובץ או יותר" / "חומר מצורף" במקום "קובץ" יחיד, כי הקובץ מצורף בכלי החיצוני (ChatGPT/Claude/Gemini) שם אפשר לצרף כמה. בלי מספר-מגבלה קשיח (המגבלה היא של הכלי החיצוני, משתנה ולא ניתנת לאכיפה). (ב) מצב-הבדיקה (סולו) קרוב יותר למשחק האמיתי: previewQuiz קורא עכשיו את מתגי-ההכנה (מהירות/הקראת-תלמידים/הקראה-לחדר) כמו goPlay, כך שכפתור 🔊 הקראה-לחדר מופיע בבדיקה (refreshHostSpeakBtn) והמנחה יכול לשמוע את הקול-העברי על המחשב שלו מראש; ו-soloReveal מציג עכשיו באנרי-שיא + זיקוקים (שיא מהירות/רצף) כמו במשחק — הנתונים (bestMs/maxStreak) כבר חושבו בסולו, רק לא הוצגו. נוספה הערת-מצב-בדיקה: אייקון ⓘ על תג "👁️ מצב בדיקה" (showSoloNote) שמסביר מה עובד-כמו-במשחק / חלקי (ניקוד יחיד) / לא-בבדיקה (חיזוקים, הפסקות-ביניים, מסך-הטלפון של המשתתף — רק במשחק עם משתתפים). חיזוקים והפסקות-ביניים לא דומו בכוונה — עם שחקן-מדומה אחד הם מלאכותיים. מסך-preview המת (id=preview, pv-*) נשאר ללא שימוש (לא נמחק עדיין). אומת: node --check + איזון-תגיות + רינדור.
@@ -293,6 +294,8 @@ input:focus{border-color:var(--gold); outline:none;}
 .mp-screen #mk-pq .pwrap{justify-content:flex-start; padding-top:24px;}
 /* v158: כשהטלפון פתוח — מסיטים את תוכן מסך-המנחה ימינה כך שלא ייחבא מאחורי הטלפון (כל הרוחב נשמר במסכים רחבים) */
 body.mock-on #hq, body.mock-on #hr{ padding-left:300px; }
+/* v159: כפתורים שלא פעילים בבדיקה — מעומעמים (סימון "לא פעיל") */
+body.mock-on #return-code-btn{ opacity:.45; }
 
 /* כרטיס חידון ברשימה (מוערם — מותאם לנייד) */
 .qlcard{background:var(--card); border-radius:14px; padding:16px; text-align:right;}
@@ -563,7 +566,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v159</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v160</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -4744,6 +4747,7 @@ function hostToggleMusic(){
   ['music-toggle','solo-music-toggle'].forEach(id=>{ const b=$(id); if(b) b.textContent=label; });
 }
 function nextQ(){
+  if (solo){ soloNextQ(); return; }   // v159: בבדיקה — מעבר-שאלה דרך זרימת-הסולו (כפתור ה-hr-next האמיתי)
   revealed = false; answers = {};
   qIndex++;
   if (qIndex >= quiz.questions.length){ hostFinish(); return; }
@@ -5276,10 +5280,11 @@ function funCard(box, ic, title, big, small){
 }
 
 function hostSkip(){
+  if (solo){ if (!revealed && curQ) soloReveal(); else soloNextQ(); return; }   // v159: ⏭️ הבא בבדיקה — חשיפה/מעבר
   if ($('hint').classList.contains('on')){ nextQ(); return; }
   if (!revealed && curQ){ revealQ(); } else { nextQ(); }
 }
-function hostJumpFinish(){ clearInterval(hostTimer); hostFinish(); }
+function hostJumpFinish(){ if (solo){ clearInterval(hostTimer); soloFinish(); return; } clearInterval(hostTimer); hostFinish(); }   // v159: 🏁 סיום בבדיקה
 // סוף סשן משחק — מאפס את קוד המשחק והמחסנית, כך שהמשחק הבא יקבל קוד חדש. נקרא ביציאה אמיתית מהזרימה.
 function endGameSession(){
   // v127: ניקוי שאריות-שחזור לפני איפוס הקוד
@@ -5451,6 +5456,7 @@ function hideReturnQR(){ const c = $('return-qr-corner'); if (c) c.remove(); }
 // מתג QR-לחזרה: פינה קטנה בצד שמאל-למטה (הצד הנגדי לסרגל המנחה), בלי לכסות את המשחק.
 // לחיצה ראשונה מציגה, לחיצה נוספת מסתירה. השחקן שיצא סורק מהפינה וכולם ממשיכים לשחק.
 function showReturnQR(){
+  if (solo){ showToast('📲 קוד חזרה — פעיל רק במשחק אמיתי'); return; }   // v159: אין משתתפים בבדיקה
   const existing = $('return-qr-corner');
   if (existing){ existing.remove(); return; }   // מתג: אם פתוח — סוגרים
   const code = playCode || topic;
@@ -5519,12 +5525,13 @@ function previewQuiz(){
   musicMuted = false; musicIdx = 0;
   if ($('solo-music-toggle')) $('solo-music-toggle').textContent = '🔇 השתקת מוזיקה';
   if ($('solo-bg-toggle')) $('solo-bg-toggle').textContent = '🙈 הסתרת רקע';
-  $('host-menu').style.display='none';
-  // סרגל בדיקה + תג בדיקה + מוזיקה — כדי שהבדיקה תרגיש כמו המשחק האמיתי
-  $('solo-bar').style.display='flex';
+  // v159: בבדיקה מציגים את סרגל-המנחה האמיתי (1:1, אותו #host-menu), לא גרסה מצומצמת.
+  $('solo-bar').style.display='none';
+  $('host-menu').style.display='flex'; $('host-menu').classList.remove('open');
   $('solo-badge').style.display='block';
-  $('solo-bg-toggle').style.display = bgUrl ? 'inline-block' : 'none';
-  $('solo-music-toggle').style.display = musicList.length ? 'inline-block' : 'none';   // רק אם נבחרה מוזיקה
+  $('bg-toggle').style.display = bgUrl ? 'inline-block' : 'none';
+  $('music-toggle').style.display = musicList.length ? 'inline-block' : 'none';
+  if ($('presence-counter')) $('presence-counter').style.display='none';   // אין משתתפים אמיתיים בבדיקה
   $('ingame-credit').style.display='none';
   applyGameBg(true);
   playGameMusic();
@@ -5676,7 +5683,7 @@ function soloReveal(){
   if (revealed) return;
   revealed = true; clearInterval(hostTimer); clearTimeout(_soloAnsTimer); clearTimeout(_soloRevealTimer);
   if ($('solo-answers')) $('solo-answers').style.display='none';
-  if ($('hr-next')) $('hr-next').style.display='none';
+  if ($('hr-next')) $('hr-next').style.display='inline-block';
   const opts = cleanAnswers(curQ);
   const correctText = curQ.answers[curQ.correct];
   const dist = {}; opts.forEach(o => dist[o.i]=0);
@@ -5727,12 +5734,8 @@ function soloReveal(){
   }
   // האם המורה צדק — הודעה קטנה
   $('hr-teams').textContent = (a && a.pick===curQ.correct) ? '✅ נכון!' : '❌ לא נכון — הנכונה מסומנת בירוק';
-  // כפתור המשך
-  let nb = $('solo-next');
-  if (!nb){ nb = document.createElement('button'); nb.id='solo-next'; nb.className='btn teal'; nb.style.marginTop='22px'; $('hr').appendChild(nb); }
-  nb.style.display='inline-block';
-  nb.textContent = (qIndex+1>=quiz.questions.length) ? 'לסיום ◂' : 'לשאלה הבאה ◂';
-  nb.onclick = () => { nb.style.display='none'; soloNextQ(); };
+  // v159: כפתור-ההמשך הוא ה-hr-next האמיתי (ממשיכים ◂, onclick=nextQ→soloNextQ בבדיקה) — 1:1 עם המשחק
+  if ($('hr-next')) $('hr-next').style.display='inline-block';
   show('hr');
 }
 
