@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v159 - הבדיקה הפכה ל"המשחק משחק את עצמו" (לבקשת יניב — הדמיה 1:1 אמיתית): המנחה מנהל מהצד שלו בלבד (לוחץ "לשאלה הבאה"), ולא עונה. לוח-התשובות-הידני שהיה מתחת למסך-המנחה — ירד. במקומו, כשעולה שאלה, השחקן-המדומה "עונה" לבד (_soloAutoAnswer) אחרי השהיה רנדומלית קצרה (1.5–3.7ש', כמו שחקן שחושב): הכפתור-בטלפון נצבע (.sel), הטלפון עובר ל"התשובה נקלטה", ואז חשיפה-אוטומטית — בדיוק כמו במשחק האמיתי, שבו allPresentAnswered→revealQ מפעיל חשיפה ~600ms אחרי שכולם ענו. כך מסך-המחשב נשאר 1:1 למסך-המנחה, הטלפון 1:1 למסך-השחקן, והמנחה צופה במשחק שלו רץ ומנהל את הקצב. הבחירה: נטייה קלה לנכון (~60%) במקום אקראי-אחיד — אחרת עם 4 אפשרויות זה כמעט תמיד טעות ולא היו נראים רצפים/זיקוקים/מגוון-חיזוקים; הניקוד/רצף/חיזוקים מחושבים על התשובה-הזו, אז יש מגוון אותנטי (לפעמים רצף וזיקוק, לפעמים טעות ואיפוס). כפתורי-הטלפון כבר לא disabled (נראים פעילים כמו אצל שחקן, רק לא לחיצים — המנחה לא לוחץ עליהם). טיימר-הזמן נשאר כרשת-ביטחון (חשיפה בתום הזמן אם משום-מה לא נענה). הערה: מסך-השחקן (pq) כולל סרגל-זמן משלו (pq-bar) — הוא מופיע בטלפון, 1:1; הסרגל-הגדול והטיימר-העגול הם של מסך-המנחה (במסך-המחשב, כבר 1:1). אומת: node --check + איזון-תגיות + רינדור + סימולציה מלאה עם צילומים.
   v158 - טלפון-מוק בבדיקה (פיצ'ר-דגל — אף בונה-חידונים ברשת לא מראה את צד-המשתתף לצד מסך-המנחה בזמן בדיקה): מסגרת-טלפון בצד-שמאל שמשקפת 1:1 את חוויית-המשתתף, בזמן שמסך-המנחה נשאר ראשי. הגישה (אפשרות א, "שלד מהאמיתי"): buildMockPhone משכפל (cloneNode) את מסכי-המשתתף האמיתיים — pq (שאלה), psent ("התשובה נקלטה"), plook ("הסתכלו ללוח"), ו-rtoast (חיזוק) — אל תוך המסגרת, עם קידומת mk- לכל id (למניעת כפילות), הסרת interactivity (תצוגה-בלבד). כך המבנה+העיצוב מסתנכרנים אוטומטית עם כל שינוי עתידי במסך-האמיתי; רק לוגיקת-המילוי (syncMockQuestion/syncMockReinforce) נפרדת, ומתועדת בבלוק-תחזוקה בולט בראש קוד-המוק (אם תשתנה לוגיקת-התצוגה — מוסרת הערה ידנית מה לעדכן). סנכרון צעד-צעד: שאלה→הטלפון מראה התקדמות+טיימר+טקסט+רמז+כפתורים; המנחה עונה במסך-הראשי→הטלפון מראה "התשובה נקלטה"; הפסקה (כל 4 שאלות, אותו תנאי כמו במשחק)→הטלפון מראה "הסתכלו ללוח" (soloNextQ פוצל ל-_soloRenderQ + שלב-הפסקה). חיזוקים אמיתיים: selectReinforcements קיבל פרמטר includeMe (ברירת-מחדל off — המשחק החי לא נגע, '_me' עדיין מסונן שם), וב-soloReveal רץ האלגוריתם האמיתי על השחקן-המדומה (eligibility זהה ל-revealQ: improve/streak) → הודעת-חיזוק נוחתת בטלפון בקצב הטבעי (START_CAP+MIN_GAP). הסתייגות כנה: סוגי-חיזוק שמשווים לשחקנים אחרים (hard וכו') לא יֵצאו עם שחקן יחיד; כל האישיים כן. בטוח לחלוטין: solo-בלבד, מסכים משוכפלים (ה-pq/psent/plook/rtoast האמיתיים לא נגעו), המוק נמחק ביציאה (endGameSession לכל מסלולי-העריכה/רשימה, ו-soloFinish לפודיום). אומת: node --check + איזון-תגיות + רינדור + צילומי-מסך של המוק בכל מצב.
   v157 - שתי תוספות-חוויה (שתיהן לא נוגעות בזרימת-המשחק החי): (א) פיצ'ר-הקובץ ב-AI עבר לרבים-ידידותי — המתג, תת-הטקסט, התזכורת, והפרומפט אומרים עכשיו "קובץ או יותר" / "חומר מצורף" במקום "קובץ" יחיד, כי הקובץ מצורף בכלי החיצוני (ChatGPT/Claude/Gemini) שם אפשר לצרף כמה. בלי מספר-מגבלה קשיח (המגבלה היא של הכלי החיצוני, משתנה ולא ניתנת לאכיפה). (ב) מצב-הבדיקה (סולו) קרוב יותר למשחק האמיתי: previewQuiz קורא עכשיו את מתגי-ההכנה (מהירות/הקראת-תלמידים/הקראה-לחדר) כמו goPlay, כך שכפתור 🔊 הקראה-לחדר מופיע בבדיקה (refreshHostSpeakBtn) והמנחה יכול לשמוע את הקול-העברי על המחשב שלו מראש; ו-soloReveal מציג עכשיו באנרי-שיא + זיקוקים (שיא מהירות/רצף) כמו במשחק — הנתונים (bestMs/maxStreak) כבר חושבו בסולו, רק לא הוצגו. נוספה הערת-מצב-בדיקה: אייקון ⓘ על תג "👁️ מצב בדיקה" (showSoloNote) שמסביר מה עובד-כמו-במשחק / חלקי (ניקוד יחיד) / לא-בבדיקה (חיזוקים, הפסקות-ביניים, מסך-הטלפון של המשתתף — רק במשחק עם משתתפים). חיזוקים והפסקות-ביניים לא דומו בכוונה — עם שחקן-מדומה אחד הם מלאכותיים. מסך-preview המת (id=preview, pv-*) נשאר ללא שימוש (לא נמחק עדיין). אומת: node --check + איזון-תגיות + רינדור.
   v156 - מפתח-אחסון ייחודי לחידון (תיקון דריסה-שקטה, אובחן בסריקה): כל חידון נשמר תחת מפתח בן 4 ספרות ב-teachers/{myStoreKey}/{editCode}. המפתח הונפק ע"י genUniqueCode — שבודק games/+shared/ (נכון לקוד-משחק) אבל *לא* את teachers/{myStoreKey}/. כך, נדיר אך אמיתי, חידון חדש יכול לקבל editCode הזהה לחידון קיים של אותו משתמש, וה-set() דורס אותו — אובדן-נתונים בשקט. (בדיקת shared/ הייתה ממילא שריד מת: shareId הוא 'sh_…', לעולם לא 4 ספרות, אז לא יכול להתאים ל-editCode.) השורש: genUniqueCode נבנתה לקודי-משחק ומוחזרה גם למפתחות-אחסון, שתי דרישות-ייחודיות שונות בפונקציה אחת. התיקון: פונקציה ייעודית genUniqueStoreKey() שבודקת את teachers/{myStoreKey}/{code}, עם פולבק דטרמיניסטי — אם 25 ניסיונות אקראיים נכשלים (ארון כמעט-מלא), סורקת את המפתחות הקיימים ובוחרת ראשון פנוי; מאחר שלמשתמש תמיד פחות מ-9000 חידונים, תא פנוי תמיד יימצא, אז דריסה הופכת *בלתי-אפשרית* (לא רק נדירה). אורח (myStoreKey ריק) → מחזיר קוד בלי בדיקה (לא נשמר ל-Firebase ממילא). שלושת הקוראים הוסבו: newQuiz, duplicateQuiz, confirmAddShared. קודי-המשחק (goPlay, ttsCode) נשארו על genUniqueCode עם המחזור של v155 — לא נגעתי. אומת: node --check + איזון-תגיות.
@@ -562,7 +563,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v158</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v159</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -5548,6 +5549,10 @@ function soloToggleBg(){ hostToggleBg(); }
 // ============================================================================
 let _mkToastTimer = null;
 let _soloInterShown = new Set();
+let _soloOpts = [];           // v159: סדר-התשובות של השאלה הנוכחית (כדי שהדגשת-הכפתור בטלפון תתאים)
+let _soloQShownAt = 0;        // v159: רגע הצגת השאלה (לחישוב dt של המענה-האוטומטי)
+let _soloAnsTimer = null;     // v159: טיימר המענה-האוטומטי (שחקן-מדומה "עונה")
+let _soloRevealTimer = null;  // v159: טיימר החשיפה-האוטומטית אחרי מענה (כמו allPresentAnswered→revealQ)
 function buildMockPhone(){
   const screen = $('mp-screen'); if (!screen) return;
   screen.innerHTML = '';
@@ -5557,7 +5562,7 @@ function buildMockPhone(){
     c.id = 'mk-' + srcId;
     c.classList.remove('on','screen'); c.classList.add('mk-screen');
     c.querySelectorAll('[id]').forEach(el => { el.id = 'mk-' + el.id; });
-    c.querySelectorAll('button').forEach(b => { b.onclick=null; b.removeAttribute('onclick'); b.disabled=true; b.style.pointerEvents='none'; });
+    c.querySelectorAll('button').forEach(b => { b.onclick=null; b.removeAttribute('onclick'); b.style.pointerEvents='none'; });
     screen.appendChild(c);
   });
   const rt = $('rtoast');
@@ -5580,7 +5585,7 @@ function syncMockQuestion(m){
   if ($('mk-pq-hint')) $('mk-pq-hint').textContent = (m.speedOn === false) ? '' : 'מהירות שווה נקודות!';
   const grid = $('mk-pq-grid');
   if (grid){ grid.innerHTML='';
-    m.options.forEach(o => { const b=document.createElement('button'); b.className='pbtn'; b.textContent=o.txt; b.disabled=true; b.style.pointerEvents='none'; grid.appendChild(b); });
+    m.options.forEach(o => { const b=document.createElement('button'); b.className='pbtn'; b.textContent=o.txt; b.style.pointerEvents='none'; grid.appendChild(b); });
   }
   const bar = $('mk-pq-bar');
   if (bar){ bar.style.transition='none'; bar.style.width='100%';
@@ -5620,7 +5625,8 @@ function soloNextQ(){
 function _soloRenderQ(){
   seq++;
   curQ = quiz.questions[qIndex];
-  const opts = cleanAnswers(curQ);
+  _soloOpts = cleanAnswers(curQ);
+  _soloQShownAt = Date.now();
   $('hq-num').textContent = 'שאלה ' + (qIndex+1) + ' / ' + quiz.questions.length + '  ·  בדיקה';
   $('hq-text').textContent = curQ.text;
   $('hq-answered').textContent = '0';
@@ -5630,44 +5636,45 @@ function _soloRenderQ(){
   $('hq-bar').style.transition='none'; $('hq-bar').style.width='100%';
   requestAnimationFrame(()=>{ $('hq-bar').style.transition='width '+quiz.time+'s linear'; $('hq-bar').style.width='0%'; });
 
-  // לוח תשובות שאפשר ללחוץ עליו (רק בבדיקה) — מתחת לשאלה, בעיצוב המשחק
-  let panel = $('solo-answers');
-  if (!panel){
-    panel = document.createElement('div'); panel.id='solo-answers';
-    panel.style.cssText='display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin-top:26px; max-width:1000px;';
-    $('hq').appendChild(panel);
-  }
-  panel.style.display='flex';
-  panel.innerHTML='';
-  const qShown = Date.now();
-  opts.forEach(o => {
-    const b = document.createElement('button'); b.className='opt-chip'; b.style.cursor='pointer'; b.style.border='none'; b.textContent=o.a;
-    b.onclick = () => {
-      clearInterval(hostTimer);
-      const dt = Date.now()-qShown;
-      answers = { _me:{ pick:o.i, dt } };
-      mockShow('psent');   // v158: הטלפון מראה "התשובה נקלטה"
-      soloReveal();
-    };
-    panel.appendChild(b);
-  });
+  // v159: אין יותר לוח-תשובות ידני — המנחה מנהל (לוחץ "לשאלה הבאה"), והקוד "עונה" עבור השחקן-המדומה.
+  if ($('solo-answers')) $('solo-answers').style.display='none';
 
-  // v158: הטלפון משקף את השאלה (שלד מהאמיתי — אותם שדות כמו showPQ)
-  syncMockQuestion({ num:qIndex+1, total:quiz.questions.length, text:curQ.text, speedOn:speedBonusOn, options:opts.map(o=>({txt:o.a,idx:o.i})), dur:quiz.time });
+  // v159: הטלפון משקף את מסך-השחקן (שלד מהאמיתי — אותם שדות כמו showPQ)
+  syncMockQuestion({ num:qIndex+1, total:quiz.questions.length, text:curQ.text, speedOn:speedBonusOn, options:_soloOpts.map(o=>({txt:o.a,idx:o.i})), dur:quiz.time });
 
   show('hq');
+
+  // v159: השחקן-המדומה "עונה" אחרי השהיה רנדומלית קצרה (כמו שחקן שחושב), ואז חשיפה-אוטומטית (allPresentAnswered→revealQ)
+  clearTimeout(_soloAnsTimer); clearTimeout(_soloRevealTimer);
+  _soloAnsTimer = setTimeout(_soloAutoAnswer, 1500 + Math.random()*2200);
+
   let t = quiz.time;
   clearInterval(hostTimer);
   hostTimer = setInterval(()=>{
     t--; $('hq-timer').textContent = Math.max(0,t);
     if (t<=5) $('hq-timer').classList.add('low');
-    if (t<=0){ answers = answers._me ? answers : {}; soloReveal(); }
+    if (t<=0){ soloReveal(); }   // רשת-ביטחון: חשיפה בתום הזמן אם משום-מה לא נענה
   },1000);
+}
+// v159: מענה-אוטומטי עבור השחקן-המדומה — הקוד "לוחץ" תשובה (נטייה קלה לנכון כדי שיֵצאו רצפים/זיקוקים/מגוון חיזוקים)
+function _soloAutoAnswer(){
+  if (revealed || answers._me || !curQ) return;
+  let pick;
+  if (Math.random() < 0.6) pick = curQ.correct;
+  else { const wrong = _soloOpts.filter(o=>o.i!==curQ.correct); pick = wrong.length ? wrong[Math.floor(Math.random()*wrong.length)].i : curQ.correct; }
+  answers = { _me:{ pick, dt: Date.now()-_soloQShownAt } };
+  $('hq-answered').textContent = '1';
+  // הדגשת הכפתור-הנבחר בטלפון (כמו .sel אצל השחקן) → "התשובה נקלטה" → חשיפה
+  const grid = $('mk-pq-grid');
+  if (grid){ const btns = grid.querySelectorAll('button'); const idx = _soloOpts.findIndex(o=>o.i===pick); if (btns[idx]) btns[idx].classList.add('sel'); }
+  setTimeout(()=>{ if (!revealed) mockShow('psent'); }, 480);
+  clearTimeout(_soloRevealTimer);
+  _soloRevealTimer = setTimeout(()=>{ if (!revealed) soloReveal(); }, 1080);
 }
 
 function soloReveal(){
   if (revealed) return;
-  revealed = true; clearInterval(hostTimer);
+  revealed = true; clearInterval(hostTimer); clearTimeout(_soloAnsTimer); clearTimeout(_soloRevealTimer);
   if ($('solo-answers')) $('solo-answers').style.display='none';
   if ($('hr-next')) $('hr-next').style.display='none';
   const opts = cleanAnswers(curQ);
