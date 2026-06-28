@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- teacher-guide v12 — QuizPlay בלבד (קהל רחב). חלק מ-yopoy. -->
+<!-- teacher-guide v13 — QuizPlay בלבד (קהל רחב). חלק מ-yopoy. -->
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -29,6 +29,13 @@ h2{font-family:'Secular One'; font-size:24px; color:var(--teal); margin:34px 0 1
 .banner-head{font-family:'Secular One'; font-size:27px; color:#06231f; background:linear-gradient(135deg, #2ec4b6, #25a99d); margin:40px 0 6px; padding:15px 20px; border-radius:14px; border-bottom:none;}
 /* תת-נושא */
 h3{font-family:'Secular One'; font-size:20px; color:var(--teal); margin:24px 0 8px; padding:4px 14px; border-inline-start:4px solid var(--teal);}
+html{scroll-behavior:smooth;}
+.group-head{font-family:'Secular One'; font-size:21px; color:#06281f; background:var(--teal); margin:42px 0 2px; padding:10px 18px; border-radius:12px; scroll-margin-top:14px;}
+.toc{margin:10px 0 24px; font-size:14.5px; line-height:1.6;}
+.toc a{color:var(--teal); text-decoration:none; font-weight:700;}
+.toc a:hover{text-decoration:underline;}
+.toctop{display:inline-block; margin:14px 0 4px; font-size:13px; opacity:.6; color:var(--teal); text-decoration:none;}
+.toctop:hover{opacity:.9;}
 h4{font-family:'Secular One'; font-size:16px; color:var(--ink); margin:18px 0 6px;}
 
 .card{background:var(--card); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:20px 24px; margin:16px 0;}
@@ -98,7 +105,7 @@ code{background:rgba(255,255,255,.1); padding:2px 7px; border-radius:6px; font-s
     </div>
     <div class="sp-box wide">
       <div class="t">🛡️ ממשיכים מאיפה שעצרתם</div>
-      <p style="margin:0; font-size:14.5px; line-height:1.6;">QuizPlay בנוי כך שגם העבודה וגם המשחק ימשיכו גם כשמשהו משתבש. בזמן יצירת החידון השינויים נשמרים אוטומטית, בלי צורך ללחוץ על "שמירה". במהלך המשחק, מנחה שהתנתק יכול להמשיך מאותה נקודה, ומשתתפים שאיבדו חיבור חוזרים לאותו משחק בלי לאבד את ההתקדמות שלהם. <span style="font-size:13px; opacity:.7;">(השחזור דורש חיבור לרשת, ובמקרה של המנחה — התחברות לחשבון.)</span></p>
+      <p style="margin:0; font-size:14.5px; line-height:1.6;">העבודה והמשחק נשמרים אוטומטית, כך שגם במקרה של ניתוק אפשר בדרך כלל להמשיך מאותה נקודה.</p>
     </div>
     <div class="sp-box">
       <div class="t">📱 מצטרפים בלי אפליקציה</div>
@@ -107,8 +114,17 @@ code{background:rgba(255,255,255,.1); padding:2px 7px; border-radius:6px; font-s
   </div>
 
   <!-- ===== המדריך עצמו ===== -->
-  <h2 class="banner-head">🧠 איך משתמשים</h2>
+  <h2 class="banner-head" id="toc" style="scroll-margin-top:14px;">🧠 המדריך</h2>
+  <div class="toc">
+    <p style="margin:0 0 9px; opacity:.8;">המדריך מחולק לארבעה חלקים:</p>
+    <div style="margin:0 0 7px;"><a href="#g-start">🛠️ בונים חידון</a> — <span style="opacity:.72;">כל מה שצריך כדי לבנות חידון: יצירה ידנית או בעזרת AI, עריכה ובדיקה לפני המפגש.</span></div>
+    <div style="margin:0 0 7px;"><a href="#g-run">▶️ מפעילים משחק</a> — <span style="opacity:.72;">מהרגע שהחידון מתחיל ועד הסיום: הפעלה, ניהול המשחק והתמודדות עם תקלות.</span></div>
+    <div style="margin:0 0 7px;"><a href="#g-manage">📂 מנהלים ומשתפים</a> — <span style="opacity:.72;">ניהול החידונים, שיתוף ושימוש בספרייה הציבורית.</span></div>
+    <div><a href="#g-tips">💡 טוב לדעת</a> — <span style="opacity:.72;">טיפים ומידע שימושי שיעזרו לכם להפיק יותר מ-QuizPlay.</span></div>
+  </div>
 
+  <div class="group-head" id="g-start">🛠️ בונים חידון</div>
+  <p style="font-size:14px; opacity:.65; margin:0 0 14px;">כל מה שצריך כדי לבנות חידון: יצירה ידנית או בעזרת AI, עריכה ובדיקה לפני המפגש.</p>
   <h3>🚪 הכניסה</h3>
   <div class="card">
     <p style="margin-top:0;">מומלץ להתחבר באמצעות Google לפני שמתחילים לעבוד.</p>
@@ -182,26 +198,47 @@ code{background:rgba(255,255,255,.1); padding:2px 7px; border-radius:6px; font-s
       <li><b>כל ההגדרות פעילות</b> — רקע, מצב-קריאוּת, בונוס-מהירות וכל מה שבחרתם מיושמים גם בבדיקה, כך שרואים בדיוק איך זה ייראה במשחק.</li>
       <li><b>תפריט-המנחה פעיל במלואו</b> — אפשר לתרגל את הצגת החידון ואת השליטה בכפתורים ובפונקציות עוד לפני המפגש.</li>
     </ul>
-    <p style="margin-bottom:0;">אל הבדיקה נכנסים דרך כפתור <b>👁️ תצוגה מקדימה</b> — מהעורך או מרשימת "החידונים שלי".</p>
+    <p style="margin-bottom:0;">אל הבדיקה נכנסים דרך כפתור <b>👁️ בדיקה</b> — מהעורך או מרשימת "החידונים שלי".</p>
     <div class="tip">הבדיקה היא הדרך הטובה ביותר להכיר את המערכת ולהרגיש בטוחים לפני שמפעילים חידון מול קהל — בלי שום סיכון ובלי צורך במשתתפים.</div>
   </div>
 
+  <div style="text-align:center; margin:6px 0 0;"><a href="#toc" class="toctop">↑ לתפריט</a></div>
+  <div class="group-head" id="g-run">▶️ מפעילים משחק</div>
+  <p style="font-size:14px; opacity:.65; margin:0 0 14px;">מהרגע שהחידון מתחיל ועד הסיום: הפעלה, ניהול המשחק והתמודדות עם תקלות.</p>
   <h3>🎮 הפעלת החידון</h3>
   <div class="card">
-    <p style="margin-top:0;">לאחר שהחידון מוכן, לוחצים על <b>▶️ משחק</b> ומגיעים למסך <b>🎬 הכנות למשחק</b>. כאן אפשר להגדיר כמה דברים לפני שמתחילים: <b>תמונת רקע ומוזיקה</b> (מהגלריה המובנית או מהמכשיר), <b>הקראה</b> ו<b>בונוס-מהירות</b>. כל אלו אופציונליים, ואפשר לשנותם, לכבותם או להחזירם גם במהלך המשחק.</p>
+    <p style="margin-top:0;">לאחר שהחידון מוכן, לוחצים על <b>▶️ התחל משחק</b> ומגיעים למסך <b>🎬 הכנות למשחק</b>.</p>
+    <p style="font-family:'Secular One'; color:var(--teal); font-size:15px; margin:18px 0 6px;">🎬 הכנה</p>
+    <p>מסך-ההכנה מאפשר להגדיר כמה דברים לפני שמתחילים — כולם אופציונליים:</p>
+    <ul>
+      <li>🎵 <b>מוזיקה</b> — מוזיקת-רקע שתתנגן במהלך המשחק, מהגלריה המובנית או מהמכשיר.</li>
+      <li>🖼️ <b>רקע</b> — תמונת-רקע למסך-המשחק, מהגלריה או מהמכשיר.</li>
+      <li>🔊 <b>הקראה</b> — הקראה קולית של השאלות (שתי מערכות — מפורט בהמשך, ב"הקראה ונגישות").</li>
+      <li>⚡ <b>בונוס-מהירות</b> — דלוק כברירת-מחדל: תשובה מהירה מזכה בניקוד גבוה יותר. אפשר לכבות, ואז כל תשובה נכונה שווה ניקוד מלא — לקצב רגוע בלי לחץ-זמן.</li>
+    </ul>
+    <p>את כל אלה אפשר לשנות, לכבות או להחזיר גם תוך כדי המשחק, דרך סרגל המנחה.</p>
+    <p style="background:rgba(46,196,182,.1); border-radius:10px; padding:10px 14px; margin:12px 0 0; font-size:14px;">💡 לפני שמתחילים, <b>ניתן</b> ללחוץ <b>👁️ בדיקה</b> ולעבור על החידון פעם אחת עם כל ההגדרות שבחרתם — מוזיקה, רקע והקראה — כדי לראות שהכול עובד כמו שצריך. (פירוט מלא בחלק <b>🔎 בדיקה</b>.)</p>
     <p>כל ההכנות מאחוריכם — וזה הרגע שהכול הוביל אליו. מכאן והלאה החידון קם לחיים מול הקבוצה.</p>
     <p style="margin-bottom:4px;">הפעלת החידון מתבצעת בשלושה שלבים:</p>
     <ol style="margin-top:4px;">
-      <li>לוחצים על <b>▶️ התחל משחק</b>.</li>
-      <li>המשתתפים מצטרפים באמצעות קוד המשחק, קישור ישיר או סריקת קוד QR — בלי הרשמה ובלי אפליקציה.</li>
-      <li>כשהכול מוכנים לוחצים על <b>🚀 מתחילים!</b></li>
+      <li>מתוך מסך-ההכנה לוחצים <b>שוב</b> על <b>▶️ התחל משחק</b> — ונפתח <b>מסך ההמתנה</b>, שעליו מופיעים <b>קוד-המשחק</b> וקוד-<b>QR</b> גדול.</li>
+      <li>המשתתפים מצטרפים באחת משלוש דרכים: 📷 סריקת ה-QR, 🔗 שליחת הקישור בוואטסאפ (כפתור העתקה), או ⌨️ כניסה לאתר והקלדת הקוד — בלי הרשמה ובלי אפליקציה. שמותיהם מופיעים ברשימה בזמן אמת.</li>
+      <li>כשכולם בפנים — לוחצים על <b>🚀 מתחילים!</b> והשאלה הראשונה עולה.</li>
     </ol>
     <p style="font-family:'Secular One'; color:var(--teal); font-size:15px; margin:18px 0 6px;">במהלך המשחק</p>
     <p style="margin-top:0;">השאלות מוצגות על המסך הגדול, והמשתתפים עונים מהטלפון האישי שלהם.</p>
-    <p>הניקוד מתבסס על שילוב של דיוק ומהירות, ובנוסף ניתן בונוס על רצף תשובות נכונות. אפשר גם לכבות את בונוס-המהירות לפני המשחק — ואז כל תשובה נכונה שווה ניקוד מלא ללא תלות במהירות, לקצב רגוע יותר ובלי לחץ-זמן.</p>
+    <p>הניקוד מתבסס על שילוב של דיוק ומהירות, ובנוסף ניתן בונוס על רצף תשובות נכונות.</p>
     <p>לאורך המשחק מופיעים רגעי שיא וסטטיסטיקות ביניים שמחזירים את תשומת הלב למסך המשותף ומוסיפים עניין וגיוון.</p>
-    <p>המנחה רואה בכל רגע כמה משתתפים מחוברים מתוך כלל המשתתפים שהצטרפו. אם מישהו מאבד חיבור או יוצא בטעות, אפשר להציג <b>קוד-חזרה (QR)</b> בפינה — בלי לעצור את המשחק — כך שיחזור במהירות וימשיך יחד עם כולם.</p>
-    <p>המנחה מקדם את המשחק משאלה לשאלה, ויכול לסיים בכל רגע.</p>
+    <p style="font-family:'Secular One'; color:var(--teal); font-size:15px; margin:18px 0 6px;">🎛️ סרגל המנחה</p>
+    <p>לאורך כל המשחק יש למנחה <b>סרגל בקרה</b> בפינה. שורה אחת גלויה תמיד: <b>👥 מונה-נוכחות</b> (כמה מחוברים מתוך כלל המצטרפים) ו-<b>📲 קוד חזרה</b> (מציג QR שמי שאיבד חיבור סורק כדי לחזור, בלי לעצור את המשחק). וכפתור <b>☰ תפריט</b> שפותח את שאר הפקדים:</p>
+    <ul>
+      <li>⏭️ <b>הבא</b> — מקדם ידנית לשאלה הבאה.</li>
+      <li>🔇 <b>השתקת מוזיקה</b> — משתיק ומחזיר את המוזיקה (אם נבחרה מוזיקה).</li>
+      <li>🙈 <b>הסתרת רקע</b> — מסתיר ומחזיר את תמונת-הרקע (אם נבחר רקע).</li>
+      <li>🔇 <b>בטל הקראה</b> — מכבה ומדליק את הקראת-החדר.</li>
+      <li>🌟 <b>חיזוקים</b> — מכבה ומדליק את הודעות-העידוד האישיות.</li>
+      <li>🏁 <b>סיום</b> — מסיים את המשחק ומציג את הפודיום.</li>
+    </ul>
     <p style="font-family:'Secular One'; color:var(--teal); font-size:15px; margin:18px 0 6px;">הקראה ונגישות 🔊</p>
     <p style="margin-top:0;">QuizPlay כולל שתי מערכות הקראה נפרדות, שאפשר להפעיל לפי הצורך:</p>
     <p><b>הקראה אישית בטלפון</b> — השאלה ואפשרויות-התשובה מוקראות בקול בטלפון של המשתתף (עדיף עם אוזניות), לצד מצב-קריאוּת-מוגברת עם טקסט גדול וניגודיות גבוהה. ההקראה מסייעת לכבדי-ראייה ולמי שמתקשה בקריאה, ואפשר להפעיל אותה לכל המשתתפים או רק לחלקם באמצעות קוד ייעודי. כשההקראה פעילה, בונוס-המהירות נכבה אוטומטית וזמן-המענה מתארך, כדי לא להעניש את מי שמאזין.</p>
@@ -225,6 +262,9 @@ code{background:rgba(255,255,255,.1); padding:2px 7px; border-radius:6px; font-s
     <p style="margin-bottom:0;">המטרה פשוטה: לאפשר לכם להתמקד בהעברת הפעילות, בלי לחשוש שכל תקלה קטנה תגרום לאובדן התקדמות, ניקוד או עבודה.</p>
   </div>
 
+  <div style="text-align:center; margin:6px 0 0;"><a href="#toc" class="toctop">↑ לתפריט</a></div>
+  <div class="group-head" id="g-manage">📂 מנהלים ומשתפים</div>
+  <p style="font-size:14px; opacity:.65; margin:0 0 14px;">ניהול החידונים, שיתוף ושימוש בספרייה הציבורית.</p>
   <h3>📂 החידונים שלי <span style="font-size:13px; font-weight:400; opacity:.55;">(לא זמין במצב אורח)</span></h3>
   <div class="card">
     <p style="margin-top:0;">כל החידונים שלכם מרוכזים במקום אחד. הרשימה מחולקת לשתי קטגוריות: <b>חידונים</b> — שמוכנים להפעלה, ו<b>טיוטות</b> — חידונים שעדיין נמצאים בתהליך עבודה. כך תמיד קל לראות מה כבר מוכן ומה עדיין דורש עריכה. בראש המסך אפשר גם לחפש חידון לפי שמו.</p>
@@ -260,7 +300,9 @@ code{background:rgba(255,255,255,.1); padding:2px 7px; border-radius:6px; font-s
     <p style="margin-bottom:0;">לאחר השימוש אפשר לסמן אם החידון היה <b>👍 שימושי</b> או <b>👎 לא שימושי</b>, ובמידת הצורך גם <b>🚩 לדווח</b> על תוכן לא תקין או בעייתי. המשוב של המשתמשים מסייע לשמור על איכות הספרייה ולהבליט חידונים טובים.</p>
   </div>
 
-  <h2>💡 דברים שכדאי לדעת</h2>
+  <div style="text-align:center; margin:6px 0 0;"><a href="#toc" class="toctop">↑ לתפריט</a></div>
+  <div class="group-head" id="g-tips">💡 טוב לדעת</div>
+  <p style="font-size:14px; opacity:.65; margin:0 0 14px;">טיפים ומידע שימושי שיעזרו לכם להפיק יותר מ-QuizPlay.</p>
   <div class="card">
     <p style="margin-top:0;">יש כמה דברים שכדאי להכיר לפני שמתחילים לעבוד עם QuizPlay:</p>
     <p style="font-family:'Secular One'; color:var(--teal); font-size:15px; margin:16px 0 4px;">רקע ומוזיקה אינם נשמרים עם החידון</p>
@@ -285,6 +327,7 @@ code{background:rgba(255,255,255,.1); padding:2px 7px; border-radius:6px; font-s
     <p style="margin:12px 0 0; font-size:13px; color:var(--ink-dim);">יש לכם רעיון, או נתקלתם בבאג או תקלה? <a href="mailto:yanivhpro@gmail.com?subject=דיווח%20QuizPlay" style="color:var(--teal); font-weight:600;">נא לדווח</a> — זה עוזר לי לשפר את QuizPlay.</p>
   </div>
 
+  <div style="text-align:center; margin:6px 0 0;"><a href="#toc" class="toctop">↑ לתפריט</a></div>
   <div style="text-align:center;">
     <a class="back" href="teacherquiz.html">→ חזרה ל-QuizPlay</a>
   </div>
