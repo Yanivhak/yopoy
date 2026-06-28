@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
-  v175 - לוגו גם במסך-הלובי (הברקוד): לוקאפ-המותג (yopoy מעל 🧠 + QuizPlay) נוסף בראש מסך-הלובי, מעל כותרת-החידון — המסך הכי-נצפה (מוקרן לכל הקבוצה בהתכנסות). קטן ומאופק (ho-brand-sm) כדי לא להתחרות בקוד/QR הפונקציונליים, בלי רקע-זוהר (זהו מסך-עבודה של המנחה). אומת: node --check + איזון-תגיות.
   v174 - לוגו במסך-ההצטרפות (join): מסך-הכניסה של התלמיד (הקלדת קוד+שם אחרי סריקת ה-QR) קיבל את לוקאפ-המותג (yopoy מעל 🧠 + QuizPlay בזוהר זהב) בראש הטופס + רקע-זוהר (מחלקת pbrand), להשלמת אי-הסימטריה מול מסכי-הפרידה הממותגים (pwait/pfin/pcut) — כעת גם הכניסה וגם היציאה של התלמיד ממותגות, ומסכי-המשחק נשארים נקיים. אומת: node --check + איזון-תגיות + רינדור.
   v173 - חזרה-חלקה דרך ה-QR (מילוי-מראש בהצטרפות-מחדש לאותו משחק): כשתלמיד שיצא סורק שוב את ה-QR של מסך-המארח (אותו משחק שעדיין רץ), השם והקוד מתמלאים אוטומטית ולוחצים רק "כניסה". (1) בכל הצטרפות, proceed שומר ב-localStorage רשומה לפי קוד-המשחק האמיתי (qz_join_{realCode}): שם, קבוצה, הקוד-בו-השתמש (כללי או קוד-הקראה), והאם תלמיד-הקראה. (2) prefillReturn חדשה נקראת ב-initJoinFromURL כשמגיעים עם ?game={code}: אם המכשיר זוכר את המשחק — השם ממולא ונעול לגמרי (readOnly+עמום, בלי מוצא; מכשירים לא מתחלפים באמצע משחק), הקוד ממולא בערך הנכון (תלמיד-הקראה מקבל את קוד-ההקראה כך שההקראה משוחזרת במקום ללכת לאיבוד), הקבוצה נזכרת ומסומנת, וחיווי "ברוך שובך". תלמיד חדש / משחק אחר / מכשיר אחר → אין מילוי, הקלדה רגילה. (3) תיקון-לוואי: maybeLoadTeams פוצלה (applyJoinTeams) ועכשיו מזהה קוד-הקראה וטוענת קבוצות מהמשחק האמיתי + מסמנת את הקבוצה הנזכרת — מתקן באג קיים שבו הקלדת קוד-הקראה ידנית במשחק-קבוצתי לא הציגה כלל כפתורי-קבוצות והתלמיד נתקע ב"בחרו קבוצה". הניקוד היה בטוח גם קודם (המארח מתעלם מהשם/קבוצה בחזרה ושומר את הרשומה לפי המזהה היציב) — ערך הפיצ'ר הוא תיקון-ההקראה+נוחות. אומת: node --check (שני בלוקי-JS) + איזון-תגיות + נוכחות הפונקציות.
   v172 - הודעת חסימת-פרסום + ערעור (השלמת מערכת-המודרציה): משתמש שנחסם מהספרייה (blocked/{uid}) — הכללים דוחים את כתיבת-הפרסום ל-library/. עד כה הכשל הוצג כ"תקלה" גנרית; עכשיו openLibraryPublishFromCard מזהה PERMISSION_DENIED ופותח חלון ייעודי (showBlockedAppeal) שמסביר שהחשבון חסום מפרסום (בנייה/הפעלה פרטית עדיין אפשרית) ומאפשר לשלוח ערעור — נכתב ל-appeals/{uid} (מותר גם לחסום לפי הכללים) ומופיע בלוח-הניהול, עם מייל-קשר-גיבוי (yanivhpro@gmail.com). שאר נתיבי-הכשל ממשיכים בהודעה הגנרית. אומת: node --check (שני בלוקי-JS) + איזון-תגיות.
@@ -278,6 +277,8 @@ body.tts-student .rtoast .remoji{ font-size:clamp(46px,12vw,70px); margin-bottom
 .ho-o2{width:10px;height:10px;background:var(--gold);top:70%;inset-inline-start:22%;box-shadow:0 0 26px 8px rgba(255,209,102,.5);}
 .ho-o3{width:12px;height:12px;background:var(--violet);top:20%;inset-inline-end:18%;box-shadow:0 0 28px 9px rgba(141,141,242,.5);}
 .ho-o4{width:9px;height:9px;background:var(--coral);top:74%;inset-inline-end:20%;box-shadow:0 0 24px 8px rgba(255,107,107,.45);}
+/* זוהר-רך מאחורי הכדורים — רק במסך-הכניסה (כמו רקע המדריך) */
+#auth-out::before{content:""; position:fixed; inset:0; z-index:0; pointer-events:none; background:radial-gradient(900px 600px at 78% 12%, rgba(255,209,102,.10), transparent 60%), radial-gradient(820px 560px at 18% 88%, rgba(46,196,182,.09), transparent 62%), radial-gradient(680px 520px at 50% 50%, rgba(141,141,242,.06), transparent 70%);}
 .ho-stage{position:relative; max-width:640px; margin:0 auto; padding:6px 0 2px; text-align:center;}
 .ho-brand{font-family:'Secular One'; font-size:clamp(46px,7.2vw,84px); line-height:1; letter-spacing:-.025em; margin:0; display:inline-flex; align-items:center; justify-content:center; gap:12px; position:relative; z-index:2;}
 .ho-stack{display:inline-flex; flex-direction:column; align-items:center; gap:1px;}
@@ -292,6 +293,10 @@ body.tts-student .rtoast .remoji{ font-size:clamp(46px,12vw,70px); margin-bottom
 .ho-reassure{display:inline-flex; gap:18px; flex-wrap:wrap; justify-content:center; margin:22px 0 0; color:var(--ink-dim); font-size:13px; font-weight:500; opacity:.85; position:relative; z-index:2;}
 .ho-reassure span{display:inline-flex; align-items:center; gap:5px;}
 .ho-reassure b{color:var(--teal); font-weight:800;}
+.ho-mani{margin:30px auto 0; max-width:520px; position:relative; z-index:2;}
+.ho-mani-line{font-family:'Heebo'; color:var(--ink); font-size:16px; font-weight:500; line-height:1.5; margin:0;}
+.ho-mani-line span{font-weight:700; white-space:nowrap;}
+.ho-mani-sub{color:var(--ink-dim); font-size:13px; opacity:.7; margin:6px 0 0;}
 /* v121: כותרת המסך המחובר — מותג ה-hero (yopoy+מוח+QuizPlay) + טיזר */
 .ho-home-wrap{margin:0 0 6px;}
 .ho-brand-sm{font-size:clamp(36px,8vw,52px); gap:9px;}
@@ -582,7 +587,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v175</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v174</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -621,6 +626,10 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
       <span class="ho-orb ho-o1"></span><span class="ho-orb ho-o2"></span><span class="ho-orb ho-o3"></span><span class="ho-orb ho-o4"></span>
       <div class="ho-stage">
         <h1 class="ho-brand"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></h1>
+        <div class="ho-mani">
+          <p class="ho-mani-line">טכנולוגיה טובה לא מודדים במה שהיא עושה, אלא במה שהיא <span>מאפשרת לאנשים לעשות יחד</span>.</p>
+          <p class="ho-mani-sub">נולד מתוך צורך. נבנה מניסיון.</p>
+        </div>
         <div class="ho-hero-teaser">בונה חידונים</div>
         <p class="ho-tag">הופכים רעיון לפעילות אינטראקטיבית בתוך דקות</p>
         <p class="ho-lede">צרו חידונים בעזרת AI או בעצמכם, הפעילו משתתפים בזמן אמת ושמרו את החידונים לשימוש חוזר.</p>
@@ -947,7 +956,6 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
 <div class="screen" id="lobby">
   <div class="topbar"></div>
   <div class="wrap">
-    <div class="ho-brand ho-brand-sm" style="display:flex; margin:0 0 16px;"><span class="ho-stack"><span class="ho-yopoy">yopoy</span><span class="ho-brain">🧠</span></span><span class="ho-word">QuizPlay</span></div>
     <h2 id="lobby-title">החידון</h2>
     <p class="sub">המשתתפים מצטרפים באחת משלוש דרכים — בוחרים מה שנוח.</p>
     <div>קוד למשחק:</div>
