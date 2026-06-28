@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (teacherquiz):
+  v171 - אבטחת-פרטיות + ניקוי קוד-מת (משלים לכללי-ה-Firebase הגרנולריים שנפרסו): המייל של המנחה הוא הנכס הרגיש שהיה חשוף, ושלוש נקודות-דליפה נסגרו בקוד. (1) saveHostSnapshot דוחף עכשיו עותק של החידון בלי ownerEmail ל-games/{code}/hostState/quiz — נתיב שחייב להישאר קריא לכל מצטרף-אורח בזמן משחק, אז המייל הוצא ממנו. ownerEmail הוא ממילא write-only (נכתב לזיהוי-בעלים, לא נקרא באף לוגיקה) — אפס-השפעה על שחזור/משחק, ונכתב מחדש בשמירה הרגילה. (2) הוסרה נפילת-המייל מ-ownerName וגם מ-originalAuthor — שניהם נכתבים לרשומות shared/ ו-library/ הציבוריות (כ"שותף על ידי"/"נוצר על ידי"); כעת בלי שם-Google מוצג קרדיט ריק במקום מייל. (3) קוד שיתוף-לפי-מייל המת נמחק כליל: ארבע פונקציות (startSpecificShare/addShareEmail/removeShareEmail/unshareSpecificAll — אפס-קוראים מאז הסרת ה-UI ב-v67), השדה allowedEmails (תמיד ריק), בלוק-המיילים ב-shareStatusBox, וענפי-הגישה-לפי-מייל בדיאלוג-הקבלה (נשאר רק נתיב-ההוספה הרגיל). הנימוק למחיקה ולא השארה: המודל שבור-מבנית בשיתוף-העתקה — נמען מקבל עותק עצמאי וחופשי לשתפו, ורשומות shared/ ציבוריות; השארת הקוד רק מפתה לשחזר דפוס שבור, והוא שמור ב-v170/Git. אומת: node --check (שני בלוקי-JS) + איזון-תגיות זהה למקור + grep ללא שאריות-קוד-חי. הסתייגות: הזרימה הרב-מכשירית החיה ניתנת לאימות סופי רק על מכשיר אמיתי — Firebase חסום בסביבת-הפיתוח.
   v170 - תיקון באג: מארח-אורח שנפל השאיר את המשתתפים על "תיכף נחזור" לנצח (הבטחה שקרית): מנגנון הנוכחות-החיה (setupHostAlive, v129) נכתב ללא תנאי גם למארח-אורח, אז כשאורח נופל ה-onDisconnect מסיר את hostAlive והמשתתפים רואים "תיכף נחזור" אחרי 8 שניות — אבל לאורח אין שחזור (resumeHostGame נשען על teachers/{uid}/activeGame, ולאורח אין uid), אז ההבטחה לא מתממשת והמשתתפים תקועים. התיקון (עקבי וכן — אורח לעולם לא חוזר): המארח כותב games/{code}/meta.hostIsGuest ביצירת החדר; כל משתתף קורא אותו בהצטרפות (_hostIsGuest); ב-handler המארח-נפל, אם המארח אורח ← המשתתף רואה "המשחק הסתיים" (מסך pcut הקיים) במקום "תיכף נחזור". מארח-מחובר — ללא שינוי (יכול לשחזר עד 45 דקות). בליפ-רשת קצר עדיין נספג ע"י 8 השניות (גם לאורח). saveHostSnapshot כבר היה מוגן לאורח (myStoreKey ריק ← return), אז אין כתיבת-זבל. אומת: node --check + איזון-תגיות + רינדור מסך-הסיום. דורש אימות-מכשיר: הזרימה החיה הרב-מכשירית (מארח-אורח נופל ← המשתתף רואה pcut) לא נבדקה בסביבה.
   v169 - אחידות-מונח: כפתור הבדיקה בעורך (action-box) שינה תווית מ"תצוגה מקדימה" ל"בדיקה", כדי להתיישר עם כל שאר המקומות בכלי (מסך-ההכנה, רשימת החידונים, מסך-הסיום, תגית מצב-בדיקה) ועם מדריך-המשתמש. (תצוגה-מקדימה-של-רקע במסך-ההכנה נשארת "תצוגה מקדימה" — היא דבר אחר.) אומת: node --check.
   v168 - מסגור ה-ⓘ במצב-בדיקה (showSoloNote): השורה הראשונה הורחבה מ"ככה זה ירגיש במשחק אמיתי" ל"גם הדמיה וגם התכוננות למשחק... וכאן אפשר לתרגל את הצגת החידון ולהתנסות בכפתורים ובפונקציות לפני המפגש" — כדי שברור שהבדיקה היא לא רק תצוגה אלא גם מרחב-תרגול. שאר הפופ-אפ (✅/🟡/❌) ללא שינוי. אומת: node --check.
@@ -577,7 +578,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v170</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v171</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -1891,7 +1892,7 @@ async function duplicateQuiz(code, q){
       teamNames: Array.isArray(q.teamNames) ? q.teamNames.slice() : [],
       questions: Array.isArray(q.questions) ? JSON.parse(JSON.stringify(q.questions)) : [],
       displayCode: newDisplay,
-      originalAuthor: q.originalAuthor || (myAuthName || myEmail || ''),
+      originalAuthor: q.originalAuthor || (myAuthName || ''),
       isDraft: false,                                  // עותק חדש = חידון, לא טיוטה
       share: { mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null },  // בלי שיתוף
       updated: Date.now(),
@@ -2156,7 +2157,7 @@ function _openLibraryOverlayCore(){
 async function newQuiz(){
   editCode = await genUniqueStoreKey();
   const displayCode = await genDisplayCode();   // קוד-תצוגה אנושי קבוע, נוצר פעם אחת
-  quiz = { title:'', time:20, teamCount:0, teamNames:[], questions:[], displayCode: displayCode, originalAuthor: (myAuthName || myEmail || ''), isDraft:false, share:{ mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null } };
+  quiz = { title:'', time:20, teamCount:0, teamNames:[], questions:[], displayCode: displayCode, originalAuthor: (myAuthName || ''), isDraft:false, share:{ mode:'none', emails:[], inLibrary:false, shareId:null, libraryId:null } };
   resetAiMeta();             // חידון חדש — בחירות AI מתאפסות (פריט 1)
   aiCardDismissed = false;   // חידון חדש — הכרטיס יוצג שוב
   quiz.questions.push({ text:'', answers:['',''], correct:0 });  // שאלה ריקה ראשונה — לפני הרינדור, כדי לרנדר פעם אחת בלבד
@@ -3101,9 +3102,8 @@ function syncShareCopies(){
   const sharedRec = {
     ownerUid: myUid, quizCode: editCode, updated: Date.now(),
     mode: sh.mode,
-    allowedEmails: sh.mode === 'specific' ? (sh.emails || []) : [],
     quiz: quizData,
-    ownerName: myAuthName || myEmail || 'מורה',        // מי ששיתף את העותק הזה → "שותף על ידי"
+    ownerName: myAuthName || 'מורה',        // מי ששיתף את העותק הזה → "שותף על ידי"
     originalAuthor: quiz.originalAuthor || null         // היוצר המקורי, נישא לאורך השרשרת → "נוצר על ידי"
   };
   fdb.ref('shared/'+sh.shareId).set(sharedRec).catch(()=>{});
@@ -3209,7 +3209,7 @@ function renderSharePanel(){
   const sh = ensureShareObj();
   panel.innerHTML = '';
 
-  if (sh.mode === 'public' || sh.mode === 'specific'){
+  if (sh.mode === 'public'){
     // משותף — שורה אחת קומפקטית: קוד + העתק-קוד + העתק-קישור (לא כרטיס גדול)
     const wrap = document.createElement('div');
     wrap.className = 'share-compact';
@@ -3283,25 +3283,6 @@ function shareStatusBox(titleText, sh){
   explain.textContent='שתפו באמצעות קוד קצר או קישור. כל מקבל יקבל עותק עצמאי של החידון.';
   box.appendChild(explain);
 
-  if (sh.mode === 'specific'){
-    // רשימת מיילים + הוספה
-    const list = document.createElement('div'); list.style.cssText='display:flex; flex-direction:column; gap:6px; margin-bottom:10px;';
-    (sh.emails||[]).forEach(em=>{
-      const r = document.createElement('div'); r.style.cssText='display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,.05); border-radius:8px; padding:6px 10px; font-size:13px;';
-      const e = document.createElement('span'); e.textContent='📧 '+em;
-      const x = document.createElement('button'); x.textContent='✕'; x.style.cssText='background:none; border:none; color:var(--coral); cursor:pointer; font-size:14px;';
-      x.onclick=()=>removeShareEmail(em);
-      r.appendChild(e); r.appendChild(x); list.appendChild(r);
-    });
-    box.appendChild(list);
-    const addRow = document.createElement('div'); addRow.style.cssText='display:flex; gap:6px;';
-    const inp = document.createElement('input'); inp.type='email'; inp.id='share-email-input'; inp.placeholder='מייל להוספה'; inp.style.cssText='flex:1; padding:7px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:13px;';
-    inp.onkeydown=(e)=>{ if(e.key==='Enter') addShareEmail(); };
-    const addBtn = document.createElement('button'); addBtn.className='btn ghost sm'; addBtn.textContent='הוספה'; addBtn.onclick=addShareEmail;
-    addRow.appendChild(inp); addRow.appendChild(addBtn);
-    box.appendChild(addRow);
-  }
-
   // קוד השיתוף האנושי — אפשרות ראשית
   if (quiz && quiz.displayCode){
     const codeWrap = document.createElement('div'); codeWrap.style.cssText='margin-top:6px; text-align:center;';
@@ -3327,40 +3308,8 @@ function shareStatusBox(titleText, sh){
   return box;
 }
 
-// --- פעולות שיתוף ספציפי ---
-async function startSpecificShare(){
-  if (!myUid){ showToast('התחברו עם Google כדי לשתף את החידון.'); return; }
-  const verr = shareLibValidationError(quiz, 'השיתוף', true);
-  if (verr){ showToast(verr); return; }
-  const sh = ensureShareObj();
-  sh.mode = 'specific'; sh.emails = []; sh.inLibrary = false;
-  if (!sh.shareId) sh.shareId = await genShareId();
-  quiz.isConfirmed = true;   // שיתוף = אישור מפורש
-  saveQuiz(); renderSharePanel();
-}
-function addShareEmail(){
-  const inp = $('share-email-input'); if (!inp) return;
-  const em = (inp.value||'').trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ showToast('נא להזין כתובת מייל תקינה.'); return; }
-  const sh = ensureShareObj();
-  if (!sh.emails) sh.emails = [];
-  if (sh.emails.indexOf(em) === -1) sh.emails.push(em);
-  saveQuiz(); renderSharePanel();
-}
-function removeShareEmail(em){
-  const sh = ensureShareObj();
-  sh.emails = (sh.emails||[]).filter(e=>e!==em);
-  saveQuiz(); renderSharePanel();
-}
-function unshareSpecificAll(){
-  showConfirm('לבטל את השיתוף?\nעותקים שכבר התקבלו יישארו אצל המשתמשים, אך הקישור יפסיק לעבוד.', ()=>{
-  const sh = ensureShareObj();
-  if (sh.shareId) fdb.ref('shared/'+sh.shareId).remove().catch(()=>{});
-  if (quiz.displayCode) fdb.ref('codes/'+quiz.displayCode).remove().catch(()=>{});   // v118: מחיקת רשומת codes/ היתומה אחרי ביטול-שיתוף
-  sh.mode = 'none'; sh.emails = []; sh.shareId = null;
-  saveQuiz(); renderSharePanel();
-  });
-}
+// שיתוף-ספציפי-לפי-מייל הוסר מה-UI ב-v67 ונמחק כקוד-מת ב-v171.
+// לא-בטוח מבנית במודל-ההעתקה; החזרה דורשת מודל גישה-לפי-דרישה חדש.
 
 // --- פעולות שיתוף לכולם ---
 async function shareToEveryone(){
@@ -3483,7 +3432,7 @@ function openLibraryPublishFromCard(code, q, onDone){
       share.inLibrary = true;
       const entry = {
         libId: share.libraryId, quizId: code, shareId: share.shareId,
-        ownerUid: myUid, ownerName: myAuthName || myEmail || 'מורה',
+        ownerUid: myUid, ownerName: myAuthName || 'מורה',
         originalAuthor: q.originalAuthor || null,
         title: q.title, description: desc,
         questionCount: realQCount(q.questions),
@@ -3685,11 +3634,7 @@ function showSharedDialog(shareId, data){
   const sharerName = data.ownerName || 'מנחה';
   const qCount = (src.questions || []).length;
 
-  // האם המשתמש מורשה? (רלוונטי רק לשיתוף ספציפי לפי מייל)
-  const isSpecific = (data.mode === 'specific');
-  const allowed = (data.allowedEmails || []).map(e=>(e||'').toLowerCase());
   const loggedIn = !!(myUid && myStoreKey);
-  const emailAllowed = allowed.indexOf((myEmail||'').toLowerCase()) !== -1;
 
   const ov = document.createElement('div'); ov.id='shared-overlay';
   ov.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px;';
@@ -3728,23 +3673,8 @@ function showSharedDialog(shareId, data){
   // אזור הכפתורים — תלוי במצב
   const btnArea = document.createElement('div');
 
-  if (isSpecific && !loggedIn){
-    // מוגן-מייל אך לא מחובר — צריך להתחבר כדי לבדוק הרשאה
-    const info = document.createElement('div');
-    info.style.cssText = 'font-size:13px; color:var(--ink-dim); margin-bottom:12px; line-height:1.5;';
-    info.textContent = 'החידון משותף עם משתמשים מורשים בלבד. התחברו עם Google כדי לבדוק אם יש לכם גישה.';
-    btnArea.appendChild(info);
-    const loginBtn = document.createElement('button'); loginBtn.className='btn teal'; loginBtn.style.width='100%'; loginBtn.style.marginBottom='8px';
-    loginBtn.textContent='🔑 התחברות עם Google';
-    loginBtn.onclick = ()=>{ pendingShareId = shareId; ov.remove(); signInGoogle(); };
-    btnArea.appendChild(loginBtn);
-  } else if (isSpecific && loggedIn && !emailAllowed){
-    // מוגן-מייל, מחובר, אך לא מורשה
-    const info = document.createElement('div');
-    info.style.cssText = 'font-size:14px; color:var(--coral); margin-bottom:12px; line-height:1.5; font-weight:600;';
-    info.textContent = 'לחשבון שלכם (' + (myEmail||'') + ') אין הרשאה לחידון הזה. בקשו ממי ששיתף אותו לשתף עם המייל שלכם.';
-    btnArea.appendChild(info);
-  } else {
+  {
+    // v171: שיתוף-מייל הוסר — תמיד כפתור הוספה
     // ציבורי / ספרייה / מורשה — אפשר להוסיף
     const addBtn = document.createElement('button'); addBtn.className='btn teal'; addBtn.style.width='100%'; addBtn.style.marginBottom='8px'; addBtn.style.fontSize='16px';
     addBtn.textContent='✓ הוספה לחידונים שלי';
@@ -5359,7 +5289,9 @@ function newQuizFromGame(){ clearInterval(hostTimer); stopGameMusic(); applyGame
 function saveHostSnapshot(){
   if (!myStoreKey || !playCode) return;   // רק מורה מחובר; אורח — אין שחזור
   try {
-    fdb.ref('games/'+playCode+'/hostState/quiz').set(quiz).catch(()=>{});
+    // v171: לא דוחפים ownerEmail ל-games/ (קריא לכל מצטרף בזמן משחק); clone בלי המייל
+    var _hsQuiz = Object.assign({}, quiz); delete _hsQuiz.ownerEmail;
+    fdb.ref('games/'+playCode+'/hostState/quiz').set(_hsQuiz).catch(()=>{});
     fdb.ref('games/'+playCode+'/hostState/editCode').set(editCode || '').catch(()=>{});
     fdb.ref('games/'+playCode+'/hostState/speedBonusOn').set(speedBonusOn).catch(()=>{});   // v149
     fdb.ref('games/'+playCode+'/hostState/roomTtsOn').set(roomTtsOn).catch(()=>{});   // v150
