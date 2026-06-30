@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (quizplay):
+  v183 - שני שינויים בכלי ה-AI (לבקשת יניב).
+  ── פתיחת הפרומפט (buildImportPrompt): "צור חידון טריוויה בעברית" ← "צור מקבץ שאלות טריוויה כטקסט בלבד בעברית". הסיבה: ג׳מיני (gemini.google.com) תופס "צור חידון" בתחילת המשפט כפקודה ומפעיל כלי-canvas אינטראקטיבי במקום להחזיר טקסט בפורמט הנדרש. הניסוח החדש מנטרל את הטריגר ואומת בג׳מיני וב-ChatGPT. "החידון" באמצע המשפט נשאר — אינו טריגר. תקף לחידון חדש ולעריכה (אותה פונקציה).
+  ── התרעת-כפילויות (findSimilarPairs + _dupTokens): אחרי ייבוא, השוואת נוסחי-השאלות בחידון הסופי (Jaccard ≥ 0.7 על טוקנים מנורמלים — קילוף תחילית/ה' הידיעה עם שמירת ≥3 אותיות, סינון מילות-קישור ומילות-שאלה). זוגות דומים-מאוד מצורפים לטוסט-הסיום (לא טוסט נפרד), מילולית ובלי מחיקה אוטומטית. סף שמרני בכוונה כדי לא להציף התרעות-שווא; תופס כפילויות-נוסח, לא בהכרח כפילויות-תוכן בניסוח רחוק.
+  אומת: node --check (שני בלוקי-JS) + איזון-תגיות.
+  v182 - מצב-חלוקה לקבצים גדולים בחלון ה-AI (לבקשת יניב). הבעיה: כלי ה-AI החיצוני (ChatGPT/Gemini/Claude) קורא קובץ גדול אך נעצר באמצע הפלט ומחזיר פחות שאלות מהמבוקש (למשל 10 במקום 30) — ו-QuizPlay הכריז "בהצלחה" על תוצאה קטועה.
+  ── מצב-חלוקה (impBatchMode): מתג-הקובץ דלוק וגם מבוקשות מעל 15 שאלות. אז (א) הפרומפט מבקש מנה של 10 (promptCount) במקום כל הכמות — הבורר נשאר היעד; (ב) מוצגת הערת-חלוקה (imp-batch-note) שמנחה לבקש במנות עם "המשך, עוד 10 על אותו חומר", לאסוף הכל ולהדביק פעם אחת.
+  ── רשת-ביטחון (parseImport): בחידון חדש, אם נוצרו פחות שאלות מהבורר — טוסט-אזהרה ("נוצרו X מתוך Y") במקום "בהצלחה", עם הוראת-השלמה.
+  ── סנכרון (syncBatchNote): ההערה והפרומפט מתעדכנים יחד דרך refresh / refreshImpAfterChange / מתג-הצירוף. הסף "50 עמודים" הוא טקסט-עצה בלבד (אי-אפשר למדוד — הקובץ אצל המורה בכלי החיצוני).
+  אומת: node --check (שני בלוקי-JS) + איזון-תגיות.
   v181 - כלי חדש ונפרד: "מילוי הסברים לשאלות הקיימות באמצעות AI" (לבקשת יניב). פותר פער — עד כה הסברים נוצרו רק לשאלות חדשות/מוחלפות, ולכן לא היה אפשר להוסיף הסבר לשאלה קיימת בלי לזרוק אותה. ההחלטה (אחרי שיניב הצביע על סיכון-הבלבול): כלי נפרד לגמרי מחלון-ההחלפה, ולא מתג-מצב — כדי שלא ייווצר "מחליף או מסביר?" ולא יתנגש עם זרימת ה-AI הקיימת. כל פעולה היא דבר אחד ברור.
   ── כפתור (renderQuestions, בראש q-list): "מלא הסברים באמצעות AI" — מופיע רק כשמתג ההסברים דלוק ויש שאלה אחת לפחות עם נוסח אך בלי הסבר (questionsMissingExplanation). נעלם כשהכל מולא.
   ── דיאלוג (openExplainFill): פרומפט להעתקה + תיבת-הדבקה + החלה, בסגנון חלון ה-AI. הפרומפט (buildExplainPrompt) מטמיע כל שאלה חסרת-הסבר + התשובה הנכונה שלה (התשובות הכרחיות כאן כי ההסבר מתחיל בתשובה), עם הנחיית-האיכות מ-v178, ומבקש הסברים ממוספרים באותו סדר.
@@ -609,7 +618,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v181</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v183</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -2553,7 +2562,7 @@ function buildImportPrompt(){
   const goalFree = ($('imp-goal-free') ? $('imp-goal-free').value.trim() : '');
   if (goalFree) goals.push(goalFree);
 
-  let p = 'צור חידון טריוויה בעברית';
+  let p = 'צור מקבץ שאלות טריוויה כטקסט בלבד בעברית';
   p += topics.length ? ' בנושא: ' + topics.join(', ') : ' בנושא שאבחר';
   // כמה שאלות לבקש: בעריכת חידון קיים — רק מספר השאלות החדשות שנדרשות (החלפות + תוספות).
   // בחידון חדש (ריק) — פשוט מספר הבורר.
@@ -2563,7 +2572,9 @@ function buildImportPrompt(){
   if (editingExisting && askCount <= 0){
     return 'לא נבחרו שאלות לעדכון.\n• כדי להחליף שאלות — סמנו אותן ברשימה.\n• כדי למחוק שאלות — השתמשו בעורך החידון.';
   }
-  p += '. ' + askCount + ' שאלות, ולכל שאלה ' + impACount + ' תשובות.';
+  // v182: מצב-חלוקה מבקש מנה של 10; הבורר (impQCount) נשאר היעד
+  const promptCount = impBatchMode() ? 10 : askCount;
+  p += '. ' + promptCount + ' שאלות, ולכל שאלה ' + impACount + ' תשובות.';
   if (age) p += (impTrack==='fun' ? ' קהל היעד: ' : ' שכבת הגיל: ') + age + '.';
   if (traits.length) p += ' מאפייני המשתתפים: ' + traits.join(', ') + '. התאם את רמת השאלות, אורך הניסוח ומורכבות התשובות בהתאם.';
   if (goals.length) p += ' מטרת החידון: ' + goals.join(', ') + '. התאם את אופי החידון למטרה.';
@@ -2717,6 +2728,17 @@ function renderImpQuestionList(){
 // נקרא אחרי כל שינוי ברשימה (סימון/הזזה/בורר) — מעדכן פרומפט
 function refreshImpAfterChange(){
   if ($('imp-prompt')) $('imp-prompt').value = buildImportPrompt();
+  syncBatchNote();
+}
+// v182: מצב-חלוקה — מתג-הקובץ דלוק וגם מבוקשות מעל 15 שאלות. אז הפרומפט מבקש מנה של 10 וההערה מוצגת.
+function impBatchMode(){
+  const attachOn = ($('imp-attach') ? $('imp-attach').checked : false);
+  const askCount = quizHasRealContent() ? impNewQuestionsNeeded() : impQCount;
+  return attachOn && askCount > 15;
+}
+function syncBatchNote(){
+  const note = $('imp-batch-note');
+  if (note) note.style.display = impBatchMode() ? 'block' : 'none';
 }
 
 /* בונה סעיף אקורדיון: כותרת שנלחצת + תוכן שנפתח/נסגר */
@@ -2769,7 +2791,7 @@ function openImport(){
     '</div>' +
     '<div style="font-size:13px; color:var(--ink); background:rgba(46,196,182,.10); border:1px solid rgba(46,196,182,.22); border-radius:9px; padding:8px 12px; line-height:1.55; margin-bottom:14px;">💡 אין חובה למלא את כל השדות — מה שתשאירו ריק פשוט לא ייכנס להנחיה.</div>';
 
-  const refresh = ()=>{ $('imp-prompt').value = buildImportPrompt(); };
+  const refresh = ()=>{ $('imp-prompt').value = buildImportPrompt(); syncBatchNote(); };
 
   // ===== בורר סוג החידון =====
   const trackTitle = document.createElement('div'); trackTitle.style.cssText='font-size:14px; color:var(--ink); font-weight:700; margin-bottom:8px;'; trackTitle.textContent='סוג החידון';
@@ -2858,7 +2880,7 @@ function openImport(){
   const atWrap = document.createElement('div'); atWrap.style.cssText='margin:12px 0 4px; background:rgba(46,196,182,.08); border:1px solid rgba(46,196,182,.25); border-radius:10px; padding:11px 13px;';
   const atLab = document.createElement('label'); atLab.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; font-size:14px; color:var(--ink); font-weight:700;';
   const atChk = document.createElement('input'); atChk.type='checkbox'; atChk.id='imp-attach'; atChk.style.cssText='width:18px; height:18px; accent-color:var(--teal); cursor:pointer; flex:0 0 auto;';
-  atChk.onchange = ()=>{ if($('imp-prompt')) $('imp-prompt').value = buildImportPrompt(); const _r=$('imp-attach-remind'); if(_r) _r.style.display = atChk.checked ? 'block' : 'none'; };
+  atChk.onchange = ()=>{ if($('imp-prompt')) $('imp-prompt').value = buildImportPrompt(); const _r=$('imp-attach-remind'); if(_r) _r.style.display = atChk.checked ? 'block' : 'none'; syncBatchNote(); };
   const atTxt = document.createElement('span'); atTxt.textContent='📎 אצרף קובץ או קבצים בכלי ה-AI (דף מידע, סיכום ועוד)';
   atLab.appendChild(atChk); atLab.appendChild(atTxt); atWrap.appendChild(atLab);
   const atSub = document.createElement('div'); atSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;';
@@ -2885,6 +2907,11 @@ function openImport(){
   const atRemind = document.createElement('div'); atRemind.id='imp-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-8px 0 16px; font-size:14px; color:var(--ink); line-height:1.5;';
   atRemind.textContent='📎 אם אתם מצרפים קבצים — צרפו אותם יחד עם ההנחיה באותה הודעה.';
   box.appendChild(atRemind);
+  // v182: הערת-חלוקה — מוצגת רק כשמתג-הקובץ דלוק וגם מבוקשות מעל 15 שאלות (impBatchMode/syncBatchNote)
+  const batchNote = document.createElement('div'); batchNote.id='imp-batch-note';
+  batchNote.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:12px 14px; margin:-8px 0 16px; font-size:13.5px; color:var(--ink); line-height:1.6;';
+  batchNote.innerHTML='📎 <b>הרבה שאלות מקובץ גדול (מעל 50 עמודים בערך)?</b> כלי ה-AI קורא את הקובץ, אבל כשמבקשים ממנו שאלות רבות בבת אחת מחומר גדול הוא עלול לעצור באמצע ולהחזיר פחות שאלות מהמבוקש. עדיף לבקש במנות: בקשו 10, ואז כתבו בצ׳אט "המשך, עוד 10 על אותו חומר", וכך עד לכמות הרצויה. אספו את כל המנות לתיבת ההדבקה למטה, ורק אז לחצו "צור חידון" — פעם אחת.';
+  box.appendChild(batchNote);
 
   // שלב 2
   const step2 = document.createElement('div'); step2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; step2.textContent='שלב 2 — שלחו לבינה המלאכותית';
@@ -3035,11 +3062,61 @@ function parseImport(){
   const ov = $('imp-overlay'); if (ov) ov.remove();
   // בדיקת אורך — מסמנים שאלות/תשובות שחורגות, כדי שהמורה יקצר
   const longCount = countOverLength(valid);
-  if (longCount > 0){
-    showToast('נוצרו ' + valid.length + ' שאלות בהצלחה!\n\nשימו לב: ' + longCount + ' שאלות או תשובות ארוכות סומנו בצהוב. מומלץ לקצר אותן לקריאה נוחה יותר.');
+  const dupPairs = findSimilarPairs(quiz.questions);   // v183: כפילויות על החידון הסופי (אינדקסים = מיקום בעורך)
+  let _msg;
+  // v182: רשת-ביטחון — בחידון חדש, אם נוצרו פחות שאלות מהמבוקש, ה-AI כנראה נעצר (קורה עם קובץ גדול). מתריעים במקום "בהצלחה".
+  if (!hadContent && valid.length < impQCount){
+    _msg = 'נוצרו ' + valid.length + ' שאלות בלבד (ביקשתם ' + impQCount + '). ייתכן שכלי ה-AI עצר באמצע — זה קורה כשמבקשים שאלות רבות מקובץ גדול בבת אחת. כדי להשלים: חזרו לכלי ה-AI, בקשו "המשך, עוד 10 על אותו חומר" עד שתגיעו לכמות, ואז הוסיפו את השאלות החדשות דרך כפתור ה-AI שוב.';
+  } else if (longCount > 0){
+    _msg = 'נוצרו ' + valid.length + ' שאלות בהצלחה!\n\nשימו לב: ' + longCount + ' שאלות או תשובות ארוכות סומנו בצהוב. מומלץ לקצר אותן לקריאה נוחה יותר.';
   } else {
-    showToast('נוצרו ' + valid.length + ' שאלות בהצלחה! אפשר לערוך אותן כרגיל.');
+    _msg = 'נוצרו ' + valid.length + ' שאלות בהצלחה! אפשר לערוך אותן כרגיל.';
   }
+  // v183: התרעת-כפילויות מצטרפת לאותה הודעה (לא טוסט נפרד), מילולית ובלי מחיקה
+  if (dupPairs.length){
+    _msg += '\n\n🔁 שאלות שנראות דומות מאוד: ' + dupPairs.map(p => p[0] + ' ו-' + p[1]).join(', ') + '. בדקו אם כדאי להחליף אחת מכל זוג.';
+  }
+  showToast(_msg);
+}
+// ===== v183: זיהוי כפילויות (התרעה בלבד, בלי מחיקה) =====
+// נרמול מילה עברית: הסרת ניקוד, וקילוף תחילית אחת נפוצה (ו/ה/ב/ל/מ/כ/ש/כש/מש) רק אם נשארות לפחות 3 אותיות.
+function _dupNormWord(w){
+  w = w.replace(/[\u0591-\u05C7]/g,'');
+  const m = w.match(/^(כש|מש|ש|ו|ה|ב|ל|מ|כ)(.+)$/);
+  if (m && m[2].length >= 3) w = m[2];
+  return w;
+}
+const _DUP_STOP = new Set(['של','על','את','עם','הוא','היא','הם','הן','אם','כי','או','גם','זה','זאת','מה','מהו','מהי','מהם','מי','איזה','איזו','אילו','כמה','האם','מתי','איפה','היכן','כיצד','מדוע','למה','אשר','כך','כדי','בין','אך','אבל','רק','יותר','פחות','אל','עד','לפי','כל','לא','כן']);
+function _dupTokens(s){
+  if (!s) return new Set();
+  s = s.replace(/[?!.,;:"'״׳()\[\]{}\-–—]/g,' ');
+  const out = new Set();
+  s.split(/\s+/).forEach(w=>{
+    w = w.trim();
+    if (!w) return;
+    w = _dupNormWord(w);
+    if (w.length >= 2 && !_DUP_STOP.has(w)) out.add(w);
+  });
+  return out;
+}
+// מחזיר זוגות אינדקסים (1-based) של שאלות-כמעט-זהות: נוסח זהה אחרי נרמול, או דמיון-טוקנים גבוה (Jaccard ≥ 0.7 עם לפחות 2 מילות-תוכן משותפות). הסף שמרני כדי לא להציף התרעות-שווא.
+function findSimilarPairs(list){
+  list = list || [];
+  const toks = list.map(q => _dupTokens(q && q.text));
+  const norm = list.map(q => (((q && q.text) || '').replace(/[?!.,;:"'״׳()\[\]{}\-–—\s]+/g,' ').trim()));
+  const pairs = [];
+  for (let i=0; i<toks.length; i++){
+    for (let j=i+1; j<toks.length; j++){
+      // נוסח זהה לחלוטין (אחרי נרמול) — מתויג תמיד, גם בשאלה קצרה
+      if (norm[i] && norm[i] === norm[j]){ pairs.push([i+1, j+1]); continue; }
+      const A = toks[i], B = toks[j];
+      if (A.size < 2 || B.size < 2) continue;   // נוסח לא-זהה וקצר מדי → לא משווים (מונע התרעות-שווא)
+      let inter = 0; A.forEach(t=>{ if (B.has(t)) inter++; });
+      const uni = A.size + B.size - inter;
+      if (uni > 0 && inter/uni >= 0.7 && inter >= 2) pairs.push([i+1, j+1]);
+    }
+  }
+  return pairs;
 }
 // ספירת שאלות/תשובות שחורגות מהמומלץ (לדיווח אחרי ייבוא)
 function qTooLong(text){ return text && text.trim().split(/\s+/).length > 25; }
