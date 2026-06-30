@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (quizplay):
+  v186 - שתי תוספות סביב התכונות מ-v185 (לבקשת יניב).
+  ── כפתור "🔁 בדוק כפילויות" שני בתחתית רשימת-השאלות בעורך — בעריכה ארוכה לא צריך לגלול חזרה למעלה. (רק כפילויות למטה, לא הדפסה — היא פעולת-סיום חד-פעמית.)
+  ── הדפסה/PDF נוספה לתפריט ה-⋯ של כל כרטיס ב"החידונים שלי" (לחידונים, לא טיוטות) — מורה שרוצה רק להדפיס מבחן מחידון קיים לא צריך להיכנס לעורך. openPrintDialog/doPrintQuiz פורמטרו לקבל חידון-יעד (targetQuiz || quiz), כך שהכרטיס מדפיס את ה-q שלו ישירות.
+  אומת: node --check (שני בלוקי-JS) + איזון-תגיות + בדיקת בניית-HTML עם חידון-יעד.
   v185 - שתי תכונות חדשות בעורך (לבקשת יניב). סרגל-כלים בראש רשימת-השאלות (מופיע כשיש לפחות שאלה אחת).
   ── בדיקת-כפילויות ידנית (checkDuplicatesNow): כפתור "🔁 בדוק כפילויות" מריץ את findSimilarPairs (v183) על כל החידון — תופס גם כפילויות שנוצרו אחרי עריכות ידניות/מקבצים נוספים, לא רק ברגע הייבוא. התרעה מילולית, בלי מחיקה.
   ── הדפסה / PDF (openPrintDialog + doPrintQuiz): כפתור "🖨️ הדפסה / PDF" פותח חלון-בחירה — אילו שאלות לכלול (ברירת-מחדל הכל), כלול תשובות (ברירת-מחדל כן), סמן תשובה נכונה (מחוון למורה, ברירת-מחדל לא), כלול הסברים (אם קיימים). מפיק דף נקי בחלון חדש וקורא window.print — הדפדפן שומר כ-PDF. בלי ספרייה חיצונית.
@@ -626,7 +630,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v185</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v186</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -2084,6 +2088,9 @@ function buildQuizCard(code, q){
   // v108: שכפול — רק לחידונים (לא לטיוטה). יוצר עותק חדש "[שם] - עותק".
   const dupItem = document.createElement('button'); dupItem.className='qlcard-menu-item'; dupItem.textContent='📄 שכפול';
   dupItem.onclick=(e)=>{ e.stopPropagation(); closeAllCardMenus(); duplicateQuiz(code, q); };
+  // v186: הדפסה/PDF ישירות מהכרטיס (בלי להיכנס לעורך)
+  const printItem = document.createElement('button'); printItem.className='qlcard-menu-item'; printItem.textContent='🖨️ הדפסה / PDF';
+  printItem.onclick=(e)=>{ e.stopPropagation(); closeAllCardMenus(); openPrintDialog(q); };
   // הרכבת התפריט: שיתוף/ספרייה/שכפול רק בחידונים (בטיוטה אין טעם לשתף/לפרסם/לשכפל משהו שזנחת).
   // מחיקה תמיד אחרונה (פעולה הרסנית בקצה, הגנה מלחיצה בטעות). שכפול צמוד למחיקה אך לפניה.
   menu.appendChild(pinItem);
@@ -2091,6 +2098,7 @@ function buildQuizCard(code, q){
   if (!q.isDraft){
     menu.appendChild(shareItem);
     menu.appendChild(libItem);
+    menu.appendChild(printItem);
   }
   if (!q.isDraft) menu.appendChild(dupItem);
   menu.appendChild(delItem);
@@ -3275,9 +3283,11 @@ function checkDuplicatesNow(){
 }
 
 // v185: ===== הדפסה / ייצוא PDF =====
-function openPrintDialog(){
+function openPrintDialog(targetQuiz){
   let ov = $('print-overlay');
   if (ov){ ov.remove(); return; }
+  const Q = targetQuiz || quiz;
+  if (!Q || !Q.questions || !Q.questions.length){ showToast('אין שאלות בחידון להדפסה.'); return; }
   ov = document.createElement('div'); ov.id='print-overlay';
   ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;';
   ov.onclick = (e)=>{ if (e.target===ov) ov.remove(); };
@@ -3296,7 +3306,7 @@ function openPrintDialog(){
   const oAns = mkOpt('pr-ans', 'כלול תשובות', true); box.appendChild(oAns.lab);
   const oCorrect = mkOpt('pr-correct', 'סמן את התשובה הנכונה (מחוון למורה)', false); box.appendChild(oCorrect.lab);
   let oExp = null;
-  if (quiz.hasExplanations){ oExp = mkOpt('pr-exp', 'כלול הסברים', false); box.appendChild(oExp.lab); }
+  if (Q.hasExplanations){ oExp = mkOpt('pr-exp', 'כלול הסברים', false); box.appendChild(oExp.lab); }
   // "סמן נכונה" הגיוני רק אם כוללים תשובות
   oAns.cb.onchange = ()=>{ oCorrect.cb.disabled = !oAns.cb.checked; if(!oAns.cb.checked) oCorrect.cb.checked=false; oCorrect.lab.style.opacity = oAns.cb.checked ? '1' : '.5'; };
 
@@ -3308,7 +3318,7 @@ function openPrintDialog(){
 
   const qbox = document.createElement('div'); qbox.style.cssText='max-height:240px; overflow:auto; border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px;';
   const qChecks = [];
-  quiz.questions.forEach((q, i)=>{
+  Q.questions.forEach((q, i)=>{
     if (!q.text || !q.text.trim()) return;
     const row = document.createElement('label'); row.style.cssText='display:flex; align-items:center; gap:8px; padding:5px 4px; cursor:pointer; font-size:13.5px; color:var(--ink);';
     const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=true; cb.dataset.idx=i; cb.style.cssText='width:16px; height:16px; accent-color:var(--teal); flex:0 0 auto;';
@@ -3327,7 +3337,7 @@ function openPrintDialog(){
   go.onclick = ()=>{
     const idxs = qChecks.filter(c=>c.checked).map(c=>parseInt(c.dataset.idx,10));
     if (!idxs.length){ showToast('בחרו לפחות שאלה אחת להדפסה.'); return; }
-    doPrintQuiz({ idxs: idxs, answers: oAns.cb.checked, markCorrect: oAns.cb.checked && oCorrect.cb.checked, explanations: !!(oExp && oExp.cb.checked) });
+    doPrintQuiz({ idxs: idxs, answers: oAns.cb.checked, markCorrect: oAns.cb.checked && oCorrect.cb.checked, explanations: !!(oExp && oExp.cb.checked) }, Q);
   };
   const cancel = document.createElement('button'); cancel.className='btn ghost sm'; cancel.textContent='ביטול';
   cancel.onclick = ()=>ov.remove();
@@ -3337,15 +3347,16 @@ function openPrintDialog(){
 }
 
 // בונה דף נקי בחלון חדש וקורא להדפסה (הדפדפן שומר כ-PDF). בלי ספרייה חיצונית.
-function doPrintQuiz(opts){
+function doPrintQuiz(opts, targetQuiz){
+  const Q = targetQuiz || quiz;
   const w = window.open('', '_blank');
   if (!w){ showToast('הדפדפן חסם את חלון ההדפסה. אפשרו חלונות קופצים לאתר ונסו שוב.'); return; }
   const letters = ['א','ב','ג','ד','ה','ו','ז','ח'];
   const E = escapeHtml;
-  let body = '<h1>' + E(quiz.title || 'חידון') + '</h1>';
+  let body = '<h1>' + E(Q.title || 'חידון') + '</h1>';
   let n = 0;
   opts.idxs.forEach(i=>{
-    const q = quiz.questions[i];
+    const q = Q.questions[i];
     if (!q || !q.text) return;
     n++;
     body += '<div class="q"><div class="qt"><span class="num">' + n + '.</span> ' + E(q.text) + '</div>';
@@ -3372,7 +3383,7 @@ function doPrintQuiz(opts){
     + '.arow.correct{font-weight:bold;}'
     + '.exp{margin:5px 22px 0;font-size:13px;color:#444;}'
     + '@media print{body{padding:0;}@page{margin:1.6cm;}}';
-  const doc = '<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>' + E(quiz.title || 'חידון') + '</title><style>' + css + '</style></head><body>' + body + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},250);};</scr' + 'ipt></body></html>';
+  const doc = '<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>' + E(Q.title || 'חידון') + '</title><style>' + css + '</style></head><body>' + body + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},250);};</scr' + 'ipt></body></html>';
   w.document.open(); w.document.write(doc); w.document.close();
   const pov = $('print-overlay'); if (pov) pov.remove();
 }
@@ -3484,6 +3495,12 @@ function renderQuestions(){
     }
     list.appendChild(card);
   });
+  // v186: כפתור "בדוק כפילויות" שני בתחתית הרשימה (נוחות בעריכה ארוכה)
+  if (realQCount(quiz.questions) >= 1){
+    const dupBtn2 = document.createElement('button'); dupBtn2.className='btn ghost sm';
+    dupBtn2.textContent='🔁 בדוק כפילויות'; dupBtn2.style.cssText='margin-top:10px;';
+    dupBtn2.onclick=checkDuplicatesNow; list.appendChild(dupBtn2);
+  }
   // כפתור "נקה הכל" מוצג רק כשיש תוכן אמיתי לנקות
   if ($('clear-all-wrap')) $('clear-all-wrap').style.display = quizHasRealContent() ? 'block' : 'none';
   updateAiCard();   // סנכרון נקודת-הכניסה ל-AI (כרטיס/כפתור) אחרי שינוי מבני בשאלות
