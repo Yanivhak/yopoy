@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (quizplay):
+  v187 - תיקון באג: הדפסה מתוך העורך החזירה "אין שאלות בחידון להדפסה" למרות שיש שאלות. הסיבה (רגרסיה מ-v186): כפתור-העורך נכתב prBtn.onclick=openPrintDialog — הצבעה ישירה, אז הדפדפן העביר את אירוע-הלחיצה כארגומנט הראשון, וב-v186 הוא נתפס כ-targetQuiz (ל-event אין .questions → הבדיקה נכשלה). מהכרטיס לא נפגע כי שם openPrintDialog(q) מפורש.
+  ── תיקון: prBtn.onclick=()=>openPrintDialog() — נקרא בלי ארגומנט, Q חוזר ל-quiz הגלובלי (החידון בעריכה).
+  ── חיזוק: הבדיקה סופרת עכשיו שאלות-עם-נוסח (כמו realQCount) במקום questions.length, כדי שלא ייפתח דיאלוג ריק על שאלות-בלי-טקסט.
+  אומת: node --check (שני בלוקי-JS) + איזון-תגיות + בדיקת שתי נקודות-הכניסה (עורך + כרטיס).
   v186 - שתי תוספות סביב התכונות מ-v185 (לבקשת יניב).
   ── כפתור "🔁 בדוק כפילויות" שני בתחתית רשימת-השאלות בעורך — בעריכה ארוכה לא צריך לגלול חזרה למעלה. (רק כפילויות למטה, לא הדפסה — היא פעולת-סיום חד-פעמית.)
   ── הדפסה/PDF נוספה לתפריט ה-⋯ של כל כרטיס ב"החידונים שלי" (לחידונים, לא טיוטות) — מורה שרוצה רק להדפיס מבחן מחידון קיים לא צריך להיכנס לעורך. openPrintDialog/doPrintQuiz פורמטרו לקבל חידון-יעד (targetQuiz || quiz), כך שהכרטיס מדפיס את ה-q שלו ישירות.
@@ -630,7 +634,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v186</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v187</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -3287,7 +3291,8 @@ function openPrintDialog(targetQuiz){
   let ov = $('print-overlay');
   if (ov){ ov.remove(); return; }
   const Q = targetQuiz || quiz;
-  if (!Q || !Q.questions || !Q.questions.length){ showToast('אין שאלות בחידון להדפסה.'); return; }
+  const _printable = ((Q && Q.questions) || []).filter(qq => qq && qq.text && qq.text.trim());
+  if (!_printable.length){ showToast('אין שאלות בחידון להדפסה.'); return; }
   ov = document.createElement('div'); ov.id='print-overlay';
   ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;';
   ov.onclick = (e)=>{ if (e.target===ov) ov.remove(); };
@@ -3395,7 +3400,7 @@ function renderQuestions(){
     const tb = document.createElement('div');
     tb.style.cssText='display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;';
     const dupBtn = document.createElement('button'); dupBtn.className='btn ghost sm'; dupBtn.textContent='🔁 בדוק כפילויות'; dupBtn.onclick=checkDuplicatesNow;
-    const prBtn = document.createElement('button'); prBtn.className='btn ghost sm'; prBtn.textContent='🖨️ הדפסה / PDF'; prBtn.onclick=openPrintDialog;
+    const prBtn = document.createElement('button'); prBtn.className='btn ghost sm'; prBtn.textContent='🖨️ הדפסה / PDF'; prBtn.onclick=()=>openPrintDialog();
     tb.appendChild(dupBtn); tb.appendChild(prBtn); list.appendChild(tb);
   }
   // v181: כפתור "מלא הסברים באמצעות AI" — מופיע רק כשמתג ההסברים דלוק ויש שאלות בלי הסבר.
