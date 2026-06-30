@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <!--
-  יומן גרסאות (quizplay):
+  ════════════════════════════════════════════════════════════
+  TestPlay — כלי בוחנים והערכה (משפחת yopoy) · מבוסס QuizPlay v187
+  ────────────────────────────────────────────────────────────
+  TestPlay שלב 1 — בוחן מסונכרן + רשומת-Run חיה.
+  ── בורר-מצב (חידון / בוחן מסונכרן / מבחן אישי) מחווט לזרימת-ההפעלה: "התחל" → בחירת-מצב → הכנה → לובי → משחק.
+  ── בוחן מסונכרן רוכב על מנוע-המשחק, רזה: בלי בונוס-מהירות, בלי חיזוקים, בלי הפסקות-ביניים, בלי באנרי-שיא, בלי פודיום/חגיגה. המורה מקדם כרגיל.
+  ── רשומת-Run חיה תחת המורה — teachers/{uid}/runs/{runId}: summary (נגזרות + status running/finished) · results/{studentKey} (displayName + תשובה לכל שאלה: pick/נכון/dt) · snapshot (שאלות + הגדרות-הרצה מוקפאות). נכתבת בתחילת-ההרצה, מתעדכנת בכל שאלה, נסגרת בסיום.
+  ── שחזור: שחזור-המארח הקיים מרחיב לכתיבה-המשך לאותו runId (תשובות שאחרי-קריסה לא אובדות). שחזור-תלמיד בסינכרוני = חזרה-לשאלה-הנוכחית דרך המזהה-היציב הקיים (getStablePlayerId).
+  ── זהות: המורה חייב Google; התלמיד נכנס בקוד+שם (displayName) בלי התחברות. אורח חסום מבוחן. studentKey = מזהה-תוך-הרצה בלבד.
+  ── מחוץ ל-v1 (→ TestPlay 2.0): פורטל-תלמיד · ניהול-כיתות/רשימות · היסטוריית-תלמיד בין-הרצות · התחברות-תלמיד/מייל-מאומת.
+  ── ציון = מספר תשובות נכונות (בלי משקלות). כיתה = תווית-טקסט חופשית (שדה ב-pregame, סינכרוני בלבד).
+  אומת: node --check (שני בלוקי-JS) + איזון-תגיות.
+  ════════════════════════════════════════════════════════════
+
+  יומן גרסאות מקור (quizplay):
   v187 - תיקון באג: הדפסה מתוך העורך החזירה "אין שאלות בחידון להדפסה" למרות שיש שאלות. הסיבה (רגרסיה מ-v186): כפתור-העורך נכתב prBtn.onclick=openPrintDialog — הצבעה ישירה, אז הדפדפן העביר את אירוע-הלחיצה כארגומנט הראשון, וב-v186 הוא נתפס כ-targetQuiz (ל-event אין .questions → הבדיקה נכשלה). מהכרטיס לא נפגע כי שם openPrintDialog(q) מפורש.
   ── תיקון: prBtn.onclick=()=>openPrintDialog() — נקרא בלי ארגומנט, Q חוזר ל-quiz הגלובלי (החידון בעריכה).
   ── חיזוק: הבדיקה סופרת עכשיו שאלות-עם-נוסח (כמו realQCount) במקום questions.length, כדי שלא ייפתח דיאלוג ריק על שאלות-בלי-טקסט.
@@ -894,7 +908,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
 
     <!-- ───── שורה 1: הפעלה ובדיקה ───── -->
     <div class="action-grid">
-      <div class="action-box" onclick="prePlay()"><span class="ab-ico">▶️</span><span>התחל משחק</span></div>
+      <div class="action-box" onclick="tpEnterPlay()"><span class="ab-ico">▶️</span><span>התחל משחק</span></div>
       <div class="action-box" onclick="previewQuiz()"><span class="ab-ico">👁️</span><span>בדיקה</span></div>
     </div>
 
@@ -929,6 +943,12 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
     <!-- תווית תצוגה מקדימה — מופיעה רק כשיש רקע פעיל (נשלט מ-previewBgIfPregame) -->
     <div id="pg-preview-note" style="display:none; font-size:13px; color:var(--gold); background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.4); border-radius:10px; padding:7px 14px; margin:0 auto 4px; max-width:340px;">👁️ זו תצוגה מקדימה — ככה הרקע ייראה במשחק</div>
 
+    <!-- TestPlay: שם הכיתה — מופיע רק בבוחן מסונכרן (נשלט מ-prePlay לפי runMode) -->
+    <div id="pg-classname-box" style="display:none; margin:16px auto 0; max-width:430px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 18px; text-align:right;">
+      <label for="pg-classname" style="display:block; font-size:16px; font-weight:700; color:var(--ink); margin-bottom:8px;">🏫 שם הכיתה <span style="font-size:13px; font-weight:400; color:var(--ink-dim);">(נשמר עם תוצאות הבוחן)</span></label>
+      <input id="pg-classname" type="text" maxlength="40" placeholder="למשל: ז׳3 / כיתת מתמטיקה" style="width:100%; box-sizing:border-box; font-family:'Heebo'; font-size:16px; padding:11px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.2); color:var(--ink);">
+    </div>
+
     <!-- הפעולה הראשית — כפתור התחלה גדול ובולט -->
     <div class="row" style="margin-top:22px; gap:12px;">
       <button class="btn teal" onclick="goPlay()" style="font-size:20px; padding:16px 36px;">▶️ התחל משחק</button>
@@ -937,7 +957,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
     <p style="margin:10px auto 0; max-width:430px; font-size:13px; color:var(--ink-dim); line-height:1.5;">👁️ הבדיקה מציגה את החידון עם הבחירות שבמסך הזה (למעט מוזיקה).</p>
 
     <!-- v149: מתג בונוס-מהירות — הגדרת-משחק, דלוק כברירת-מחדל. נקרא ב-hostStart דרך #pg-speed-toggle. -->
-    <div style="margin:20px auto 0; max-width:430px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 18px; text-align:right;">
+    <div id="pg-speed-box" style="margin:20px auto 0; max-width:430px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 18px; text-align:right;">
       <label for="pg-speed-toggle" style="display:flex; align-items:center; justify-content:space-between; gap:16px; cursor:pointer; margin:0;">
         <span style="flex:1;">
           <span style="font-size:16px; font-weight:700; color:var(--ink);">⚡ בונוס מהירות</span>
@@ -1141,8 +1161,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<!-- משגר-שלד זמני: כפתור-פינה לפתיחת בורר-המצב לבדיקת-מבנה. יוסר כשתחווט זרימת-ההפעלה האמיתית. -->
-<button id="tp-skel-launch" onclick="show('mode-select')" style="position:fixed; bottom:12px; left:12px; z-index:99999; background:var(--gold); color:#1a2342; border:none; border-radius:10px; padding:8px 12px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.3);">🧪 שלד</button>
+<!-- (משגר-השלד הזמני הוסר — זרימת-ההפעלה האמיתית מחווטת דרך tpEnterPlay) -->
 
 
 <!-- ============ מארח: הפסקת ביניים (סטטיסטיקה על הלוח) ============ -->
@@ -1215,7 +1234,8 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
 <!-- ============ מארח: סיום ============ -->
 <div class="screen" id="hfin">
   <div class="wrap">
-    <h1>🎉 סיימנו!</h1>
+    <h1 id="hfin-title">🎉 סיימנו!</h1>
+    <div id="tp-synced-finish" style="display:none; margin:14px auto; max-width:480px; background:var(--card); border-radius:14px; padding:18px 22px; font-size:18px; font-weight:700; color:var(--gold); line-height:1.7;"></div>
     <div class="podium" id="podium"></div>
     <button class="hspk-btn" onclick="hostSpeakWinner()" style="display:none; margin:14px 0 0; font-family:'Heebo'; font-size:17px; font-weight:800; color:#06231f; background:var(--teal); border:none; border-radius:12px; padding:12px 24px; cursor:pointer;">🔊 הקראה</button>
     <div id="team-final" style="margin:14px 0; font-size:clamp(18px,2.4vw,26px); color:var(--gold); font-weight:700;"></div>
@@ -2423,7 +2443,7 @@ function playExisting(code, data){
   if (data.copiedFrom) quiz.copiedFrom = data.copiedFrom;
   if (data.aiMeta){ quiz.aiMeta = data.aiMeta; loadAiMeta(data.aiMeta); }   // v118: שימור קדם-מילוי ה-AI גם בנתיב משחק/בדיקה
   renderEditor();   // מכין את העורך ברקע (כדי שחזרה לעריכה תעבוד)
-  prePlay();        // עוברים למסך הכנה (מוזיקה ורקע) לפני הלובי
+  tpEnterPlay();    // TestPlay: בחירת-מצב לפני ההכנה
 }
 
 function prePlay(){
@@ -2441,6 +2461,10 @@ function prePlay(){
   nav('pregame');
   updateSttsDesc();   // v151.8: רענון הערת-30 ונעילת-מהירות גם בחזרה מעריכה (לא רק בלחיצת-מתג)
   previewBgIfPregame();   // אם כבר נבחר רקע — מדליק תצוגה מקדימה חיה מאחורי הכרטיסים
+  // TestPlay: שדה שם-כיתה גלוי רק בבוחן מסונכרן; בונוס-מהירות מוסתר שם (לא רלוונטי להערכה)
+  { const _s = (runMode === 'synced');
+    if ($('pg-classname-box')) $('pg-classname-box').style.display = _s ? 'block' : 'none';
+    if ($('pg-speed-box')) $('pg-speed-box').style.display = _s ? 'none' : 'block'; }
 }
 
 function testExisting(code, data){
@@ -5054,6 +5078,7 @@ function hostStart(){
   sttsHostOn = $('pg-stts-toggle') ? $('pg-stts-toggle').checked : false;   // v151 (נקרא מוקדם)
   if (sttsHostOn) speedBonusOn = false;   // v151.4: הקראת-תלמידים דלוקה → בונוס-מהירות כבוי תמיד
   sttsLiveAllowed = sttsHostOn;   // v151.13: נקבע בתחילת המשחק — מתג-הקראה בסרגל רק אם נבחרה הקראה
+  if (runMode === 'synced'){ speedBonusOn = false; tpClassName = ($('pg-classname') && $('pg-classname').value.trim()) || ''; }   // TestPlay: בוחן — בלי בונוס-מהירות; קליטת שם-הכיתה
   { const _r = document.querySelector('input[name="stts-mode"][value="some"]'); ttsMode = (sttsHostOn && _r && _r.checked) ? 'some' : 'all'; }   // v152
   roomTtsOn = $('pg-roomtts-toggle') ? $('pg-roomtts-toggle').checked : false;   // v150
   ttsBtnOn = roomTtsOn;   // v150.3
@@ -5079,6 +5104,7 @@ function hostStart(){
   if ($('bg-toggle')) $('bg-toggle').textContent = '🙈 הסתרת רקע';
   playGameMusic();
   qIndex = -1;
+  tpRunStart();   // TestPlay: פתיחת רשומת-Run (בוחן מסונכרן בלבד)
   nextQ();
 }
 
@@ -5387,7 +5413,7 @@ function nextQ(){
   // לא עושים הפסקה אם נשארות פחות מ-2 שאלות (כדי לא לעצור ממש לפני הסוף).
   const total = quiz.questions.length;
   const remaining = total - qIndex;
-  if (!intermissionDone.has(qIndex) && Object.keys(players).length > 0 &&
+  if (runMode !== 'synced' && !intermissionDone.has(qIndex) && Object.keys(players).length > 0 &&
       qIndex > 0 && qIndex % 4 === 0 && remaining >= 2){
     intermissionDone.add(qIndex);
     showIntermission();
@@ -5713,10 +5739,12 @@ function revealQ(){
   const _nextIdx = qIndex + 1;
   const _boardNext = !intermissionDone.has(_nextIdx) && Object.keys(players).length > 0 &&
                      _nextIdx > 0 && _nextIdx % 4 === 0 && (quiz.questions.length - _nextIdx) >= 2;
-  const reinforceMap = _boardNext ? {} : selectReinforcements(reinforceEligibles, qIndex, quiz.questions.length);
+  const reinforceMap = (runMode === 'synced' || _boardNext) ? {} : selectReinforcements(reinforceEligibles, qIndex, quiz.questions.length);
   if (Object.keys(reinforceMap).length) sfxStreak();   // צליל קצר כשיש חיזוק
   // עדכון רצף/תוצאות לשחקנים + חיזוק אישי לכל נמען
   send({ t:'rev', i:seq, correctIdx: curQ.correct, correctText, scores: scoreboard(), reinforce: reinforceMap });
+  if (runMode === 'synced'){ const _b = $('hr-banners'); if (_b) _b.innerHTML = ''; }   // בוחן: בלי באנרי-מהירות/רצף על הלוח
+  tpRunRecordReveal();   // TestPlay: לכידת תשובות-השאלה ל-Run
 
   // מצב הקבוצות על הלוח
   if (quiz.teamCount>0){
@@ -5859,6 +5887,12 @@ function hostFinish(){
   $('host-menu').style.display='none';
   $('ingame-credit').style.display='none';
   hideReturnQR();
+  // TestPlay: סיום בוחן מסונכרן — מסך ענייני + נעילת ה-Run (בלי פודיום/חגיגה)
+  if (runMode === 'synced'){ tpHostFinishSynced(); return; }
+  // איפוס תצוגת-הסיום למצב חידון (אם קדם בוחן מסונכרן באותו סשן)
+  ['podium','team-final','fun-cards'].forEach(function(id){ const el=$(id); if (el) el.style.display=''; });
+  if ($('tp-synced-finish')) $('tp-synced-finish').style.display='none';
+  if ($('hfin-title')) $('hfin-title').textContent='🎉 סיימנו!';
   const board = scoreboard();
   // פודיום
   const pod = $('podium'); pod.innerHTML='';
@@ -6056,6 +6090,13 @@ function resumeHostGame(code){
     const pr = hs.progress;
     quiz = hs.quiz;
     editCode = hs.editCode || editCode;
+    // TestPlay: שחזור רשומת-Run של בוחן מסונכרן — ממשיכים לכתוב לאותו runId (אחרת תשובות שאחרי-קריסה יאבדו)
+    if (hs.tpRunMode === 'synced' && hs.tpRunId && myStoreKey){
+      runMode = 'synced'; tpRunId = hs.tpRunId;
+      tpClassName = hs.tpClassName || tpClassName || '';
+      tpRun = { results:{}, startedAt: (hs.progress && hs.progress.ts) || Date.now() };
+      fdb.ref('teachers/'+myStoreKey+'/runs/'+tpRunId+'/results').once('value').then(function(rs){ tpRun.results = rs.val() || {}; }).catch(function(){});
+    } else { runMode = 'quiz'; }
     speedBonusOn = (hs.speedBonusOn !== false);   // v149: ברירת-מחדל דלוק (תאימות-לאחור)
     roomTtsOn = !!hs.roomTtsOn;   // v150
     ttsBtnOn = roomTtsOn;   // v150.3
@@ -6661,13 +6702,140 @@ window.addEventListener('beforeunload', function(e){
   }
 });
 
-/* ===== TestPlay skeleton — מבנה בלבד, ללא לוגיקה (זמני) ===== */
-window.tpMode = null;
+/* ============================================================
+   TestPlay — שלב 1: בוחן מסונכרן + רשומת-Run חיה
+   כל הכתיבות מוגנות: רצות רק כש-runMode==='synced', יש tpRun, ויש מורה מחובר (myStoreKey).
+   ============================================================ */
+window.tpMode = null;      // המצב שנבחר בבורר (quiz / synced / self)
+let runMode = 'quiz';      // מצב-ההרצה הפעיל. ברירת-מחדל 'quiz' — נתיבי-ה-Run פעילים רק ב-'synced'
+let tpRunId = null;        // מזהה ההרצה הנוכחית ב-Firebase
+let tpRun = null;          // מצב-ה-Run בזיכרון (מראה למה שנכתב): { results, startedAt }
+let tpClassName = '';      // תווית-הכיתה החופשית שהמורה הקליד
+
+// כניסה לזרימת-ההפעלה: קודם בודקים מוכנות, ואז מציגים את בורר-המצב.
+function tpEnterPlay(){
+  const noName = quizNameMissing(); if (noName){ showToast(noName); return; }
+  const err = quizReady(); if (err){ showToast(err); return; }
+  show('mode-select');
+}
+
+// בחירת-מצב מתוך הבורר.
 function tpPick(m){
-  window.tpMode = m;                 // המצב הנבחר — ישמש את הלוגיקה בהמשך
-  if (m === 'quiz') show('tp-quiznote');
-  else if (m === 'synced') show('tp-synced');
-  else show('tp-self');
+  window.tpMode = m;
+  if (m === 'quiz'){ runMode = 'quiz'; prePlay(); return; }
+  if (m === 'synced'){
+    if (isGuest || !myStoreKey){ showToast('מצב בוחן דורש התחברות עם Google — כדי שתוצאות הבוחן יישמרו.'); return; }
+    runMode = 'synced'; prePlay(); return;
+  }
+  show('tp-self');   // מבחן אישי — נבנה בשלב 3
+}
+
+function tpRunBase(){ return 'teachers/' + myStoreKey + '/runs/' + tpRunId; }
+
+// פתיחת ההרצה: מזהה חדש, snapshot מוקפא, summary עם status=running. נקרא מ-hostStart.
+function tpRunStart(){
+  if (runMode !== 'synced' || !myStoreKey) return;
+  tpRunId = playCode + '-' + Date.now().toString(36);
+  tpRun = { results:{}, startedAt: Date.now() };
+  const snap = {
+    questions: JSON.parse(JSON.stringify(quiz.questions || [])),
+    settings: {
+      mode: 'synced',
+      answerTimeSec: quiz.time || 20,
+      speedBonus: false,
+      teamCount: quiz.teamCount || 0,
+      ttsRoom: !!roomTtsOn,
+      ttsStudents: !!sttsHostOn
+    },
+    examName: quiz.title || '',
+    frozenAt: tpRun.startedAt
+  };
+  try {
+    fdb.ref(tpRunBase() + '/snapshot').set(snap).catch(function(){});
+    fdb.ref('games/' + playCode + '/hostState/tpRunId').set(tpRunId).catch(function(){});
+    fdb.ref('games/' + playCode + '/hostState/tpRunMode').set('synced').catch(function(){});
+    fdb.ref('games/' + playCode + '/hostState/tpClassName').set(tpClassName || '').catch(function(){});
+  } catch(e){}
+  tpRunWriteSummary('running');
+}
+
+// כתיבת/עדכון ה-summary (קל, לרשימה) — נגזרות מחושבות מחדש מ-tpRun.results.
+function tpRunWriteSummary(status){
+  if (runMode !== 'synced' || !tpRun || !myStoreKey) return;
+  const qn = (quiz.questions || []).length;
+  const keys = Object.keys(tpRun.results);
+  const perQ = [];
+  for (let i = 0; i < qn; i++){
+    let ans = 0, cor = 0;
+    keys.forEach(function(k){ const a = tpRun.results[k].answers[i]; if (a){ ans++; if (a.correct) cor++; } });
+    perQ.push(ans ? Math.round(cor / ans * 100) : null);
+  }
+  let sumCorrect = 0, sumTime = 0, timeN = 0;
+  keys.forEach(function(k){
+    const r = tpRun.results[k];
+    sumCorrect += (r.correctTotal || 0);
+    Object.keys(r.answers).forEach(function(qi){ const dt = r.answers[qi].dt; if (typeof dt === 'number'){ sumTime += dt; timeN++; } });
+  });
+  const summary = {
+    quizId: editCode || '',
+    examName: quiz.title || '',
+    className: tpClassName || '',
+    date: tpRun.startedAt,
+    mode: 'synced',
+    status: status,
+    questionCount: qn,
+    participantCount: keys.length,
+    avgCorrect: keys.length ? Math.round((sumCorrect / keys.length) * 100) / 100 : 0,
+    avgTimeMs: timeN ? Math.round(sumTime / timeN) : null,
+    perQuestionCorrectPct: perQ,
+    updatedAt: Date.now()
+  };
+  try { fdb.ref(tpRunBase() + '/summary').set(summary).catch(function(){}); } catch(e){}
+}
+
+// לכידת תשובות-השאלה הנוכחית. נקרא מ-revealQ (אחרי שנספרו התשובות).
+function tpRunRecordReveal(){
+  if (runMode !== 'synced' || !tpRun || !myStoreKey || !curQ) return;
+  Object.keys(answers).forEach(function(id){
+    const a = answers[id], p = players[id];
+    if (!p) return;
+    const key = id;   // studentKey = מזהה-תוך-הרצה יציב (getStablePlayerId)
+    if (!tpRun.results[key]) tpRun.results[key] = { displayName: p.name || '', answers:{}, correctTotal:0 };
+    const correct = (a.pick === curQ.correct);
+    tpRun.results[key].answers[qIndex] = { pick: a.pick, correct: correct, dt: (typeof a.dt === 'number' ? a.dt : null) };
+    tpRun.results[key].displayName = p.name || tpRun.results[key].displayName;
+    let ct = 0; const ans = tpRun.results[key].answers;
+    Object.keys(ans).forEach(function(qi){ if (ans[qi].correct) ct++; });
+    tpRun.results[key].correctTotal = ct;
+    try { fdb.ref(tpRunBase() + '/results/' + key).set(tpRun.results[key]).catch(function(){}); } catch(e){}
+  });
+  tpRunWriteSummary('running');
+}
+
+// סגירת ההרצה. נקרא מ-hostFinish (סינכרוני).
+function tpRunFinish(){
+  if (runMode === 'synced' && tpRun && myStoreKey) tpRunWriteSummary('finished');
+}
+
+// סיום בוחן מסונכרן — מסך-סיום ענייני, בלי פודיום/חגיגה.
+function tpHostFinishSynced(){
+  tpRunFinish();
+  send({ t:'end', scores: scoreboard() });
+  clearActiveGamePointer();
+  teardownHostAlive();
+  ['podium','team-final','fun-cards'].forEach(function(id){ const el = $(id); if (el) el.style.display = 'none'; });
+  const spk = document.querySelector('#hfin .hspk-btn'); if (spk) spk.style.display = 'none';
+  const t = $('hfin-title'); if (t) t.textContent = '✅ הבוחן הסתיים';
+  const box = $('tp-synced-finish');
+  if (box){
+    const n = tpRun ? Object.keys(tpRun.results).length : 0;
+    box.style.display = 'block';
+    box.innerHTML = '📊 ' + n + ' נבחנו · התוצאות נשמרו אוטומטית.<br><span style="font-size:14px; color:var(--ink-dim); font-weight:500;">צפייה בתוצאות תתווסף בספריית-התוצאות (השלב הבא).</span>';
+  }
+  if ($('hfin-host-actions')) $('hfin-host-actions').style.display = '';
+  if ($('hfin-solo-actions')) $('hfin-solo-actions').style.display = 'none';
+  if ($('guest-save-box')) $('guest-save-box').style.display = 'none';
+  show('hfin');
 }
 </script>
 </body>
