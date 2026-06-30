@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <!--
   יומן גרסאות (quizplay):
+  v185 - שתי תכונות חדשות בעורך (לבקשת יניב). סרגל-כלים בראש רשימת-השאלות (מופיע כשיש לפחות שאלה אחת).
+  ── בדיקת-כפילויות ידנית (checkDuplicatesNow): כפתור "🔁 בדוק כפילויות" מריץ את findSimilarPairs (v183) על כל החידון — תופס גם כפילויות שנוצרו אחרי עריכות ידניות/מקבצים נוספים, לא רק ברגע הייבוא. התרעה מילולית, בלי מחיקה.
+  ── הדפסה / PDF (openPrintDialog + doPrintQuiz): כפתור "🖨️ הדפסה / PDF" פותח חלון-בחירה — אילו שאלות לכלול (ברירת-מחדל הכל), כלול תשובות (ברירת-מחדל כן), סמן תשובה נכונה (מחוון למורה, ברירת-מחדל לא), כלול הסברים (אם קיימים). מפיק דף נקי בחלון חדש וקורא window.print — הדפדפן שומר כ-PDF. בלי ספרייה חיצונית.
+  אומת: node --check (שני בלוקי-JS) + איזון-תגיות + בדיקת בניית-ה-HTML.
   v184 - הערת-החלוקה נכתבה מחדש לפי הזרימה האמיתית של המורה (לבקשת יניב). הבעיה בנוסח הקודם: הוא הסביר "בקשו 10" — אבל הפרומפט כבר מבקש 10 לבד במצב-חלוקה (v182), אז ההנחיה הייתה כפולה ומבלבלת.
   ── הטקסט עכשיו דינמי (נבנה ב-syncBatchNote לפי impQCount, מתעדכן בזמן אמת עם הבורר): "שלחו את ההנחיה כרגיל, ואז כתבו 'המשך' [פעם אחת/פעמיים], העתיקו את [שני/שלושת] המקבצים לתיבה ברצף, ולחצו צור חידון." בלי מספר-יעד ובלי חישוב גלוי למורה.
   ── הסף: 16–20 שאלות → "המשך" פעם אחת ושני מקבצים; מעל 20 → פעמיים ושלושה מקבצים. (ההערה ממילא מופיעה רק מעל 15.) הוראה, לא חסימה — המורה חופשי לחלק אחרת.
@@ -622,7 +626,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v184</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">v185</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -3260,8 +3264,129 @@ function applyExplainFill(){
   showToast(t);
 }
 
+// v185: בדיקת-כפילויות ידנית על כל החידון (אותו מנוע כמו בייבוא — findSimilarPairs)
+function checkDuplicatesNow(){
+  const pairs = findSimilarPairs(quiz.questions);
+  if (!pairs.length){
+    showToast('לא נמצאו שאלות שנראות כפולות. 👍');
+  } else {
+    showToast('🔁 שאלות שנראות דומות מאוד: ' + pairs.map(p => p[0] + ' ו-' + p[1]).join(', ') + '. בדקו אם כדאי להחליף אחת מכל זוג.');
+  }
+}
+
+// v185: ===== הדפסה / ייצוא PDF =====
+function openPrintDialog(){
+  let ov = $('print-overlay');
+  if (ov){ ov.remove(); return; }
+  ov = document.createElement('div'); ov.id='print-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;';
+  ov.onclick = (e)=>{ if (e.target===ov) ov.remove(); };
+  const box = document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:560px; width:100%; text-align:right; margin:auto;';
+  box.innerHTML = '<div style="font-family:\'Secular One\'; font-size:22px; color:var(--gold); margin-bottom:6px;">🖨️ הדפסת החידון</div>' +
+    '<div style="font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;">בחרו מה לכלול בדף, ואז לחצו "הכנת דף להדפסה". בחלון ההדפסה של הדפדפן אפשר לבחור יעד "שמירה כ-PDF".</div>';
+
+  const mkOpt = (id, label, checked)=>{
+    const lab = document.createElement('label'); lab.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; font-size:14.5px; color:var(--ink); margin-bottom:10px;';
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=checked; cb.style.cssText='width:18px; height:18px; accent-color:var(--teal); cursor:pointer; flex:0 0 auto;';
+    const sp = document.createElement('span'); sp.textContent=label;
+    lab.appendChild(cb); lab.appendChild(sp);
+    return { lab, cb };
+  };
+  const oAns = mkOpt('pr-ans', 'כלול תשובות', true); box.appendChild(oAns.lab);
+  const oCorrect = mkOpt('pr-correct', 'סמן את התשובה הנכונה (מחוון למורה)', false); box.appendChild(oCorrect.lab);
+  let oExp = null;
+  if (quiz.hasExplanations){ oExp = mkOpt('pr-exp', 'כלול הסברים', false); box.appendChild(oExp.lab); }
+  // "סמן נכונה" הגיוני רק אם כוללים תשובות
+  oAns.cb.onchange = ()=>{ oCorrect.cb.disabled = !oAns.cb.checked; if(!oAns.cb.checked) oCorrect.cb.checked=false; oCorrect.lab.style.opacity = oAns.cb.checked ? '1' : '.5'; };
+
+  const hr = document.createElement('div'); hr.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:14px 0;'; box.appendChild(hr);
+  const qhead = document.createElement('div'); qhead.style.cssText='display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;';
+  const qttl = document.createElement('div'); qttl.style.cssText='font-size:14px; font-weight:700; color:var(--ink);'; qttl.textContent='שאלות לכלול';
+  const toggleAll = document.createElement('button'); toggleAll.className='btn ghost sm'; toggleAll.textContent='נקה הכל';
+  qhead.appendChild(qttl); qhead.appendChild(toggleAll); box.appendChild(qhead);
+
+  const qbox = document.createElement('div'); qbox.style.cssText='max-height:240px; overflow:auto; border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px;';
+  const qChecks = [];
+  quiz.questions.forEach((q, i)=>{
+    if (!q.text || !q.text.trim()) return;
+    const row = document.createElement('label'); row.style.cssText='display:flex; align-items:center; gap:8px; padding:5px 4px; cursor:pointer; font-size:13.5px; color:var(--ink);';
+    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=true; cb.dataset.idx=i; cb.style.cssText='width:16px; height:16px; accent-color:var(--teal); flex:0 0 auto;';
+    const tx = document.createElement('span'); tx.textContent=(i+1)+'. '+q.text; tx.style.cssText='overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+    row.appendChild(cb); row.appendChild(tx); qbox.appendChild(row); qChecks.push(cb);
+  });
+  box.appendChild(qbox);
+  toggleAll.onclick = ()=>{
+    const anyOn = qChecks.some(c=>c.checked);
+    qChecks.forEach(c=> c.checked = !anyOn);
+    toggleAll.textContent = anyOn ? 'סמן הכל' : 'נקה הכל';
+  };
+
+  const actions = document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:16px;';
+  const go = document.createElement('button'); go.className='btn teal'; go.style.flex='1'; go.textContent='🖨️ הכנת דף להדפסה';
+  go.onclick = ()=>{
+    const idxs = qChecks.filter(c=>c.checked).map(c=>parseInt(c.dataset.idx,10));
+    if (!idxs.length){ showToast('בחרו לפחות שאלה אחת להדפסה.'); return; }
+    doPrintQuiz({ idxs: idxs, answers: oAns.cb.checked, markCorrect: oAns.cb.checked && oCorrect.cb.checked, explanations: !!(oExp && oExp.cb.checked) });
+  };
+  const cancel = document.createElement('button'); cancel.className='btn ghost sm'; cancel.textContent='ביטול';
+  cancel.onclick = ()=>ov.remove();
+  actions.appendChild(go); actions.appendChild(cancel); box.appendChild(actions);
+
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+
+// בונה דף נקי בחלון חדש וקורא להדפסה (הדפדפן שומר כ-PDF). בלי ספרייה חיצונית.
+function doPrintQuiz(opts){
+  const w = window.open('', '_blank');
+  if (!w){ showToast('הדפדפן חסם את חלון ההדפסה. אפשרו חלונות קופצים לאתר ונסו שוב.'); return; }
+  const letters = ['א','ב','ג','ד','ה','ו','ז','ח'];
+  const E = escapeHtml;
+  let body = '<h1>' + E(quiz.title || 'חידון') + '</h1>';
+  let n = 0;
+  opts.idxs.forEach(i=>{
+    const q = quiz.questions[i];
+    if (!q || !q.text) return;
+    n++;
+    body += '<div class="q"><div class="qt"><span class="num">' + n + '.</span> ' + E(q.text) + '</div>';
+    if (opts.answers && q.answers && q.answers.length){
+      body += '<div class="ans">';
+      q.answers.forEach((a, ai)=>{
+        const isC = opts.markCorrect && ai === q.correct;
+        body += '<div class="arow' + (isC ? ' correct' : '') + '">' + (letters[ai] || '') + '. ' + E(a) + (isC ? ' \u2714' : '') + '</div>';
+      });
+      body += '</div>';
+    }
+    if (opts.explanations && q.explanation && q.explanation.trim()){
+      body += '<div class="exp"><b>הסבר:</b> ' + E(q.explanation) + '</div>';
+    }
+    body += '</div>';
+  });
+  const css = 'body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;padding:28px;line-height:1.55;direction:rtl;}'
+    + 'h1{font-size:22px;margin:0 0 20px;border-bottom:2px solid #111;padding-bottom:8px;}'
+    + '.q{margin-bottom:16px;page-break-inside:avoid;}'
+    + '.qt{font-size:15.5px;font-weight:bold;margin-bottom:5px;}'
+    + '.num{margin-inline-end:4px;}'
+    + '.ans{margin:0 22px;}'
+    + '.arow{margin-bottom:3px;font-size:14.5px;}'
+    + '.arow.correct{font-weight:bold;}'
+    + '.exp{margin:5px 22px 0;font-size:13px;color:#444;}'
+    + '@media print{body{padding:0;}@page{margin:1.6cm;}}';
+  const doc = '<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8"><title>' + E(quiz.title || 'חידון') + '</title><style>' + css + '</style></head><body>' + body + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},250);};</scr' + 'ipt></body></html>';
+  w.document.open(); w.document.write(doc); w.document.close();
+  const pov = $('print-overlay'); if (pov) pov.remove();
+}
+
 function renderQuestions(){
   const list = $('q-list'); list.innerHTML = '';
+  // v185: סרגל-כלים — בדיקת-כפילויות + הדפסה (כשיש לפחות שאלה אחת עם נוסח)
+  if (realQCount(quiz.questions) >= 1){
+    const tb = document.createElement('div');
+    tb.style.cssText='display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;';
+    const dupBtn = document.createElement('button'); dupBtn.className='btn ghost sm'; dupBtn.textContent='🔁 בדוק כפילויות'; dupBtn.onclick=checkDuplicatesNow;
+    const prBtn = document.createElement('button'); prBtn.className='btn ghost sm'; prBtn.textContent='🖨️ הדפסה / PDF'; prBtn.onclick=openPrintDialog;
+    tb.appendChild(dupBtn); tb.appendChild(prBtn); list.appendChild(tb);
+  }
   // v181: כפתור "מלא הסברים באמצעות AI" — מופיע רק כשמתג ההסברים דלוק ויש שאלות בלי הסבר.
   if (quiz.hasExplanations){
     const missExp = questionsMissingExplanation();
