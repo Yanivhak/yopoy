@@ -649,7 +649,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 23</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 24</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -3958,7 +3958,7 @@ function openExamImport(mode){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 23';
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 24';
   box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
   desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: פרקים, סוגים, ניקוד ובחירה.';
@@ -4013,8 +4013,10 @@ var examCTopics = new Set(), examCTraits = new Set(), examCAge = '';
 function examcNum(id){ var el=$(id); var n=el?parseInt(el.value,10):0; return (isNaN(n)||n<0)?0:n; }
 // מצב-מנות: מתג-הקובץ דלוק וגם מבוקשות מעל 15 שאלות (partId → פר-פרק; אחרת → סך פתוח+אמריקאי+אנסין).
 function examBatchMode(partId){
-  // מוצג רק כשמתג-הצירוף דלוק — קובץ גדול/כמה קבצים הוא הסיכון האמיתי להיחתך (בלי קשר למספר-השאלות).
-  return $('examc-attach') ? $('examc-attach').checked : false;
+  // מוצג כשמעורב קובץ כלשהו (חומר-לימוד או בחינה-לדוגמה) — הסיכון האמיתי להיחתך.
+  var a = $('examc-attach') && $('examc-attach').checked;
+  var sm = $('examc-sample') && $('examc-sample').checked;
+  return a || sm;
 }
 // עוטף מקטע לטיני/מספרי ב-isolate כדי שלא יתהפך בהקשר RTL (AI, ---עוד---, וכו').
 function examLtr(t){ return '<span style="unicode-bidi:isolate; direction:ltr;">' + t + '</span>'; }
@@ -4126,6 +4128,8 @@ function examCreatePrompt(mode, partId){
     L.push('כדי לזהות מי-מה: הקובץ בעל מבנה-בחינה (ניקוד, "ענו על X מתוך Y", חלוקה לפרקים), או ששמו מרמז על מבחן/בחינה/דוגמה — הוא הבחינה-לדוגמה. השני הוא חומר-הלימוד.');
   } else if (attach) {
     L.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף; הנושא והמאפיינים משמשים כהקשר בלבד.');
+  } else if (sample) {
+    L.push('מצורפת בחינה-לדוגמה — לרמה בלבד: חקה את רמת-הקושי, אורך-השאלות והסגנון שלה, אך אל תיקח ממנה תוכן ואל תחזור על שאלותיה. את התוכן בסס על הנושאים שצוינו למעלה.');
   }
   L.push('');
   L.push('המבנה המדויק הנדרש (דוגמה תקינה):');
@@ -4179,11 +4183,11 @@ function openExamCreate(mode){
   ov.onclick = function(e){ if (e.target===ov) ov.remove(); };
   var box = document.createElement('div');
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
-  var refresh = function(){ var atOn = $('examc-attach') && $('examc-attach').checked; var _sr=$('examc-sample-row'); if(_sr){ _sr.style.display = atOn ? 'block' : 'none'; if(!atOn && $('examc-sample')) $('examc-sample').checked=false; } var smOn = $('examc-sample') && $('examc-sample').checked; var p=$('examc-prompt'); if (p) p.value = examCreatePrompt(mode); var _r=$('examc-attach-remind'); if(_r){ if(atOn){ _r.textContent = smOn ? '📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד ואת הבחינה-לדוגמה — יחד עם ההנחיה, באותה הודעה.' : '📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד — יחד עם ההנחיה, באותה הודעה.'; _r.style.display='block'; } else { _r.style.display='none'; } } examSyncBatchNote(); };
+  var refresh = function(){ var atOn = $('examc-attach') && $('examc-attach').checked; var smOn = $('examc-sample') && $('examc-sample').checked; var p=$('examc-prompt'); if (p) p.value = examCreatePrompt(mode); var _r=$('examc-attach-remind'); if(_r){ var txt=''; if(atOn && smOn) txt='📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד ואת הבחינה-לדוגמה — יחד עם ההנחיה, באותה הודעה.'; else if(atOn) txt='📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד — יחד עם ההנחיה, באותה הודעה.'; else if(smOn) txt='📎 אל תשכח לצרף לכלי ה-AI את הבחינה-לדוגמה — יחד עם ההנחיה, באותה הודעה.'; if(txt){ _r.textContent=txt; _r.style.display='block'; } else { _r.style.display='none'; } } examSyncBatchNote(); };
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;';
   title.textContent = (mode==='append') ? '✨ הוספת שאלות ב-AI' : '✨ בניית בחינה חדשה עם AI';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 23'; box.appendChild(_vtag);
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 24'; box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent = (mode==='append') ? 'הגדירו כמה שאלות להוסיף ובאיזה נושא, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה.' : 'הגדירו את הבחינה, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה. המערכת תבנה את הבחינה ותוביל לעריכה.';
   box.appendChild(desc);
@@ -4248,15 +4252,15 @@ function openExamCreate(mode){
   atLab.appendChild(atChk); atLab.appendChild(atTxt); atWrap.appendChild(atLab);
   var atSub = document.createElement('div'); atSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;'; atSub.textContent='סמנו אם תצרפו קובץ ב-ChatGPT/Gemini/Claude — הבחינה תיבנה על בסיס תוכנו. (את הקובץ מצרפים שם, לא כאן.)';
   atWrap.appendChild(atSub);
-  var smRow = document.createElement('div'); smRow.id='examc-sample-row'; smRow.style.cssText='display:none; margin-top:10px; padding-top:10px; border-top:1px solid rgba(46,196,182,.2);';
+  box.appendChild(atWrap);
+  var smWrap = document.createElement('div'); smWrap.style.cssText='margin:8px 0 4px; background:rgba(255,209,102,.08); border:1px solid rgba(255,209,102,.25); border-radius:10px; padding:11px 13px;';
   var smLab = document.createElement('label'); smLab.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; font-size:14px; color:var(--ink); font-weight:700;';
   var smChk = document.createElement('input'); smChk.type='checkbox'; smChk.id='examc-sample'; smChk.style.cssText='width:18px; height:18px; accent-color:var(--gold); cursor:pointer; flex:0 0 auto;';
   smChk.onchange = refresh;
-  var smTxt = document.createElement('span'); smTxt.textContent='🎯 אצרף גם בחינה-לדוגמה — לכיוון רמת-השאלות';
-  smLab.appendChild(smChk); smLab.appendChild(smTxt); smRow.appendChild(smLab);
-  var smSub = document.createElement('div'); smSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;'; smSub.textContent='ה-AI יחקה את רמתה, אורכה וסגנונה על התוכן שלכם — בלי לחזור על שאלותיה.';
-  smRow.appendChild(smSub); atWrap.appendChild(smRow);
-  box.appendChild(atWrap);
+  var smTxt = document.createElement('span'); smTxt.textContent='🎯 אצרף בחינה-לדוגמה — לכיוון רמת-השאלות';
+  smLab.appendChild(smChk); smLab.appendChild(smTxt); smWrap.appendChild(smLab);
+  var smSub = document.createElement('div'); smSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;'; smSub.textContent='ה-AI יחקה את רמתה, אורכה וסגנונה — על התוכן שלכם (מהחומר או מהנושאים), בלי לחזור על שאלותיה.';
+  smWrap.appendChild(smSub); box.appendChild(smWrap);
   var hr = document.createElement('div'); hr.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:18px 0 14px;'; box.appendChild(hr);
   var s1 = document.createElement('div'); s1.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את הטקסט'; box.appendChild(s1);
   var s1sub = document.createElement('div'); s1sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s1sub.textContent='העתיקו את ההנחיה והדביקו אותה בכלי ה-AI שבו אתם משתמשים.'; box.appendChild(s1sub);
@@ -4302,7 +4306,7 @@ function openPartAi(partId){
   var title=document.createElement('div'); title.style.cssText='font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px;';
   title.textContent='🤖 שאלות ב-AI — פרק '+(pIdx+1)+' ('+typeLabel+')';
   box.appendChild(title);
-  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 23'; box.appendChild(_vtag);
+  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 24'; box.appendChild(_vtag);
   var desc=document.createElement('div'); desc.style.cssText='font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בפרק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
   box.appendChild(desc);
