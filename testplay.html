@@ -649,7 +649,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 9</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 11</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -741,10 +741,17 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
          במצב לא-מחובר מוסתר, כך שמסך הכניסה מציג שני כפתורים בלבד (התחברות/אורח) ולא מציף בכל המערכת. -->
     <div id="logged-in-home" style="display:none;">
       <!-- שלוש פעולות ראשיות — אותו גודל, היררכיה לפי צבע -->
-      <div style="max-width:420px; margin:0 auto; display:flex; flex-direction:column; gap:10px;">
-        <button class="btn teal" onclick="goNewQuiz()" style="width:100%;">➕ בחינה חדשה</button>
-        <button class="btn" onclick="goShowList()" style="width:100%;">🗂️ החידונים שלי</button>
-        <a href="teacher-library.html" class="btn navy" style="width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">📚 ספרייה ציבורית</a>
+      <div style="max-width:440px; margin:0 auto;">
+        <div style="font-size:13px; color:var(--ink-dim); font-weight:700; margin-bottom:8px; text-align:right;">יצירת בחינה חדשה</div>
+        <div style="display:flex; flex-direction:column; gap:9px; margin-bottom:18px;">
+          <button class="btn teal" onclick="goNewQuiz()" style="width:100%;">✍️ בנייה ידנית</button>
+          <button class="btn navy" onclick="openExamCreate('create')" style="width:100%;">✨ בנייה עם AI</button>
+          <button class="btn navy" onclick="openExamImport('full')" style="width:100%;">📄 ייבוא בחינה קיימת</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <button class="btn" onclick="goShowList()" style="width:100%;">📋 הבחינות שלי</button>
+          <a href="teacher-library.html" class="btn ghost" style="width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">📚 ספרייה ציבורית</a>
+        </div>
       </div>
 
       <!-- פעולה משנית: פתיחה לפי קוד -->
@@ -3742,8 +3749,8 @@ function examImportPrompt(mode){
   lines.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
   return lines.join('\n');
 }
-function examImportError(msg){
-  var m = $('exam-imp-msg');
+function examImportError(msg, msgId){
+  var m = $(msgId || 'exam-imp-msg');
   if (m){ m.textContent = msg; m.style.display='block'; }
   if (typeof showToast==='function') showToast(String(msg).split('\n')[0]);
 }
@@ -3767,34 +3774,97 @@ function examParseExam(text){
   for (var i=0;i<attempts.length;i++){ try { return { ok:true, data: JSON.parse(attempts[i]) }; } catch(e){ lastErr = e.message; } }
   return { ok:false, err: lastErr, snippet: (s.slice(0,160) || '(ריק)') };
 }
-function examImportBuild(jsonText, mode){
-  var struct = (mode==='structure');
-  var _m=$('exam-imp-msg'); if(_m){ _m.style.display='none'; _m.textContent=''; }
-  var _r = examParseExam(jsonText);
-  if (!_r.ok){ examImportError('לא הצלחתי לקרוא את ה-JSON.\nשגיאה: ' + _r.err + '\n\nהתחלת מה שהתקבל:\n' + _r.snippet); return; }
-  var data = _r.data;
-  if (!data || !Array.isArray(data.parts) || !data.parts.length){ examImportError('ה-JSON נקרא, אך אין בו "parts" (רשימת חלקים) תקינה. ודאו שההנחיה רצה במלואה ושהתשובה לא נחתכה.'); return; }
-  var hasExisting = (quiz.parts && quiz.parts.length) || (typeof quizHasRealContent==='function' && quizHasRealContent());
-  if (hasExisting && !confirm('הייבוא יחליף את הבחינה הקיימת. להמשיך?')) return;
+// דיאלוג תלת-ברירתי כשכבר קיימת בחינה: החלף / פתח כבחינה חדשה / ביטול.
+function examConfirmSource(onReplace, onNew){
+  var ov = document.createElement('div'); ov.id='exam-src-ov';
+  ov.style.cssText='position:fixed; inset:0; z-index:80; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; padding:20px;';
+  var box = document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.2); border-radius:16px; padding:24px; max-width:430px; width:100%; text-align:right;';
+  box.innerHTML = '<div style="font-size:19px; font-weight:800; color:var(--gold); margin-bottom:8px;">כבר קיימת בחינה בעריכה</div>' +
+    '<div style="font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:18px;">הפעולה הזו יוצרת בחינה חדשה. מה תרצו לעשות?</div>';
+  var mk = function(label, cls, fn){ var b=document.createElement('button'); b.className='btn '+cls; b.textContent=label; b.style.cssText='width:100%; margin-bottom:10px;'; b.onclick=function(){ ov.remove(); if(fn) fn(); }; return b; };
+  box.appendChild(mk('🔄 החלף את הבחינה הקיימת','teal', onReplace));
+  box.appendChild(mk('➕ פתח כבחינה חדשה','navy', onNew));
+  var c=document.createElement('button'); c.className='btn ghost sm'; c.textContent='❌ ביטול'; c.style.cssText='width:100%;'; c.onclick=function(){ ov.remove(); }; box.appendChild(c);
+  ov.appendChild(box); ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+  document.body.appendChild(ov);
+}
+// מאכלס את quiz מנתונים מפוענחים. opts: {structure, append, overlayId}. append=true → מוסיף חלקים לקיים במקום להחליף.
+// בונה אובייקט-שאלה בודד מ-JSON לפי סוג-החלק (משותף לייבוא ולמיזוג-לחלק)
+function examBuildQFromJson(qq, type, struct, partId){
+  qq = qq||{};
+  if (type==='open'){
+    var rawSubs = (Array.isArray(qq.subs) && qq.subs.length) ? qq.subs : [{},{}];
+    var subs = rawSubs.map(function(su){ su=su||{}; return { text: struct?'':String(su.text||''), points: Math.max(0, Math.round((Number(su.points)||0)*2)/2) }; });
+    return { text: struct?'':String(qq.text||''), subs:subs, partId:partId, points:0 };
+  }
+  var rawAns = (Array.isArray(qq.answers) && qq.answers.length>=2) ? qq.answers : ['',''];
+  var answers = rawAns.map(function(a){ return struct?'':String(a==null?'':a); });
+  if (answers.length>4) answers = answers.slice(0,4);
+  var correct = parseInt(qq.correct,10); if (isNaN(correct) || correct<0 || correct>=answers.length) correct = 0;
+  return { text: struct?'':String(qq.text||''), answers:answers, correct: struct?0:correct, partId:partId, points:0 };
+}
+// מיזוג שאלות-AI אל חלק ספציפי (הוסף / החלף-הכל / החלף-נבחרות). לא יוצר חלקים חדשים.
+function examApplyToPart(data, opts){
+  opts = opts||{};
+  var pid = opts.appendToPartId;
+  var tp = null; for (var i=0;i<quiz.parts.length;i++){ if (quiz.parts[i].id===pid){ tp=quiz.parts[i]; break; } }
+  if (!tp){ if(typeof showToast==='function') showToast('החלק לא נמצא — ייתכן שנמחק.'); return; }
+  if (opts.replaceAll){
+    quiz.questions = quiz.questions.filter(function(q){ return q.partId !== pid; });
+  } else if (opts.replaceIds && opts.replaceIds.length){
+    var kill = {}; opts.replaceIds.forEach(function(k){ kill[k]=true; });
+    // מזהה שאלה = מיקומה במערך-הבחינה; נמחק לפי אינדקסים
+    quiz.questions = quiz.questions.filter(function(q,idx){ return !kill[idx]; });
+  }
+  var added = 0;
+  (data.parts||[]).forEach(function(pp){
+    var qlist = (pp && Array.isArray(pp.questions)) ? pp.questions : [];
+    qlist.forEach(function(qq){ quiz.questions.push(examBuildQFromJson(qq, tp.type, false, pid)); added++; });
+  });
+  if (typeof examAutofill==='function') examAutofill(tp);
+  var ov=$(opts.overlayId||'examc-overlay'); if (ov) ov.remove();
+  if (typeof renderQuestions==='function') renderQuestions();
+  if (typeof touch==='function') touch();
+  if (typeof syncExamToggle==='function') syncExamToggle();
+  if (typeof nav==='function') nav('editor');
+  setTimeout(function(){
+    var dupMsg = '';
+    if (typeof findSimilarPairs==='function'){
+      var pairs = findSimilarPairs(quiz.questions);   // כל הבחינה — חוצה-חלקים וחוצה-סוגים
+      if (pairs && pairs.length){ dupMsg = ' ⚠️ ייתכנו ' + pairs.length + ' כפילויות בבחינה — לחצו "🔁 בדוק כפילויות" לפירוט.'; }
+    }
+    var head = opts.replaceAll ? 'החלק נבנה מחדש' : ('נוספו ' + added + ' שאלות לחלק');
+    if (typeof showToast==='function') showToast(head + ' ✓ — בדקו את הניקוד והחלוקה.' + dupMsg);
+  }, 60);
+}
+function examApplyBuild(data, opts){
+  opts = opts||{};
+  var struct = !!opts.structure, append = !!opts.append;
   examEnsure();
   quiz.examMode = true;
-  if (data.title && !struct){ quiz.title = String(data.title).slice(0,40); var ti=$('quiz-title'); if (ti) ti.value = quiz.title; }
-  quiz.examTime = Math.max(1, parseInt(data.examTime,10)||45);
-  quiz.bonus = Math.max(0, parseInt(data.bonus,10)||0);
-  quiz.parts = [];
-  quiz.questions = [];
+  // מיזוג-לחלק: נתיב נפרד, בלי לגעת בבניית-החלקים הרגילה
+  if (append && opts.appendToPartId){ examApplyToPart(data, opts); return; }
+  if (!append){
+    if (data.title && !struct){ quiz.title = String(data.title).slice(0,40); var ti=$('quiz-title'); if (ti) ti.value = quiz.title; }
+    quiz.examTime = Math.max(1, parseInt(data.examTime,10)||45);
+    quiz.bonus = Math.max(0, parseInt(data.bonus,10)||0);
+    quiz.parts = [];
+    quiz.questions = [];
+  }
+  var newParts = [];
   data.parts.forEach(function(pp){
     var type = (pp && pp.type==='open') ? 'open' : 'mc';
     var part = { id: examNewId(), type: type, score: Math.max(0, parseInt(pp&&pp.score,10)||0), choiceCount: Math.max(0, parseInt(pp&&pp.choiceCount,10)||0) };
     if (pp && pp.passage != null){ part.passage = struct ? '' : String(pp.passage); }
     if (type==='open') part.subCount = 2;
-    quiz.parts.push(part);
+    quiz.parts.push(part); newParts.push(part);
     var qlist = (pp && Array.isArray(pp.questions)) ? pp.questions : [];
     qlist.forEach(function(qq){
       qq = qq||{};
       if (type==='open'){
         var rawSubs = (Array.isArray(qq.subs) && qq.subs.length) ? qq.subs : [{},{}];
-        var subs = rawSubs.map(function(s){ s=s||{}; return { text: struct?'':String(s.text||''), points: Math.max(0, Math.round((Number(s.points)||0)*2)/2) }; });
+        var subs = rawSubs.map(function(su){ su=su||{}; return { text: struct?'':String(su.text||''), points: Math.max(0, Math.round((Number(su.points)||0)*2)/2) }; });
         quiz.questions.push({ text: struct?'':String(qq.text||''), subs:subs, partId:part.id, points:0 });
       } else {
         var rawAns = (Array.isArray(qq.answers) && qq.answers.length>=2) ? qq.answers : ['',''];
@@ -3805,21 +3875,41 @@ function examImportBuild(jsonText, mode){
       }
     });
   });
-  // ניקוד: אם חלק חסר ניקוד-שאלות (ה-AI לא נתן) — מלא אוטומטית שווה. אחרת — שמור את מה שהגיע.
-  quiz.parts.forEach(function(part){ if (examPartSum(part)===0 && (Number(part.score)||0)>0) examAutofill(part); });
-  var ov=$('exam-imp-overlay'); if (ov) ov.remove();
+  newParts.forEach(function(part){ if (examPartSum(part)===0 && (Number(part.score)||0)>0) examAutofill(part); });
+  var ov=$(opts.overlayId||'exam-imp-overlay'); if (ov) ov.remove();
   renderQuestions(); touch(); syncExamToggle();
-  var _allEmpty = quiz.questions.length>0 && quiz.questions.every(function(q){
+  if (typeof nav==='function') nav('editor');
+  var _allEmpty = !append && quiz.questions.length>0 && quiz.questions.every(function(q){
     var te = (String(q.text||'').trim()==='');
     if (q.subs) return te && q.subs.every(function(su){ return String(su.text||'').trim()===''; });
     if (q.answers) return te && q.answers.every(function(a){ return String(a||'').trim()===''; });
     return te;
   });
   setTimeout(function(){
-    if (!struct && _allEmpty){ showToast('ה-JSON לא כלל תוכן שאלות — נבנה המבנה בלבד. אם רצית תוכן, ודאו שהעתקתם את ההנחיה של "כולל תוכן השאלות".'); }
-    else if (!examIsValid()){ showToast('הבחינה יובאה — יש הערות-אימות לתיקון (ראו אדום).'); }
-    else { showToast('הבחינה יובאה בהצלחה ✓'); }
+    if (append){ showToast('נוספו שאלות לבחינה ✓ — בדקו את הניקוד והחלוקה לחלקים.'); }
+    else if (!struct && _allEmpty){ showToast('ה-JSON לא כלל תוכן שאלות — נבנה המבנה בלבד. אם רצית תוכן, ודאו שהעתקתם את ההנחיה הנכונה.'); }
+    else if (!examIsValid()){ showToast('הבחינה נבנתה — יש הערות-אימות לתיקון (ראו אדום).'); }
+    else { showToast('הבחינה נבנתה בהצלחה ✓'); }
   }, 60);
+}
+// כניסה: מפענח, מאמת, ומחליט. ריק→החלף בשקט; יש-תוכן→דיאלוג; append→מוסיף. opts: {structure, append, msgId, overlayId}
+function examImportBuild(jsonText, opts){
+  if (typeof opts==='string') opts = { structure:(opts==='structure') };   // תאימות-לאחור: mode ישן
+  opts = opts||{};
+  var msgId = opts.msgId || 'exam-imp-msg';
+  var _m=$(msgId); if(_m){ _m.style.display='none'; _m.textContent=''; }
+  var _r = examParseExam(jsonText);
+  if (!_r.ok){ examImportError('לא הצלחתי לקרוא את ה-JSON.\nשגיאה: ' + _r.err + '\n\nהתחלת מה שהתקבל:\n' + _r.snippet, msgId); return; }
+  var data = _r.data;
+  if (!data || !Array.isArray(data.parts) || !data.parts.length){ examImportError('ה-JSON נקרא, אך אין בו "parts" (רשימת חלקים) תקינה. ודאו שההנחיה רצה במלואה ושהתשובה לא נחתכה.', msgId); return; }
+  if (opts.append){ examApplyBuild(data, {structure:opts.structure, append:true, appendToPartId:opts.appendToPartId, replaceAll:opts.replaceAll, overlayId:opts.overlayId, msgId:opts.msgId}); return; }
+  if (typeof quiz==='undefined' || !quiz){ if (typeof newQuiz==='function'){ Promise.resolve(newQuiz()).then(function(){ examApplyBuild(data, {structure:opts.structure, overlayId:opts.overlayId}); }); } return; }
+  var hasContent = (typeof quizHasRealContent==='function' && quizHasRealContent());
+  if (!hasContent){ examApplyBuild(data, {structure:opts.structure, overlayId:opts.overlayId}); return; }
+  examConfirmSource(
+    function(){ examApplyBuild(data, {structure:opts.structure, overlayId:opts.overlayId}); },
+    function(){ if (typeof newQuiz==='function'){ Promise.resolve(newQuiz()).then(function(){ examApplyBuild(data, {structure:opts.structure, overlayId:opts.overlayId}); }); } }
+  );
 }
 function openExamImport(mode){
   mode = (mode==='structure') ? 'structure' : 'full';
@@ -3832,7 +3922,7 @@ function openExamImport(mode){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 9';
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 11';
   box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
   desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: חלקים, סוגים, ניקוד ובחירה.';
@@ -3871,20 +3961,295 @@ function openExamImport(mode){
   ov.appendChild(box);
   document.body.appendChild(ov);
 }
+// ============ בניית בחינה מאפס עם AI (מסך מלא, לא overlay-מעל-הכל) ============
+var examCTopics = new Set(), examCTraits = new Set(), examCAge = '';
+function examcNum(id){ var el=$(id); var n=el?parseInt(el.value,10):0; return (isNaN(n)||n<0)?0:n; }
+function examcFree(parent, id, placeholder, refresh){
+  var inp=document.createElement('input'); inp.type='text'; inp.id=id; inp.placeholder=placeholder;
+  inp.style.cssText='width:100%; margin-top:8px; padding:9px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:14px;';
+  inp.oninput = refresh;
+  parent.appendChild(inp);
+}
+function examCreatePrompt(mode, partId){
+  // ── מצב מתוחם-לחלק (AI פר-חלק): הסוג ידוע, מטמיעים את שאלות-החלק הקיימות ──
+  if (partId){
+    var _tp=null; for(var _i=0;_i<quiz.parts.length;_i++){ if(quiz.parts[_i].id===partId){ _tp=quiz.parts[_i]; break; } }
+    if (_tp){
+      var _tl = (_tp.type==='open') ? 'פתוחות (כל שאלה עם תת-סעיפים וניקוד לכל סעיף)' : 'אמריקאיות (רב-ברירה, 4 תשובות לכל שאלה)';
+      var _n = (typeof examcNum==='function' ? examcNum('examc-count') : 0) || 3;
+      var _note = $('examc-note') ? $('examc-note').value.trim() : '';
+      var _attach = $('examc-attach') ? $('examc-attach').checked : false;
+      var _exist = quiz.questions.filter(function(q){ return q.partId===partId; }).map(function(q){ return String(q.text||'').trim(); }).filter(Boolean);
+      var P=[];
+      P.push('צור ' + _n + ' שאלות ' + _tl + ' בעברית — כטקסט בלבד, בלי עיצוב, בלי הסברים ובלי בלוק-קוד.');
+      if (_tp.passage) P.push('השאלות מתייחסות לקטע-הקריאה הבא: "' + String(_tp.passage).slice(0,600) + '".');
+      if (_note) P.push('הנחיה נוספת חשובה: ' + _note + '.');
+      if (_attach) P.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף.');
+      if (_exist.length){
+        P.push('');
+        P.push('אלה השאלות שכבר נמצאות בחלק — צור שאלות חדשות ושונות מהן, ואל תחזור על אף אחת מהן:');
+        _exist.forEach(function(t,i){ P.push((i+1)+'. '+t); });
+      }
+      P.push('');
+      P.push('החזר JSON יחיד במבנה הזה (חלק אחד בלבד):');
+      P.push('{ "parts": [ {');
+      P.push('    "type": "' + _tp.type + '",');
+      if (_tp.type==='open'){
+        P.push('    "questions": [ { "text": "נוסח השאלה", "subs": [ {"text":"סעיף א","points":10}, {"text":"סעיף ב","points":10} ] } ]');
+      } else {
+        P.push('    "questions": [ { "text": "נוסח השאלה", "answers": ["תשובה 1","תשובה 2","תשובה 3","תשובה 4"], "correct": 0 } ]');
+      }
+      P.push('} ] }');
+      P.push('');
+      P.push((_tp.type==='open') ? '- open: subs = תת-הסעיפים, לכל אחד text ו-points.' : '- mc: answers = רשימת התשובות; correct = אינדקס התשובה הנכונה מ-0.');
+      P.push('השתמש במרכאות כפולות ישרות (") בלבד. החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
+      return P.join('\n');
+    }
+  }
+  var append = (mode==='append');
+  var topics = []; examCTopics.forEach(function(t){ topics.push(t); });
+  var tFree = $('examc-topic-free') ? $('examc-topic-free').value.trim() : ''; if (tFree) topics.push(tFree);
+  var aFree = $('examc-age-free') ? $('examc-age-free').value.trim() : '';
+  var age = aFree || examCAge;
+  var traits = []; examCTraits.forEach(function(t){ traits.push(t); });
+  var trFree = $('examc-trait-free') ? $('examc-trait-free').value.trim() : ''; if (trFree) traits.push(trFree);
+  var nOpen = examcNum('examc-open'), nMc = examcNum('examc-mc'), nAnsin = examcNum('examc-ansin');
+  var total = examcNum('examc-score') || 100, etime = examcNum('examc-time') || 45;
+  var note = $('examc-note') ? $('examc-note').value.trim() : '';
+  var attach = $('examc-attach') ? $('examc-attach').checked : false;
+  var L = [];
+  L.push(append ? 'צור שאלות נוספות לבחינה קיימת — כטקסט בלבד, בלי עיצוב, בלי הסברים ובלי בלוק-קוד.'
+                : 'צור בחינה חדשה — כטקסט בלבד, בלי עיצוב, בלי הסברים ובלי בלוק-קוד.');
+  L.push('');
+  var wants = [];
+  if (nOpen>0) wants.push(nOpen + ' שאלות פתוחות (עם תת-סעיפים)');
+  if (nMc>0) wants.push(nMc + ' שאלות אמריקאיות (רב-ברירה, 4 תשובות לכל שאלה)');
+  var wl = (append ? 'הוסף: ' : 'הבחינה תכלול: ') + (wants.length ? wants.join(' וגם ') : 'שאלות לפי שיקולך');
+  if (nAnsin>0) wl += ', וכן ' + nAnsin + ' קטעי-קריאה (אנ-סין) — כל קטע כ-part נפרד עם passage ועם שאלות עליו';
+  wl += '.';
+  L.push(wl);
+  if (topics.length) L.push('נושא הבחינה: ' + topics.join(', ') + '.');
+  else L.push('נושא הבחינה: בחר נושא מתאים וכתוב אותו ב-title.');
+  if (age) L.push('שכבת הגיל: ' + age + '. התאם את רמת השאלות, אורך הניסוח והמורכבות.');
+  if (traits.length) L.push('מאפייני הנבחנים: ' + traits.join(', ') + '. התאם בהתאם.');
+  if (!append){
+    L.push('ציון הבחינה הכולל: ' + total + ' נקודות. חלק את הניקוד בין החלקים כך שסכום ציוני-החלקים יהיה בדיוק ' + total + '.');
+    L.push('משך הבחינה: ' + etime + ' דקות (שדה examTime).');
+  } else {
+    L.push('לכל חלק חדש קבע score סביר; אתאים את הניקוד הסופי בעורך.');
+  }
+  if (note) L.push('הנחיה נוספת חשובה: ' + note + '.');
+  if (attach) L.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף; הנושא והמאפיינים משמשים כהקשר בלבד.');
+  L.push('');
+  L.push('החזר JSON יחיד במבנה המדויק הזה (דוגמה תקינה):');
+  L.push('{');
+  L.push('  "title": "שם הבחינה",');
+  L.push('  "examTime": ' + etime + ',');
+  L.push('  "bonus": 0,');
+  L.push('  "parts": [');
+  L.push('    { "type": "open", "score": 40, "choiceCount": 0, "passage": "",');
+  L.push('      "questions": [');
+  L.push('        { "text": "נוסח השאלה", "subs": [ {"text":"סעיף א","points":10}, {"text":"סעיף ב","points":10} ] }');
+  L.push('      ] },');
+  L.push('    { "type": "mc", "score": 60, "choiceCount": 0,');
+  L.push('      "questions": [');
+  L.push('        { "text": "נוסח השאלה", "answers": ["תשובה 1","תשובה 2","תשובה 3","תשובה 4"], "correct": 0 }');
+  L.push('      ] }');
+  L.push('  ]');
+  L.push('}');
+  L.push('');
+  L.push('משמעות השדות:');
+  L.push('- title: שם הבחינה (נסח שם קצר וברור).');
+  L.push('- examTime: משך המבחן בדקות (מספר שלם).');
+  L.push('- bonus: 0 (אלא אם ביקשתי אחרת).');
+  L.push('- כל פרק/חלק = part נפרד. אל תערבב סוגים בתוך אותו חלק.');
+  L.push('- type: "mc" לאמריקאיות, "open" לפתוחות.');
+  L.push('- score: ניקוד החלק כולו (מספר שלם).');
+  L.push('- choiceCount: אם עונים על כל שאלות החלק → 0. (חלוקת-בחירה "ענה על X מתוך Y" אקבע בעצמי בעורך.)');
+  L.push('- passage: קטע-קריאה (אנ-סין) מעל שאלות החלק. אם אין קטע — השמט את השדה.');
+  L.push('- mc: answers = רשימת התשובות; correct = אינדקס התשובה הנכונה מ-0.');
+  L.push('- open: subs = תת-הסעיפים, לכל אחד text ו-points.');
+  L.push('');
+  L.push('השתמש במרכאות כפולות ישרות (") בלבד — לא מרכאות מסולסלות/חכמות.');
+  L.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
+  return L.join('\n');
+}
+function openExamCreate(mode){
+  mode = (mode==='append') ? 'append' : 'create';
+  var ov = $('examc-overlay'); if (ov) ov.remove();
+  impOpenSection = 'topics';
+  ov = document.createElement('div'); ov.id='examc-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;';
+  ov.onclick = function(e){ if (e.target===ov) ov.remove(); };
+  var box = document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
+  var refresh = function(){ var p=$('examc-prompt'); if (p) p.value = examCreatePrompt(mode); };
+  var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;';
+  title.textContent = (mode==='append') ? '✨ הוספת שאלות ב-AI' : '✨ בניית בחינה חדשה עם AI';
+  box.appendChild(title);
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 11'; box.appendChild(_vtag);
+  var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
+  desc.textContent = (mode==='append') ? 'הגדירו כמה שאלות להוסיף ובאיזה נושא, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה.' : 'הגדירו את הבחינה, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה. המערכת תבנה את הבחינה ותוביל לעריכה.';
+  box.appendChild(desc);
+  var tip = document.createElement('div'); tip.style.cssText='font-size:13px; color:var(--ink); background:rgba(46,196,182,.10); border:1px solid rgba(46,196,182,.22); border-radius:9px; padding:8px 12px; line-height:1.55; margin-bottom:14px;';
+  tip.textContent='💡 אין חובה למלא הכל — שדות ריקים לא ייכנסו להנחיה. את המבנה המדויק (חלוקה לחלקים, "ענה על X מתוך Y") תכווננו בעורך אחרי-כן.';
+  box.appendChild(tip);
+  var C = IMP_CONTENT.study;
+  var acc = document.createElement('div'); box.appendChild(acc);
+  impAccordionSection(acc, 'topics', C.topicsTitle, function(body){
+    impChipRow(body, C.topics, examCTopics, refresh);
+    examcFree(body, 'examc-topic-free', C.topicFree, refresh);
+  });
+  impAccordionSection(acc, 'age', C.ageTitle, function(body){
+    var ageRow = document.createElement('div'); ageRow.style.cssText='display:flex; flex-wrap:wrap; gap:6px;';
+    C.ages.forEach(function(label){
+      var b=document.createElement('button'); b.className='btn ghost sm'; b.textContent=label;
+      if (examCAge===label){ b.style.background='var(--gold)'; b.style.color='#1a2342'; }
+      b.onclick=function(){ examCAge=(examCAge===label?'':label); [].slice.call(ageRow.children).forEach(function(c){c.style.background='';c.style.color='';}); if(examCAge===label){ b.style.background='var(--gold)'; b.style.color='#1a2342'; } refresh(); };
+      ageRow.appendChild(b);
+    });
+    body.appendChild(ageRow);
+    examcFree(body, 'examc-age-free', C.ageFree, refresh);
+  });
+  impAccordionSection(acc, 'traits', C.traitsTitle, function(body){
+    impChipRow(body, C.traits, examCTraits, refresh);
+    examcFree(body, 'examc-trait-free', C.traitFree, refresh);
+  });
+  var struct = document.createElement('div'); struct.style.cssText='margin:16px 0 6px;';
+  struct.innerHTML = '<div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:10px;">מבנה הבחינה</div>';
+  var grid = document.createElement('div'); grid.style.cssText='display:grid; grid-template-columns:1fr 1fr; gap:10px;';
+  var numField = function(id, label, val){
+    var wrap=document.createElement('div');
+    var lab=document.createElement('label'); lab.style.cssText='display:block; font-size:13px; color:var(--ink-dim); margin-bottom:4px;'; lab.textContent=label;
+    var inp=document.createElement('input'); inp.type='number'; inp.id=id; inp.min='0'; inp.value=String(val);
+    inp.style.cssText='width:100%; padding:9px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:15px;';
+    inp.oninput = refresh;
+    wrap.appendChild(lab); wrap.appendChild(inp); return wrap;
+  };
+  grid.appendChild(numField('examc-open','מספר שאלות פתוחות', 2));
+  grid.appendChild(numField('examc-mc','מספר שאלות אמריקאיות', (mode==='append'?0:4)));
+  grid.appendChild(numField('examc-ansin','מספר קטעי אנ-סין', 0));
+  if (mode!=='append'){
+    grid.appendChild(numField('examc-score','ציון כולל', 100));
+    grid.appendChild(numField('examc-time','משך הבחינה (דקות)', 45));
+  }
+  struct.appendChild(grid);
+  box.appendChild(struct);
+  var noteWrap = document.createElement('div'); noteWrap.style.cssText='margin:14px 0 4px;';
+  noteWrap.innerHTML='<div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">הנחיה חופשית (לא חובה)</div><div style="font-size:12px; color:var(--ink-dim); margin-bottom:7px; line-height:1.5;">לדוגמה: "התמקד בפרק 3" או "כלול שאלה על נושא מסוים". לחומר ארוך עדיף לצרף קובץ.</div>';
+  var noteInp = document.createElement('textarea'); noteInp.id='examc-note';
+  noteInp.style.cssText='width:100%; height:60px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:9px 12px; font-family:Heebo; font-size:14px; resize:vertical;';
+  noteInp.oninput = refresh;
+  noteWrap.appendChild(noteInp); box.appendChild(noteWrap);
+  var atWrap = document.createElement('div'); atWrap.style.cssText='margin:12px 0 4px; background:rgba(46,196,182,.08); border:1px solid rgba(46,196,182,.25); border-radius:10px; padding:11px 13px;';
+  var atLab = document.createElement('label'); atLab.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; font-size:14px; color:var(--ink); font-weight:700;';
+  var atChk = document.createElement('input'); atChk.type='checkbox'; atChk.id='examc-attach'; atChk.style.cssText='width:18px; height:18px; accent-color:var(--teal); cursor:pointer; flex:0 0 auto;';
+  atChk.onchange = refresh;
+  var atTxt = document.createElement('span'); atTxt.textContent='📎 אצרף חומר-לימוד בכלי ה-AI (סיכום, פרק, דף מקורות)';
+  atLab.appendChild(atChk); atLab.appendChild(atTxt); atWrap.appendChild(atLab);
+  var atSub = document.createElement('div'); atSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;'; atSub.textContent='סמנו אם תצרפו קובץ ב-ChatGPT/Gemini/Claude — הבחינה תיבנה על בסיס תוכנו. (את הקובץ מצרפים שם, לא כאן.)';
+  atWrap.appendChild(atSub); box.appendChild(atWrap);
+  var hr = document.createElement('div'); hr.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:18px 0 14px;'; box.appendChild(hr);
+  var s1 = document.createElement('div'); s1.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את ההנחיה'; box.appendChild(s1);
+  var pBox = document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
+  pBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
+  pBox.value = examCreatePrompt(mode); box.appendChild(pBox);
+  var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
+  copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת ההנחיה'; },1500); };
+  box.appendChild(copyBtn);
+  var s2 = document.createElement('div'); s2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — הדביקו את התשובה כאן'; box.appendChild(s2);
+  var s2sub = document.createElement('div'); s2sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s2sub.textContent='הדביקו את ה-JSON שקיבלתם מכלי ה-AI.'; box.appendChild(s2sub);
+  var paste = document.createElement('textarea'); paste.id='examc-paste';
+  paste.style.cssText='width:100%; height:140px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
+  box.appendChild(paste);
+  var msg = document.createElement('div'); msg.id='examc-msg'; msg.style.cssText='display:none; white-space:pre-wrap; color:#ff8a8a; background:rgba(255,107,107,.10); border:1px solid rgba(255,107,107,.35); border-radius:10px; padding:10px 13px; font-size:13px; line-height:1.5; margin-top:12px; font-family:Heebo;';
+  box.appendChild(msg);
+  var actions = document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:14px;';
+  var doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent = (mode==='append') ? '✓ הוסף לבחינה' : '✓ בנה בחינה'; doBtn.style.flex='1';
+  doBtn.onclick = function(){ examImportBuild(paste.value, { append:(mode==='append'), msgId:'examc-msg', overlayId:'examc-overlay' }); };
+  var closeBtn = document.createElement('button'); closeBtn.className='btn ghost sm'; closeBtn.textContent='ביטול'; closeBtn.onclick=function(){ ov.remove(); };
+  actions.appendChild(doBtn); actions.appendChild(closeBtn); box.appendChild(actions);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
+function openPartAi(partId){
+  var tp=null, pIdx=-1; for(var i=0;i<quiz.parts.length;i++){ if(quiz.parts[i].id===partId){ tp=quiz.parts[i]; pIdx=i; break; } }
+  if (!tp){ if(typeof showToast==='function') showToast('החלק לא נמצא.'); return; }
+  var typeLabel = (tp.type==='open') ? 'פתוח' : 'אמריקאי';
+  var st = { replaceAll:false };
+  var ov=$('examc-overlay'); if(ov) ov.remove();
+  ov=document.createElement('div'); ov.id='examc-overlay';
+  ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;';
+  ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+  var box=document.createElement('div');
+  box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:560px; width:100%; text-align:right; margin:auto;';
+  var refresh=function(){ var p=$('examc-prompt'); if(p) p.value=examCreatePrompt('append', partId); };
+  var title=document.createElement('div'); title.style.cssText='font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px;';
+  title.textContent='🤖 שאלות ב-AI — חלק '+(pIdx+1)+' ('+typeLabel+')';
+  box.appendChild(title);
+  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 11'; box.appendChild(_vtag);
+  var desc=document.createElement('div'); desc.style.cssText='font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
+  desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בחלק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
+  box.appendChild(desc);
+  var cWrap=document.createElement('div'); cWrap.style.cssText='margin-bottom:12px;';
+  cWrap.innerHTML='<label style="display:block; font-size:13px; color:var(--ink-dim); margin-bottom:4px;">כמה שאלות להוסיף</label>';
+  var cIn=document.createElement('input'); cIn.type='number'; cIn.id='examc-count'; cIn.min='1'; cIn.value='3';
+  cIn.style.cssText='width:100px; padding:9px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:15px;';
+  cIn.oninput=refresh; cWrap.appendChild(cIn); box.appendChild(cWrap);
+  var mWrap=document.createElement('div'); mWrap.style.cssText='margin-bottom:12px; display:flex; gap:8px;';
+  var addBtn=document.createElement('button'); addBtn.className='btn ghost sm'; addBtn.textContent='➕ הוסף לחלק'; addBtn.style.flex='1';
+  var repBtn=document.createElement('button'); repBtn.className='btn ghost sm'; repBtn.textContent='🔄 החלף את כל שאלות החלק'; repBtn.style.flex='1';
+  var paint=function(){ addBtn.style.background=st.replaceAll?'':'var(--teal)'; addBtn.style.color=st.replaceAll?'':'#06231f'; repBtn.style.background=st.replaceAll?'var(--coral)':''; repBtn.style.color=st.replaceAll?'#2a0b0b':''; };
+  addBtn.onclick=function(){ st.replaceAll=false; paint(); };
+  repBtn.onclick=function(){ st.replaceAll=true; paint(); };
+  paint(); mWrap.appendChild(addBtn); mWrap.appendChild(repBtn); box.appendChild(mWrap);
+  var noteWrap=document.createElement('div'); noteWrap.style.cssText='margin-bottom:10px;';
+  noteWrap.innerHTML='<label style="display:block; font-size:13px; color:var(--ink-dim); margin-bottom:4px;">הנחיה חופשית (לא חובה)</label>';
+  var noteInp=document.createElement('textarea'); noteInp.id='examc-note';
+  noteInp.style.cssText='width:100%; height:54px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:9px 12px; font-family:Heebo; font-size:14px; resize:vertical;';
+  noteInp.oninput=refresh; noteWrap.appendChild(noteInp); box.appendChild(noteWrap);
+  var atWrap=document.createElement('div'); atWrap.style.cssText='margin-bottom:12px; background:rgba(46,196,182,.08); border:1px solid rgba(46,196,182,.25); border-radius:10px; padding:10px 12px;';
+  var atLab=document.createElement('label'); atLab.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; font-size:13.5px; color:var(--ink); font-weight:700;';
+  var atChk=document.createElement('input'); atChk.type='checkbox'; atChk.id='examc-attach'; atChk.style.cssText='width:17px; height:17px; accent-color:var(--teal); cursor:pointer; flex:0 0 auto;';
+  atChk.onchange=refresh;
+  var atTxt=document.createElement('span'); atTxt.textContent='📎 אצרף חומר-לימוד בכלי ה-AI';
+  atLab.appendChild(atChk); atLab.appendChild(atTxt); atWrap.appendChild(atLab); box.appendChild(atWrap);
+  var hr=document.createElement('div'); hr.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:14px 0 12px;'; box.appendChild(hr);
+  var s1=document.createElement('div'); s1.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את ההנחיה'; box.appendChild(s1);
+  var pBox=document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
+  pBox.style.cssText='width:100%; height:140px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
+  pBox.value=examCreatePrompt('append', partId); box.appendChild(pBox);
+  var copyBtn=document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 16px; font-size:16px; padding:12px;';
+  copyBtn.onclick=function(){ pBox.select(); try{document.execCommand('copy');}catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){copyBtn.textContent='📋 העתקת ההנחיה';},1500); };
+  box.appendChild(copyBtn);
+  var s2=document.createElement('div'); s2.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — הדביקו את התשובה'; box.appendChild(s2);
+  var paste=document.createElement('textarea'); paste.id='examc-paste';
+  paste.style.cssText='width:100%; height:120px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
+  box.appendChild(paste);
+  var msg=document.createElement('div'); msg.id='examc-msg'; msg.style.cssText='display:none; white-space:pre-wrap; color:#ff8a8a; background:rgba(255,107,107,.10); border:1px solid rgba(255,107,107,.35); border-radius:10px; padding:10px 13px; font-size:13px; line-height:1.5; margin-top:12px; font-family:Heebo;';
+  box.appendChild(msg);
+  var actions=document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:14px;';
+  var doBtn=document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent='✓ בנה'; doBtn.style.flex='1';
+  doBtn.onclick=function(){ examImportBuild(paste.value, { append:true, appendToPartId:partId, replaceAll:st.replaceAll, msgId:'examc-msg', overlayId:'examc-overlay' }); };
+  var closeBtn=document.createElement('button'); closeBtn.className='btn ghost sm'; closeBtn.textContent='ביטול'; closeBtn.onclick=function(){ ov.remove(); };
+  actions.appendChild(doBtn); actions.appendChild(closeBtn); box.appendChild(actions);
+  ov.appendChild(box); document.body.appendChild(ov);
+}
 function renderExamEditor(){
   var list = $('q-list'); list.innerHTML = '';
   examEnsure();
   { var _etw=$('exam-toggle-wrap'); if(_etw) _etw.style.display='none'; var _fab=$('flat-addq-btn'); if(_fab) _fab.style.display='none'; }
-  var _impWrap = document.createElement('div'); _impWrap.style.cssText='margin-bottom:14px;';
-  var _impHead = document.createElement('div'); _impHead.style.cssText='font-size:17px; font-weight:800; color:var(--gold); margin-bottom:3px;'; _impHead.textContent='🤖 ייבוא בחינה באמצעות AI';
-  _impWrap.appendChild(_impHead);
-  var _impSub = document.createElement('div'); _impSub.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:9px; line-height:1.5;'; _impSub.textContent='בחרו אם לייבא עם תוכן השאלות, או רק את המבנה (חלקים, מספר שאלות, ניקוד ובחירה):';
-  _impWrap.appendChild(_impSub);
+  var _aiWrap = document.createElement('div'); _aiWrap.style.cssText='margin-bottom:14px;';
+  var _aiHead = document.createElement('div'); _aiHead.style.cssText='font-size:17px; font-weight:800; color:var(--gold); margin-bottom:3px;'; _aiHead.textContent='🤖 AI וייבוא';
+  _aiWrap.appendChild(_aiHead);
+  var _aiSub = document.createElement('div'); _aiSub.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:9px; line-height:1.5;'; _aiSub.textContent='הוסיפו שאלות בעזרת AI, או ייבאו בחינה קיימת (עם תוכן או מבנה בלבד).';
+  _aiWrap.appendChild(_aiSub);
+  var _aiHint = document.createElement('div'); _aiHint.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; _aiHint.textContent='לשאלות-AI — השתמשו בכפתור \u201C🤖 שאלות ב-AI\u201D בתוך כל חלק (הסוג נשמר אוטומטית).';
+  _aiWrap.appendChild(_aiHint);
   var _impRow = document.createElement('div'); _impRow.style.cssText='display:flex; gap:8px; flex-wrap:wrap;';
-  var _impFull = document.createElement('button'); _impFull.className='btn sm'; _impFull.style.cssText='flex:1 1 auto; background:rgba(243,200,90,.18); border:1px solid rgba(243,200,90,.5); color:var(--gold); font-weight:700;'; _impFull.textContent='עם תוכן השאלות'; _impFull.onclick=function(){ openExamImport('full'); };
-  var _impStruct = document.createElement('button'); _impStruct.className='btn sm'; _impStruct.style.cssText='flex:1 1 auto; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.2); color:var(--ink); font-weight:700;'; _impStruct.textContent='מבנה בלבד (ללא תוכן)'; _impStruct.onclick=function(){ openExamImport('structure'); };
-  _impRow.appendChild(_impFull); _impRow.appendChild(_impStruct); _impWrap.appendChild(_impRow);
-  list.appendChild(_impWrap);
+  var _impFull = document.createElement('button'); _impFull.className='btn sm'; _impFull.style.cssText='flex:1 1 auto; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.2); color:var(--ink); font-weight:700;'; _impFull.textContent='📄 ייבוא עם תוכן'; _impFull.onclick=function(){ openExamImport('full'); };
+  var _impStruct = document.createElement('button'); _impStruct.className='btn sm'; _impStruct.style.cssText='flex:1 1 auto; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.2); color:var(--ink); font-weight:700;'; _impStruct.textContent='📐 ייבוא מבנה בלבד'; _impStruct.onclick=function(){ openExamImport('structure'); };
+  _impRow.appendChild(_impFull); _impRow.appendChild(_impStruct); _aiWrap.appendChild(_impRow);
+  list.appendChild(_aiWrap);
   var total = examTotal(), cap = examCap(), over = total > cap;
 
   // הגדרות-בחינה
@@ -4006,6 +4371,9 @@ function renderExamEditor(){
     var addQ = document.createElement('button'); addQ.className='btn ghost sm'; addQ.style.cssText='margin-top:4px;';
     addQ.textContent='➕ הוסף שאלה לחלק זה'; addQ.onclick=function(){ examAddQuestion(part.id); };
     box.appendChild(addQ);
+    var aiQ = document.createElement('button'); aiQ.className='btn sm'; aiQ.style.cssText='margin-top:4px; margin-inline-start:8px; background:rgba(243,200,90,.18); border:1px solid rgba(243,200,90,.5); color:var(--gold); font-weight:700;';
+    aiQ.textContent='🤖 שאלות ב-AI'; aiQ.onclick=function(){ openPartAi(part.id); };
+    box.appendChild(aiQ);
     var delP = document.createElement('button'); delP.className='btn ghost sm'; delP.style.cssText='margin-top:4px; margin-inline-start:8px; color:#ff8a8a; border-color:rgba(255,107,107,.35);';
     delP.textContent='🗑 מחק חלק'; delP.onclick=function(){ examDelPart(part.id); };
     box.appendChild(delP);
