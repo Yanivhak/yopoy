@@ -649,7 +649,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 14</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 15</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -3941,7 +3941,7 @@ function openExamImport(mode){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 14';
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 15';
   box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
   desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: פרקים, סוגים, ניקוד ובחירה.';
@@ -4030,7 +4030,7 @@ function examCreatePrompt(mode, partId){
         _exist.forEach(function(t,i){ P.push((i+1)+'. '+t); });
       }
       P.push('');
-      P.push('החזר JSON יחיד במבנה הזה (פרק אחד בלבד):');
+      P.push('המבנה הנדרש (פרק אחד):');
       P.push('{ "parts": [ {');
       P.push('    "type": "' + _tp.type + '",');
       if (_tp.type==='open'){
@@ -4041,11 +4041,16 @@ function examCreatePrompt(mode, partId){
       P.push('} ] }');
       P.push('');
       P.push((_tp.type==='open') ? '- open: subs = תת-הסעיפים, לכל אחד text ו-points.' : '- mc: answers = רשימת התשובות; correct = אינדקס התשובה הנכונה מ-0.');
-      P.push('השתמש במרכאות כפולות ישרות (") בלבד. החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
+      P.push('השתמש במרכאות כפולות ישרות (") בלבד.');
       if (examBatchMode(partId)){
         P.push('');
-        P.push('חשוב — עבודה במנות (הקובץ ארוך): החזר עד 15 שאלות בכל תשובה. אם ביקשתי יותר, החזר את הראשונות, ובשורה נפרדת אחרי ה-JSON כתוב בדיוק: ---עוד---');
-        P.push('כשאכתוב \u201Cהמשך\u201D — החזר את השאלות הבאות באותו מבנה בדיוק (JSON נפרד עם parts), ושוב ---עוד--- אם נשארו. בלי הסימן = סיימת.');
+        P.push('חשוב — הקובץ ארוך, אז אל תנסה להחזיר הכל בבת-אחת. עבוד במנות:');
+        P.push('• בכל תשובה: JSON תקין ומלא במבנה { "parts": [ ... ] } — עם עד 15 שאלות.');
+        P.push('• מיד אחרי ה-JSON, בשורה נפרדת, כתוב בדיוק: ---עוד---');
+        P.push('• כשאכתוב "המשך": JSON נפרד ומלא נוסף באותו מבנה { "parts": [ ... ] } — עם השאלות שטרם נתת. שוב ---עוד--- אם נשאר; בלי הסימן = סיימת.');
+        P.push('• כל תשובה עומדת בפני עצמה כ-JSON תקין ושלם. אל תפצל JSON אחד בין תשובות.');
+      } else {
+        P.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
       }
       return P.join('\n');
     }
@@ -4085,7 +4090,7 @@ function examCreatePrompt(mode, partId){
   if (note) L.push('הנחיה נוספת חשובה: ' + note + '.');
   if (attach) L.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף; הנושא והמאפיינים משמשים כהקשר בלבד.');
   L.push('');
-  L.push('החזר JSON יחיד במבנה המדויק הזה (דוגמה תקינה):');
+  L.push('המבנה המדויק הנדרש (דוגמה תקינה):');
   L.push('{');
   L.push('  "title": "שם הבחינה",');
   L.push('  "examTime": ' + etime + ',');
@@ -4115,11 +4120,15 @@ function examCreatePrompt(mode, partId){
   L.push('- open: subs = תת-הסעיפים, לכל אחד text ו-points.');
   L.push('');
   L.push('השתמש במרכאות כפולות ישרות (") בלבד — לא מרכאות מסולסלות/חכמות.');
-  L.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
   if (examBatchMode()){
     L.push('');
-    L.push('חשוב — עבודה בפרקים (הקובץ ארוך): אם אינך יכול להחזיר את כל הפרקים בתשובה אחת, החזר פרק אחד או יותר במלואם כ-JSON תקין, ובשורה נפרדת אחרי ה-JSON כתוב בדיוק: ---עוד---');
-    L.push('כשאכתוב \u201Cהמשך\u201D — החזר את הפרקים הבאים (רק אלה שעוד לא נתת) באותו מבנה, ושוב ---עוד--- אם נשארו. בלי הסימן = סיימת.');
+    L.push('חשוב — הקובץ ארוך, אז אל תנסה להחזיר את כל הפרקים בבת-אחת. עבוד בפרקים:');
+    L.push('• בתשובה הראשונה: JSON תקין ומלא — { "title": ..., "examTime": ..., "bonus": ..., "parts": [ ... ] } — עם פרק אחד או יותר במלואם (לא בהכרח כולם).');
+    L.push('• מיד אחרי ה-JSON, בשורה נפרדת, כתוב בדיוק: ---עוד---');
+    L.push('• כשאכתוב "המשך": JSON נפרד ומלא נוסף — { "parts": [ ... ] } בלבד (בלי title/examTime) — עם הפרקים שטרם נתת. שוב ---עוד--- אם נשאר; בלי הסימן = סיימת.');
+    L.push('• כל תשובה עומדת בפני עצמה כ-JSON תקין ושלם. אל תפצל JSON אחד בין תשובות.');
+  } else {
+    L.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
   }
   return L.join('\n');
 }
@@ -4136,7 +4145,7 @@ function openExamCreate(mode){
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;';
   title.textContent = (mode==='append') ? '✨ הוספת שאלות ב-AI' : '✨ בניית בחינה חדשה עם AI';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 14'; box.appendChild(_vtag);
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 15'; box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent = (mode==='append') ? 'הגדירו כמה שאלות להוסיף ובאיזה נושא, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה.' : 'הגדירו את הבחינה, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה. המערכת תבנה את הבחינה ותוביל לעריכה.';
   box.appendChild(desc);
@@ -4240,7 +4249,7 @@ function openPartAi(partId){
   var title=document.createElement('div'); title.style.cssText='font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px;';
   title.textContent='🤖 שאלות ב-AI — פרק '+(pIdx+1)+' ('+typeLabel+')';
   box.appendChild(title);
-  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 14'; box.appendChild(_vtag);
+  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 15'; box.appendChild(_vtag);
   var desc=document.createElement('div'); desc.style.cssText='font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בפרק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
   box.appendChild(desc);
