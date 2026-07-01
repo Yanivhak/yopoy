@@ -3620,9 +3620,21 @@ function examAddPart(){
 }
 function examMakeSubs(k){ var a=[]; var m = k||2; for (var i=0;i<m;i++) a.push({ text:'', points:0 }); return a; }
 function examSetPartType(part, t){
-  if (examQsOf(part.id).length) return;
+  if (part.type === t) return;
+  var qs = examQsOf(part.id);
+  var hasContent = qs.some(function(q){
+    if (q.text && q.text.trim()) return true;
+    if (part.type==='open') return (q.subs||[]).some(function(s){ return (s.text&&s.text.trim()) || (Number(s.points)||0)>0; });
+    return (q.answers||[]).some(function(a){ return a && a.trim(); });
+  });
+  if (hasContent && !confirm('החלפת סוג-החלק תמיר את השאלות שבו. הנוסח יישמר, אך התוכן הייחודי לסוג הנוכחי (תשובות אמריקאיות או תת-סעיפים) יימחק. להמשיך?')) return;
   part.type = t;
   if (t==='open' && typeof part.subCount === 'undefined') part.subCount = 2;
+  qs.forEach(function(q){
+    if (t==='open'){ delete q.answers; delete q.correct; if (!Array.isArray(q.subs) || !q.subs.length) q.subs = examMakeSubs(part.subCount||2); }
+    else { delete q.subs; if (!Array.isArray(q.answers) || q.answers.length<2){ q.answers = ['','']; } if (typeof q.correct !== 'number') q.correct = 0; }
+  });
+  examAutofill(part);
   renderQuestions(); touch();
 }
 function examSetChoice(part, val){
@@ -3707,25 +3719,26 @@ function renderExamEditor(){
     var head = document.createElement('div'); head.style.cssText='display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px;';
     var plbl = document.createElement('div'); plbl.style.cssText='font-size:16px; font-weight:800; color:var(--violet);'; plbl.textContent=examPartLabel(pi);
     head.appendChild(plbl);
-    var locked = (n>0);
     var typeWrap = document.createElement('div'); typeWrap.style.cssText='display:inline-flex; border:1px solid rgba(255,255,255,.18); border-radius:20px; overflow:hidden;';
     [['mc','אמריקאי'],['open','פתוח']].forEach(function(pair){
       var tb=document.createElement('button'); var on=(part.type===pair[0]);
       tb.textContent=pair[1];
-      tb.style.cssText='border:none; padding:5px 13px; font-family:Heebo; font-size:13px; font-weight:700; cursor:'+(locked?'default':'pointer')+'; background:'+(on?'var(--violet)':'transparent')+'; color:'+(on?'#0b0b2a':'var(--ink-dim)')+';';
-      if (!locked) tb.onclick=function(){ examSetPartType(part, pair[0]); };
+      tb.style.cssText='border:none; padding:5px 13px; font-family:Heebo; font-size:13px; font-weight:700; cursor:pointer; background:'+(on?'var(--violet)':'transparent')+'; color:'+(on?'#0b0b2a':'var(--ink-dim)')+';';
+      tb.title = (n>0 ? 'החלפת סוג תמיר את השאלות בחלק' : 'בחרו את סוג-החלק');
+      tb.onclick=function(){ examSetPartType(part, pair[0]); };
       typeWrap.appendChild(tb);
     });
     head.appendChild(typeWrap);
-    if (locked){ var lk=document.createElement('span'); lk.textContent='🔒'; lk.title='סוג-החלק ננעל אחרי שנוספו שאלות'; lk.style.cssText='font-size:12px; opacity:.55;'; head.appendChild(lk); }
     var sWrap = document.createElement('div'); sWrap.style.cssText='display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-inline-start:auto;';
     var chWrap = document.createElement('span'); chWrap.style.cssText='display:inline-flex; align-items:center; gap:5px;';
     var chLbl = document.createElement('span'); chLbl.textContent='עונים על:'; chLbl.style.cssText='font-size:13px; color:var(--ink-dim);';
+    var canChoice = (n>=2);
     var chIn = document.createElement('input'); chIn.type='number'; chIn.min='0'; chIn.max=String(n); chIn.value=String(Math.min(Number(part.choiceCount)||0, n));
     chIn.title='כמה שאלות התלמיד עונה. 0 = כל השאלות.';
-    chIn.style.cssText='width:52px; padding:7px 8px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.07); color:var(--ink); font-family:Heebo; font-size:14px; text-align:center;';
+    chIn.disabled = !canChoice;
+    chIn.style.cssText='width:52px; padding:7px 8px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.07); color:var(--ink); font-family:Heebo; font-size:14px; text-align:center;'+(canChoice?'':' opacity:.45; cursor:not-allowed;');
     chIn.onchange=function(){ examSetChoice(part, chIn.value); };
-    var chOf = document.createElement('span'); chOf.textContent='מתוך '+n; chOf.style.cssText='font-size:12px; color:var(--ink-dim);';
+    var chOf = document.createElement('span'); chOf.textContent = canChoice ? ('מתוך '+n) : ('מתוך '+n+' — דרושות 2+ שאלות'); chOf.style.cssText='font-size:12px; color:var(--ink-dim);';
     chWrap.appendChild(chLbl); chWrap.appendChild(chIn); chWrap.appendChild(chOf);
     var scWrap = document.createElement('span'); scWrap.style.cssText='display:inline-flex; align-items:center; gap:5px;';
     var sLbl = document.createElement('span'); sLbl.textContent='ציון החלק:'; sLbl.style.cssText='font-size:13px; color:var(--ink-dim);';
