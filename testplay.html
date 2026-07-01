@@ -649,7 +649,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 13</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 14</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -3838,6 +3838,25 @@ function examApplyToPart(data, opts){
     if (typeof showToast==='function') showToast(head + ' ✓ — בדקו את הניקוד והחלוקה.' + dupMsg);
   }, 60);
 }
+// פענוח מנות מרובות: מפצל על ---עוד---, מפענח כל מנה בנפרד, ומצרף את פרקיהן לבחינה אחת.
+// כל מנה = JSON נפרד {parts:[...]}. מנה-בודדת (בלי סימן) = התנהגות רגילה. הראשונה קובעת שם/זמן/בונוס.
+function examParseBatches(text){
+  var raw = String(text||'');
+  var marker = /-{2,}\s*עוד\s*-{2,}/g;
+  var chunks = raw.split(marker).map(function(c){ return c.trim(); }).filter(function(c){ return c.length; });
+  if (!chunks.length) return { ok:false, err:'(ריק)', snippet:'(ריק)' };
+  if (chunks.length===1) return examParseExam(chunks[0]);   // מנה בודדת — נתיב רגיל
+  var datas = [], firstErr = null, firstSnip = '';
+  chunks.forEach(function(ch){
+    var r = examParseExam(ch);
+    if (r.ok && r.data && Array.isArray(r.data.parts) && r.data.parts.length) datas.push(r.data);
+    else if (!firstErr){ firstErr = r.err || 'מנה לא-תקינה'; firstSnip = r.snippet || ch.slice(0,160); }
+  });
+  if (!datas.length) return { ok:false, err: firstErr||'לא נמצאו מנות תקינות', snippet: firstSnip };
+  var merged = { title: datas[0].title, examTime: datas[0].examTime, bonus: datas[0].bonus, parts: [] };
+  datas.forEach(function(d){ (d.parts||[]).forEach(function(p){ merged.parts.push(p); }); });
+  return { ok:true, data: merged, batches: datas.length };
+}
 function examApplyBuild(data, opts){
   opts = opts||{};
   var struct = !!opts.structure, append = !!opts.append;
@@ -3898,7 +3917,7 @@ function examImportBuild(jsonText, opts){
   opts = opts||{};
   var msgId = opts.msgId || 'exam-imp-msg';
   var _m=$(msgId); if(_m){ _m.style.display='none'; _m.textContent=''; }
-  var _r = examParseExam(jsonText);
+  var _r = examParseBatches(jsonText);   // תומך במנות מרובות (---עוד---)
   if (!_r.ok){ examImportError('לא הצלחתי לקרוא את ה-JSON.\nשגיאה: ' + _r.err + '\n\nהתחלת מה שהתקבל:\n' + _r.snippet, msgId); return; }
   var data = _r.data;
   if (!data || !Array.isArray(data.parts) || !data.parts.length){ examImportError('ה-JSON נקרא, אך אין בו "parts" (רשימת פרקים) תקינה. ודאו שההנחיה רצה במלואה ושהתשובה לא נחתכה.', msgId); return; }
@@ -3922,7 +3941,7 @@ function openExamImport(mode){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 13';
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 14';
   box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
   desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: פרקים, סוגים, ניקוד ובחירה.';
@@ -3964,6 +3983,26 @@ function openExamImport(mode){
 // ============ בניית בחינה מאפס עם AI (מסך מלא, לא overlay-מעל-הכל) ============
 var examCTopics = new Set(), examCTraits = new Set(), examCAge = '';
 function examcNum(id){ var el=$(id); var n=el?parseInt(el.value,10):0; return (isNaN(n)||n<0)?0:n; }
+// מצב-מנות: מתג-הקובץ דלוק וגם מבוקשות מעל 15 שאלות (partId → פר-פרק; אחרת → סך פתוח+אמריקאי+אנסין).
+function examBatchMode(partId){
+  var attach = $('examc-attach') ? $('examc-attach').checked : false;
+  if (!attach) return false;
+  var count = partId ? examcNum('examc-count') : (examcNum('examc-open') + examcNum('examc-mc') + examcNum('examc-ansin'));
+  return count > 15;
+}
+// מציג/מסתיר את הערת-המנות ומעדכן את נוסחה לפי המסך.
+function examSyncBatchNote(partId){
+  var el = $('examc-batch-note'); if (!el) return;
+  var on = examBatchMode(partId);
+  el.style.display = on ? 'block' : 'none';
+  if (!on) return;
+  var steps = '<b>1.</b> הריצו את ההנחיה ב-AI. <b>2.</b> אם בסוף התשובה מופיע <code>---עוד---</code>, כתבו ב-AI \u201Cהמשך\u201D והדביקו את המנה הבאה <b>מתחת</b> לקודמת (באותה תיבה). <b>3.</b> חזרו עד שאין <code>---עוד---</code>, ואז לחצו \u201Cבנה\u201D פעם אחת';
+  if (partId){
+    el.innerHTML = '📎 <b>קובץ גדול?</b> ה-AI עלול להיחתך כשמבקשים ממנו הרבה שאלות בבת-אחת, אז ההנחיה מבקשת ממנו לעבוד במנות. ' + steps + '.';
+  } else {
+    el.innerHTML = '📎 <b>קובץ גדול?</b> כשמבקשים הרבה שאלות מקובץ ארוך ה-AI עלול להיחתך, אז ההנחיה מבקשת ממנו לעבוד בפרקים. ' + steps + ' — כל הפרקים ייבנו יחד.';
+  }
+}
 function examcFree(parent, id, placeholder, refresh){
   var inp=document.createElement('input'); inp.type='text'; inp.id=id; inp.placeholder=placeholder;
   inp.style.cssText='width:100%; margin-top:8px; padding:9px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:14px;';
@@ -4003,6 +4042,11 @@ function examCreatePrompt(mode, partId){
       P.push('');
       P.push((_tp.type==='open') ? '- open: subs = תת-הסעיפים, לכל אחד text ו-points.' : '- mc: answers = רשימת התשובות; correct = אינדקס התשובה הנכונה מ-0.');
       P.push('השתמש במרכאות כפולות ישרות (") בלבד. החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
+      if (examBatchMode(partId)){
+        P.push('');
+        P.push('חשוב — עבודה במנות (הקובץ ארוך): החזר עד 15 שאלות בכל תשובה. אם ביקשתי יותר, החזר את הראשונות, ובשורה נפרדת אחרי ה-JSON כתוב בדיוק: ---עוד---');
+        P.push('כשאכתוב \u201Cהמשך\u201D — החזר את השאלות הבאות באותו מבנה בדיוק (JSON נפרד עם parts), ושוב ---עוד--- אם נשארו. בלי הסימן = סיימת.');
+      }
       return P.join('\n');
     }
   }
@@ -4072,6 +4116,11 @@ function examCreatePrompt(mode, partId){
   L.push('');
   L.push('השתמש במרכאות כפולות ישרות (") בלבד — לא מרכאות מסולסלות/חכמות.');
   L.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
+  if (examBatchMode()){
+    L.push('');
+    L.push('חשוב — עבודה בפרקים (הקובץ ארוך): אם אינך יכול להחזיר את כל הפרקים בתשובה אחת, החזר פרק אחד או יותר במלואם כ-JSON תקין, ובשורה נפרדת אחרי ה-JSON כתוב בדיוק: ---עוד---');
+    L.push('כשאכתוב \u201Cהמשך\u201D — החזר את הפרקים הבאים (רק אלה שעוד לא נתת) באותו מבנה, ושוב ---עוד--- אם נשארו. בלי הסימן = סיימת.');
+  }
   return L.join('\n');
 }
 function openExamCreate(mode){
@@ -4083,11 +4132,11 @@ function openExamCreate(mode){
   ov.onclick = function(e){ if (e.target===ov) ov.remove(); };
   var box = document.createElement('div');
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
-  var refresh = function(){ var p=$('examc-prompt'); if (p) p.value = examCreatePrompt(mode); };
+  var refresh = function(){ var p=$('examc-prompt'); if (p) p.value = examCreatePrompt(mode); examSyncBatchNote(); };
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;';
   title.textContent = (mode==='append') ? '✨ הוספת שאלות ב-AI' : '✨ בניית בחינה חדשה עם AI';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 13'; box.appendChild(_vtag);
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 14'; box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent = (mode==='append') ? 'הגדירו כמה שאלות להוסיף ובאיזה נושא, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה.' : 'הגדירו את הבחינה, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה. המערכת תבנה את הבחינה ותוביל לעריכה.';
   box.appendChild(desc);
@@ -4157,6 +4206,8 @@ function openExamCreate(mode){
   var pBox = document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value = examCreatePrompt(mode); box.appendChild(pBox);
+  var bnote = document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; font-size:12.5px; color:var(--ink); line-height:1.65; background:rgba(243,200,90,.10); border:1px solid rgba(243,200,90,.38); border-radius:10px; padding:10px 13px; margin:10px 0 2px;';
+  box.appendChild(bnote);
   var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
   copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת ההנחיה'; },1500); };
   box.appendChild(copyBtn);
@@ -4185,11 +4236,11 @@ function openPartAi(partId){
   ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
   var box=document.createElement('div');
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:560px; width:100%; text-align:right; margin:auto;';
-  var refresh=function(){ var p=$('examc-prompt'); if(p) p.value=examCreatePrompt('append', partId); };
+  var refresh=function(){ var p=$('examc-prompt'); if(p) p.value=examCreatePrompt('append', partId); examSyncBatchNote(partId); };
   var title=document.createElement('div'); title.style.cssText='font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px;';
   title.textContent='🤖 שאלות ב-AI — פרק '+(pIdx+1)+' ('+typeLabel+')';
   box.appendChild(title);
-  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 13'; box.appendChild(_vtag);
+  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 14'; box.appendChild(_vtag);
   var desc=document.createElement('div'); desc.style.cssText='font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בפרק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
   box.appendChild(desc);
@@ -4246,6 +4297,8 @@ function openPartAi(partId){
   var pBox=document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:140px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value=examCreatePrompt('append', partId); box.appendChild(pBox);
+  var bnote=document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; font-size:12.5px; color:var(--ink); line-height:1.65; background:rgba(243,200,90,.10); border:1px solid rgba(243,200,90,.38); border-radius:10px; padding:10px 13px; margin:10px 0 2px;';
+  box.appendChild(bnote);
   var copyBtn=document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 16px; font-size:16px; padding:12px;';
   copyBtn.onclick=function(){ pBox.select(); try{document.execCommand('copy');}catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){copyBtn.textContent='📋 העתקת ההנחיה';},1500); };
   box.appendChild(copyBtn);
