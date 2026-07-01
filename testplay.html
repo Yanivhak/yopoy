@@ -649,7 +649,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 16</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 22</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -3746,7 +3746,15 @@ function examImportPrompt(mode){
   }
   lines.push('');
   lines.push('השתמש במרכאות כפולות ישרות (") בלבד — לא מרכאות מסולסלות/חכמות.');
-  lines.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
+  lines.push('');
+  lines.push('אם הבחינה גדולה ולא נכנסת בתשובה אחת — עבוד במנות:');
+  lines.push('- כל מנה = JSON תקין ומלא בפני עצמו, בצורת {"parts":[...]}.');
+  lines.push('- המנה הראשונה כוללת את המעטפת המלאה (title, examTime, bonus ואת parts). כל מנה נוספת = {"parts":[...]} בלבד.');
+  lines.push('- בסוף כל מנה שאינה האחרונה — כתוב בשורה נפרדת: ---עוד---');
+  lines.push('- כשהמשתמש כותב "עוד" — המשך מהפרק הבא במנה חדשה. אל תפצל JSON יחיד בין שתי תשובות.');
+  lines.push('- אם הכול נכנס בתשובה אחת — החזר JSON אחד, בלי הסימן ---עוד---.');
+  lines.push('');
+  lines.push('החזר רק JSON — בלי טקסט לפני או אחרי (פרט לסימן ---עוד--- בין מנות, אם יש).');
   return lines.join('\n');
 }
 function examImportError(msg, msgId){
@@ -3811,18 +3819,26 @@ function examApplyToPart(data, opts){
   var pid = opts.appendToPartId;
   var tp = null; for (var i=0;i<quiz.parts.length;i++){ if (quiz.parts[i].id===pid){ tp=quiz.parts[i]; break; } }
   if (!tp){ if(typeof showToast==='function') showToast('הפרק לא נמצא — ייתכן שנמחק.'); return; }
-  if (opts.replaceAll){
-    quiz.questions = quiz.questions.filter(function(q){ return q.partId !== pid; });
-  } else if (opts.replaceIds && opts.replaceIds.length){
-    var kill = {}; opts.replaceIds.forEach(function(k){ kill[k]=true; });
-    // מזהה שאלה = מיקומה במערך-הבחינה; נמחק לפי אינדקסים
-    quiz.questions = quiz.questions.filter(function(q,idx){ return !kill[idx]; });
-  }
-  var added = 0;
+  // בונים את השאלות החדשות תחילה
+  var newQs = [];
   (data.parts||[]).forEach(function(pp){
     var qlist = (pp && Array.isArray(pp.questions)) ? pp.questions : [];
-    qlist.forEach(function(qq){ quiz.questions.push(examBuildQFromJson(qq, tp.type, false, pid)); added++; });
+    qlist.forEach(function(qq){ newQs.push(examBuildQFromJson(qq, tp.type, false, pid)); });
   });
+  var added = newQs.length;
+  if (opts.replaceAll){
+    quiz.questions = quiz.questions.filter(function(q){ return q.partId !== pid; }).concat(newQs);
+  } else if (opts.replaceIds && opts.replaceIds.length){
+    // כמו QuizPlay: מיפוי לפי-מיקום — כל שאלה מסומנת מקבלת חדשה מה-pool במקומה (1:1, שמירת-סדר מדויקת), לא-מסומנת נשמרת, עודף בסוף
+    var kill = {}; opts.replaceIds.forEach(function(k){ kill[k]=true; });
+    var pool = newQs.slice();
+    var result = [];
+    quiz.questions.forEach(function(q, idx){ if (kill[idx] && pool.length){ result.push(pool.shift()); } else { result.push(q); } });
+    while (pool.length){ result.push(pool.shift()); }
+    quiz.questions = result;
+  } else {
+    quiz.questions = quiz.questions.concat(newQs);   // הוסף — בסוף
+  }
   if (typeof examAutofill==='function') examAutofill(tp);
   var ov=$(opts.overlayId||'examc-overlay'); if (ov) ov.remove();
   if (typeof renderQuestions==='function') renderQuestions();
@@ -3835,7 +3851,7 @@ function examApplyToPart(data, opts){
       var pairs = findSimilarPairs(quiz.questions);   // כל הבחינה — חוצה-חלקים וחוצה-סוגים
       if (pairs && pairs.length){ dupMsg = ' ⚠️ ייתכנו ' + pairs.length + ' כפילויות בבחינה — לחצו "🔁 בדוק כפילויות" לפירוט.'; }
     }
-    var head = opts.replaceAll ? 'הפרק נבנה מחדש' : ('נוספו ' + added + ' שאלות לפרק');
+    var head = opts.replaceAll ? 'הפרק נבנה מחדש' : ((opts.replaceIds && opts.replaceIds.length) ? 'הוחלפו שאלות בפרק' : ('נוספו ' + added + ' שאלות לפרק'));
     if (typeof showToast==='function') showToast(head + ' ✓ — בדקו את הניקוד והחלוקה.' + dupMsg);
   }, 60);
 }
@@ -3942,7 +3958,7 @@ function openExamImport(mode){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 16';
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 22';
   box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
   desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: פרקים, סוגים, ניקוד ובחירה.';
@@ -3950,19 +3966,30 @@ function openExamImport(mode){
   var note = document.createElement('div'); note.style.cssText='background:rgba(46,196,182,.08); border:1px solid rgba(46,196,182,.25); border-radius:10px; padding:11px 13px; margin-bottom:16px; font-size:13.5px; color:var(--ink); line-height:1.55;';
   note.textContent='📎 את קובץ-הבחינה מצרפים בכלי ה-AI (שם), לא כאן. כלי-ה-AI קוראים PDF/Word — כולל עברית — טוב יותר מכל חילוץ בדפדפן.';
   box.appendChild(note);
-  var s1 = document.createElement('div'); s1.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את ההנחיה';
+  var s1 = document.createElement('div'); s1.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את הטקסט';
   box.appendChild(s1);
+  var s1sub = document.createElement('div'); s1sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s1sub.textContent='העתיקו את ההנחיה והדביקו אותה בכלי ה-AI שבו אתם משתמשים.'; box.appendChild(s1sub);
   var pBox = document.createElement('textarea'); pBox.id='exam-imp-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value = examImportPrompt(mode);
   box.appendChild(pBox);
-  var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
-  copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת ההנחיה'; },1500); };
+  var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת הפרומפט'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
+  copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת הפרומפט'; },1500); };
   box.appendChild(copyBtn);
-  var s2 = document.createElement('div'); s2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — הדביקו את התשובה כאן';
+  var atRemind = document.createElement('div'); atRemind.style.cssText='background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-8px 0 16px; font-size:14px; color:var(--ink); line-height:1.5;';
+  atRemind.textContent='📎 צרפו את קובץ-הבחינה (Word/PDF) יחד עם ההנחיה — באותה הודעה.';
+  box.appendChild(atRemind);
+  var bnote = document.createElement('div'); bnote.style.cssText='background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:12px 14px; margin:-8px 0 16px; font-size:13.5px; color:var(--ink); line-height:1.6;';
+  bnote.innerHTML = examBatchNoteHtml('צור בחינה');
+  box.appendChild(bnote);
+  var s2 = document.createElement('div'); s2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — שלחו לבינה המלאכותית';
   box.appendChild(s2);
-  var s2sub = document.createElement('div'); s2sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s2sub.textContent='הדביקו את ה-JSON שקיבלתם מכלי ה-AI.';
+  var s2sub = document.createElement('div'); s2sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:14px; line-height:1.5;'; s2sub.textContent='שלחו לכלי הבינה המלאכותית והמתינו לתשובה.';
   box.appendChild(s2sub);
+  var s3 = document.createElement('div'); s3.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s3.textContent='שלב 3 — הדביקו את התשובה כאן';
+  box.appendChild(s3);
+  var s3sub = document.createElement('div'); s3sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s3sub.textContent='העתיקו את התשובה שקיבלתם, והדביקו אותה כאן למטה.';
+  box.appendChild(s3sub);
   var paste = document.createElement('textarea'); paste.id='exam-imp-paste';
   paste.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   box.appendChild(paste);
@@ -3972,7 +3999,7 @@ function openExamImport(mode){
   modeNote.textContent = (mode==='structure') ? 'מצב מבנה בלבד — ייבנה השלד (פרקים, מספר שאלות, ניקוד ובחירה) עם שאלות ריקות למילוי.' : 'מצב מלא — ייבנו גם נוסחי השאלות, התשובות והסעיפים.';
   box.appendChild(modeNote);
   var actions = document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:14px;';
-  var doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent='✓ בנה בחינה'; doBtn.style.flex='1';
+  var doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent='✓ צור בחינה'; doBtn.style.flex='1';
   doBtn.onclick = function(){ examImportBuild(paste.value, mode); };
   var closeBtn = document.createElement('button'); closeBtn.className='btn ghost sm'; closeBtn.textContent='ביטול';
   closeBtn.onclick = function(){ ov.remove(); };
@@ -3986,23 +4013,25 @@ var examCTopics = new Set(), examCTraits = new Set(), examCAge = '';
 function examcNum(id){ var el=$(id); var n=el?parseInt(el.value,10):0; return (isNaN(n)||n<0)?0:n; }
 // מצב-מנות: מתג-הקובץ דלוק וגם מבוקשות מעל 15 שאלות (partId → פר-פרק; אחרת → סך פתוח+אמריקאי+אנסין).
 function examBatchMode(partId){
-  var attach = $('examc-attach') ? $('examc-attach').checked : false;
-  if (!attach) return false;
-  var count = partId ? examcNum('examc-count') : (examcNum('examc-open') + examcNum('examc-mc') + examcNum('examc-ansin'));
-  return count > 15;
+  // מוצג רק כשמתג-הצירוף דלוק — קובץ גדול/כמה קבצים הוא הסיכון האמיתי להיחתך (בלי קשר למספר-השאלות).
+  return $('examc-attach') ? $('examc-attach').checked : false;
 }
-// מציג/מסתיר את הערת-המנות ומעדכן את נוסחה לפי המסך.
+// עוטף מקטע לטיני/מספרי ב-isolate כדי שלא יתהפך בהקשר RTL (AI, ---עוד---, וכו').
+function examLtr(t){ return '<span style="unicode-bidi:isolate; direction:ltr;">' + t + '</span>'; }
+// ארבעת שלבי-העבודה-במנות — זהים בכל המסכים. fileHint = תוספת לשלב 1 (ייבוא-קובץ).
+function examBatchNoteHtml(btnLabel){
+  var MK = '<code style="unicode-bidi:isolate;">---עוד---</code>';
+  var BTN = btnLabel || 'צור בחינה';
+  return '📎 <b>קובץ גדול או כמה קבצים?</b> הבינה המלאכותית לא תמיד מסתדרת עם הכול בבת-אחת, אז היא עשויה להחזיר את התשובה בכמה מנות:<br>' +
+         'שלחו את ההנחיה כרגיל. אם בסוף התשובה מופיע ' + MK + ' — כתבו בצ׳אט "<b>עוד</b>", והמשיכו כך עד שהסימון ' + MK + ' ייעלם.<br>' +
+         'בסיום, העתיקו את <b>כל</b> מקטעי-התשובה (אחד אחרי השני, לפי הסדר) לתיבה למטה, ולחצו "<b>' + BTN + '</b>".';
+}
 function examSyncBatchNote(partId){
   var el = $('examc-batch-note'); if (!el) return;
   var on = examBatchMode(partId);
   el.style.display = on ? 'block' : 'none';
   if (!on) return;
-  var steps = '<b>1.</b> הריצו את ההנחיה ב-AI. <b>2.</b> אם בסוף התשובה מופיע <code>---עוד---</code>, כתבו ב-AI \u201Cהמשך\u201D והדביקו את המנה הבאה <b>מתחת</b> לקודמת (באותה תיבה). <b>3.</b> חזרו עד שאין <code>---עוד---</code>, ואז לחצו \u201Cבנה\u201D פעם אחת';
-  if (partId){
-    el.innerHTML = '📎 <b>קובץ גדול?</b> ה-AI עלול להיחתך כשמבקשים ממנו הרבה שאלות בבת-אחת, אז ההנחיה מבקשת ממנו לעבוד במנות. ' + steps + '.';
-  } else {
-    el.innerHTML = '📎 <b>קובץ גדול?</b> כשמבקשים הרבה שאלות מקובץ ארוך ה-AI עלול להיחתך, אז ההנחיה מבקשת ממנו לעבוד בפרקים. ' + steps + ' — כל הפרקים ייבנו יחד.';
-  }
+  el.innerHTML = examBatchNoteHtml(partId ? 'בנה' : 'צור בחינה');
 }
 function examcFree(parent, id, placeholder, refresh){
   var inp=document.createElement('input'); inp.type='text'; inp.id=id; inp.placeholder=placeholder;
@@ -4048,7 +4077,7 @@ function examCreatePrompt(mode, partId){
         P.push('חשוב — הקובץ ארוך, אז אל תנסה להחזיר הכל בבת-אחת. עבוד במנות:');
         P.push('• בכל תשובה: JSON תקין ומלא במבנה { "parts": [ ... ] } — עם עד 15 שאלות.');
         P.push('• מיד אחרי ה-JSON, בשורה נפרדת, כתוב בדיוק: ---עוד---');
-        P.push('• כשאכתוב "המשך": JSON נפרד ומלא נוסף באותו מבנה { "parts": [ ... ] } — עם השאלות שטרם נתת. שוב ---עוד--- אם נשאר; בלי הסימן = סיימת.');
+        P.push('• כשאכתוב "עוד": JSON נפרד ומלא נוסף באותו מבנה { "parts": [ ... ] } — עם השאלות שטרם נתת. שוב ---עוד--- אם נשאר; בלי הסימן = סיימת.');
         P.push('• כל תשובה עומדת בפני עצמה כ-JSON תקין ושלם. אל תפצל JSON אחד בין תשובות.');
       } else {
         P.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
@@ -4089,7 +4118,15 @@ function examCreatePrompt(mode, partId){
     L.push('לכל פרק חדש קבע score סביר; אתאים את הניקוד הסופי בעורך.');
   }
   if (note) L.push('הנחיה נוספת חשובה: ' + note + '.');
-  if (attach) L.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף; הנושא והמאפיינים משמשים כהקשר בלבד.');
+  var sample = $('examc-sample') ? $('examc-sample').checked : false;
+  if (attach && sample) {
+    L.push('מצורפים שני קבצים, כל אחד בתפקיד שונה:');
+    L.push('• חומר-הלימוד — ממנו קח את התוכן (נושאים, מושגים, עובדות). הנושא והמאפיינים משמשים כהקשר בלבד.');
+    L.push('• הבחינה-לדוגמה — רמה בלבד: חקה את רמת-הקושי, אורך-השאלות והסגנון, אך אל תיקח ממנה תוכן ואל תחזור על שאלותיה.');
+    L.push('כדי לזהות מי-מה: הקובץ בעל מבנה-בחינה (ניקוד, "ענו על X מתוך Y", חלוקה לפרקים), או ששמו מרמז על מבחן/בחינה/דוגמה — הוא הבחינה-לדוגמה. השני הוא חומר-הלימוד.');
+  } else if (attach) {
+    L.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף; הנושא והמאפיינים משמשים כהקשר בלבד.');
+  }
   L.push('');
   L.push('המבנה המדויק הנדרש (דוגמה תקינה):');
   L.push('{');
@@ -4126,7 +4163,7 @@ function examCreatePrompt(mode, partId){
     L.push('חשוב — הקובץ ארוך, אז אל תנסה להחזיר את כל הפרקים בבת-אחת. עבוד בפרקים:');
     L.push('• בתשובה הראשונה: JSON תקין ומלא — { "title": ..., "examTime": ..., "bonus": ..., "parts": [ ... ] } — עם פרק אחד או יותר במלואם (לא בהכרח כולם).');
     L.push('• מיד אחרי ה-JSON, בשורה נפרדת, כתוב בדיוק: ---עוד---');
-    L.push('• כשאכתוב "המשך": JSON נפרד ומלא נוסף — { "parts": [ ... ] } בלבד (בלי title/examTime) — עם הפרקים שטרם נתת. שוב ---עוד--- אם נשאר; בלי הסימן = סיימת.');
+    L.push('• כשאכתוב "עוד": JSON נפרד ומלא נוסף — { "parts": [ ... ] } בלבד (בלי title/examTime) — עם הפרקים שטרם נתת. שוב ---עוד--- אם נשאר; בלי הסימן = סיימת.');
     L.push('• כל תשובה עומדת בפני עצמה כ-JSON תקין ושלם. אל תפצל JSON אחד בין תשובות.');
   } else {
     L.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
@@ -4142,11 +4179,11 @@ function openExamCreate(mode){
   ov.onclick = function(e){ if (e.target===ov) ov.remove(); };
   var box = document.createElement('div');
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
-  var refresh = function(){ var p=$('examc-prompt'); if (p) p.value = examCreatePrompt(mode); examSyncBatchNote(); };
+  var refresh = function(){ var atOn = $('examc-attach') && $('examc-attach').checked; var _sr=$('examc-sample-row'); if(_sr){ _sr.style.display = atOn ? 'block' : 'none'; if(!atOn && $('examc-sample')) $('examc-sample').checked=false; } var smOn = $('examc-sample') && $('examc-sample').checked; var p=$('examc-prompt'); if (p) p.value = examCreatePrompt(mode); var _r=$('examc-attach-remind'); if(_r){ if(atOn){ _r.textContent = smOn ? '📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד ואת הבחינה-לדוגמה — יחד עם ההנחיה, באותה הודעה.' : '📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד — יחד עם ההנחיה, באותה הודעה.'; _r.style.display='block'; } else { _r.style.display='none'; } } examSyncBatchNote(); };
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;';
   title.textContent = (mode==='append') ? '✨ הוספת שאלות ב-AI' : '✨ בניית בחינה חדשה עם AI';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 16'; box.appendChild(_vtag);
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 22'; box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent = (mode==='append') ? 'הגדירו כמה שאלות להוסיף ובאיזה נושא, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה.' : 'הגדירו את הבחינה, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה. המערכת תבנה את הבחינה ותוביל לעריכה.';
   box.appendChild(desc);
@@ -4210,26 +4247,41 @@ function openExamCreate(mode){
   var atTxt = document.createElement('span'); atTxt.textContent='📎 אצרף חומר-לימוד בכלי ה-AI (סיכום, פרק, דף מקורות)';
   atLab.appendChild(atChk); atLab.appendChild(atTxt); atWrap.appendChild(atLab);
   var atSub = document.createElement('div'); atSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;'; atSub.textContent='סמנו אם תצרפו קובץ ב-ChatGPT/Gemini/Claude — הבחינה תיבנה על בסיס תוכנו. (את הקובץ מצרפים שם, לא כאן.)';
-  atWrap.appendChild(atSub); box.appendChild(atWrap);
+  atWrap.appendChild(atSub);
+  var smRow = document.createElement('div'); smRow.id='examc-sample-row'; smRow.style.cssText='display:none; margin-top:10px; padding-top:10px; border-top:1px solid rgba(46,196,182,.2);';
+  var smLab = document.createElement('label'); smLab.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; font-size:14px; color:var(--ink); font-weight:700;';
+  var smChk = document.createElement('input'); smChk.type='checkbox'; smChk.id='examc-sample'; smChk.style.cssText='width:18px; height:18px; accent-color:var(--gold); cursor:pointer; flex:0 0 auto;';
+  smChk.onchange = refresh;
+  var smTxt = document.createElement('span'); smTxt.textContent='🎯 אצרף גם בחינה-לדוגמה — לכיוון רמת-השאלות';
+  smLab.appendChild(smChk); smLab.appendChild(smTxt); smRow.appendChild(smLab);
+  var smSub = document.createElement('div'); smSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:6px; line-height:1.5;'; smSub.textContent='ה-AI יחקה את רמתה, אורכה וסגנונה על התוכן שלכם — בלי לחזור על שאלותיה.';
+  smRow.appendChild(smSub); atWrap.appendChild(smRow);
+  box.appendChild(atWrap);
   var hr = document.createElement('div'); hr.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:18px 0 14px;'; box.appendChild(hr);
-  var s1 = document.createElement('div'); s1.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את ההנחיה'; box.appendChild(s1);
+  var s1 = document.createElement('div'); s1.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את הטקסט'; box.appendChild(s1);
+  var s1sub = document.createElement('div'); s1sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s1sub.textContent='העתיקו את ההנחיה והדביקו אותה בכלי ה-AI שבו אתם משתמשים.'; box.appendChild(s1sub);
   var pBox = document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value = examCreatePrompt(mode); box.appendChild(pBox);
-  var bnote = document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; font-size:12.5px; color:var(--ink); line-height:1.65; background:rgba(243,200,90,.10); border:1px solid rgba(243,200,90,.38); border-radius:10px; padding:10px 13px; margin:10px 0 2px;';
-  box.appendChild(bnote);
-  var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
-  copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת ההנחיה'; },1500); };
+  var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת הפרומפט'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
+  copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת הפרומפט'; },1500); };
   box.appendChild(copyBtn);
-  var s2 = document.createElement('div'); s2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — הדביקו את התשובה כאן'; box.appendChild(s2);
-  var s2sub = document.createElement('div'); s2sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s2sub.textContent='הדביקו את ה-JSON שקיבלתם מכלי ה-AI.'; box.appendChild(s2sub);
+  var atRemind = document.createElement('div'); atRemind.id='examc-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-8px 0 16px; font-size:14px; color:var(--ink); line-height:1.5;';
+  atRemind.textContent='📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד — יחד עם ההנחיה, באותה הודעה.';
+  box.appendChild(atRemind);
+  var bnote = document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:12px 14px; margin:-8px 0 16px; font-size:13.5px; color:var(--ink); line-height:1.6;';
+  box.appendChild(bnote);
+  var s2 = document.createElement('div'); s2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — שלחו לבינה המלאכותית'; box.appendChild(s2);
+  var s2sub = document.createElement('div'); s2sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:14px; line-height:1.5;'; s2sub.textContent='הדביקו את הטקסט בכלי הבינה המלאכותית ושלחו. המתינו לתשובה.'; box.appendChild(s2sub);
+  var s3 = document.createElement('div'); s3.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s3.textContent='שלב 3 — הדביקו את התשובה כאן'; box.appendChild(s3);
+  var s3sub = document.createElement('div'); s3sub.style.cssText='font-size:13px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s3sub.textContent='העתיקו את התשובה שקיבלתם, והדביקו אותה כאן למטה.'; box.appendChild(s3sub);
   var paste = document.createElement('textarea'); paste.id='examc-paste';
   paste.style.cssText='width:100%; height:140px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   box.appendChild(paste);
   var msg = document.createElement('div'); msg.id='examc-msg'; msg.style.cssText='display:none; white-space:pre-wrap; color:#ff8a8a; background:rgba(255,107,107,.10); border:1px solid rgba(255,107,107,.35); border-radius:10px; padding:10px 13px; font-size:13px; line-height:1.5; margin-top:12px; font-family:Heebo;';
   box.appendChild(msg);
   var actions = document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:14px;';
-  var doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent = (mode==='append') ? '✓ הוסף לבחינה' : '✓ בנה בחינה'; doBtn.style.flex='1';
+  var doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent = (mode==='append') ? '✓ הוסף לבחינה' : '✓ צור בחינה'; doBtn.style.flex='1';
   doBtn.onclick = function(){ examImportBuild(paste.value, { append:(mode==='append'), msgId:'examc-msg', overlayId:'examc-overlay' }); };
   var closeBtn = document.createElement('button'); closeBtn.className='btn ghost sm'; closeBtn.textContent='ביטול'; closeBtn.onclick=function(){ ov.remove(); };
   actions.appendChild(doBtn); actions.appendChild(closeBtn); box.appendChild(actions);
@@ -4246,11 +4298,11 @@ function openPartAi(partId){
   ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
   var box=document.createElement('div');
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:560px; width:100%; text-align:right; margin:auto;';
-  var refresh=function(){ var p=$('examc-prompt'); if(p) p.value=examCreatePrompt('append', partId); examSyncBatchNote(partId); };
+  var refresh=function(){ var p=$('examc-prompt'); if(p) p.value=examCreatePrompt('append', partId); var _r=$('examc-attach-remind'); if(_r) _r.style.display=($('examc-attach') && $('examc-attach').checked)?'block':'none'; examSyncBatchNote(partId); };
   var title=document.createElement('div'); title.style.cssText='font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px;';
   title.textContent='🤖 שאלות ב-AI — פרק '+(pIdx+1)+' ('+typeLabel+')';
   box.appendChild(title);
-  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 16'; box.appendChild(_vtag);
+  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 22'; box.appendChild(_vtag);
   var desc=document.createElement('div'); desc.style.cssText='font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בפרק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
   box.appendChild(desc);
@@ -4303,16 +4355,23 @@ function openPartAi(partId){
   var atTxt=document.createElement('span'); atTxt.textContent='📎 אצרף חומר-לימוד בכלי ה-AI';
   atLab.appendChild(atChk); atLab.appendChild(atTxt); atWrap.appendChild(atLab); box.appendChild(atWrap);
   var hr=document.createElement('div'); hr.style.cssText='border-top:1px solid rgba(255,255,255,.12); margin:14px 0 12px;'; box.appendChild(hr);
-  var s1=document.createElement('div'); s1.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את ההנחיה'; box.appendChild(s1);
+  var s1=document.createElement('div'); s1.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s1.textContent='שלב 1 — העתיקו את הטקסט'; box.appendChild(s1);
+  var s1sub=document.createElement('div'); s1sub.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s1sub.textContent='העתיקו את ההנחיה והדביקו אותה בכלי ה-AI שבו אתם משתמשים.'; box.appendChild(s1sub);
   var pBox=document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:140px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value=examCreatePrompt('append', partId); box.appendChild(pBox);
-  var bnote=document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; font-size:12.5px; color:var(--ink); line-height:1.65; background:rgba(243,200,90,.10); border:1px solid rgba(243,200,90,.38); border-radius:10px; padding:10px 13px; margin:10px 0 2px;';
-  box.appendChild(bnote);
-  var copyBtn=document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 16px; font-size:16px; padding:12px;';
-  copyBtn.onclick=function(){ pBox.select(); try{document.execCommand('copy');}catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){copyBtn.textContent='📋 העתקת ההנחיה';},1500); };
+  var copyBtn=document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת הפרומפט'; copyBtn.style.cssText='width:100%; margin:10px 0 16px; font-size:16px; padding:12px;';
+  copyBtn.onclick=function(){ pBox.select(); try{document.execCommand('copy');}catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){copyBtn.textContent='📋 העתקת הפרומפט';},1500); };
   box.appendChild(copyBtn);
-  var s2=document.createElement('div'); s2.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — הדביקו את התשובה'; box.appendChild(s2);
+  var atRemind=document.createElement('div'); atRemind.id='examc-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-6px 0 14px; font-size:13.5px; color:var(--ink); line-height:1.5;';
+  atRemind.textContent='📎 אם אתם מצרפים חומר — צרפו אותו יחד עם ההנחיה באותה הודעה.';
+  box.appendChild(atRemind);
+  var bnote=document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:12px 14px; margin:-6px 0 14px; font-size:13px; color:var(--ink); line-height:1.6;';
+  box.appendChild(bnote);
+  var s2=document.createElement('div'); s2.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — שלחו לבינה המלאכותית'; box.appendChild(s2);
+  var s2sub=document.createElement('div'); s2sub.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:12px; line-height:1.5;'; s2sub.textContent='הדביקו את הטקסט בכלי הבינה המלאכותית ושלחו. המתינו לתשובה.'; box.appendChild(s2sub);
+  var s3=document.createElement('div'); s3.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s3.textContent='שלב 3 — הדביקו את התשובה'; box.appendChild(s3);
+  var s3sub=document.createElement('div'); s3sub.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; s3sub.textContent='העתיקו את התשובה שקיבלתם, והדביקו אותה כאן למטה.'; box.appendChild(s3sub);
   var paste=document.createElement('textarea'); paste.id='examc-paste';
   paste.style.cssText='width:100%; height:120px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   box.appendChild(paste);
