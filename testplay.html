@@ -649,7 +649,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 22</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 23</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -3958,7 +3958,7 @@ function openExamImport(mode){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 22';
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 23';
   box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
   desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: פרקים, סוגים, ניקוד ובחירה.';
@@ -3973,12 +3973,12 @@ function openExamImport(mode){
   pBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value = examImportPrompt(mode);
   box.appendChild(pBox);
+  var atRemind = document.createElement('div'); atRemind.style.cssText='background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:12px 0 6px; font-size:14px; color:var(--ink); line-height:1.5;';
+  atRemind.textContent='📎 צרפו את קובץ-הבחינה (Word/PDF) יחד עם ההנחיה — באותה הודעה.';
+  box.appendChild(atRemind);
   var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת הפרומפט'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
   copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת הפרומפט'; },1500); };
   box.appendChild(copyBtn);
-  var atRemind = document.createElement('div'); atRemind.style.cssText='background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-8px 0 16px; font-size:14px; color:var(--ink); line-height:1.5;';
-  atRemind.textContent='📎 צרפו את קובץ-הבחינה (Word/PDF) יחד עם ההנחיה — באותה הודעה.';
-  box.appendChild(atRemind);
   var bnote = document.createElement('div'); bnote.style.cssText='background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:12px 14px; margin:-8px 0 16px; font-size:13.5px; color:var(--ink); line-height:1.6;';
   bnote.innerHTML = examBatchNoteHtml('צור בחינה');
   box.appendChild(bnote);
@@ -4183,7 +4183,7 @@ function openExamCreate(mode){
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;';
   title.textContent = (mode==='append') ? '✨ הוספת שאלות ב-AI' : '✨ בניית בחינה חדשה עם AI';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 22'; box.appendChild(_vtag);
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 23'; box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent = (mode==='append') ? 'הגדירו כמה שאלות להוסיף ובאיזה נושא, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה.' : 'הגדירו את הבחינה, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה. המערכת תבנה את הבחינה ותוביל לעריכה.';
   box.appendChild(desc);
@@ -4263,12 +4263,12 @@ function openExamCreate(mode){
   var pBox = document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value = examCreatePrompt(mode); box.appendChild(pBox);
+  var atRemind = document.createElement('div'); atRemind.id='examc-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:12px 0 6px; font-size:14px; color:var(--ink); line-height:1.5;';
+  atRemind.textContent='📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד — יחד עם ההנחיה, באותה הודעה.';
+  box.appendChild(atRemind);
   var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת הפרומפט'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
   copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת הפרומפט'; },1500); };
   box.appendChild(copyBtn);
-  var atRemind = document.createElement('div'); atRemind.id='examc-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-8px 0 16px; font-size:14px; color:var(--ink); line-height:1.5;';
-  atRemind.textContent='📎 אל תשכח לצרף לכלי ה-AI את חומר-הלימוד — יחד עם ההנחיה, באותה הודעה.';
-  box.appendChild(atRemind);
   var bnote = document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:12px 14px; margin:-8px 0 16px; font-size:13.5px; color:var(--ink); line-height:1.6;';
   box.appendChild(bnote);
   var s2 = document.createElement('div'); s2.style.cssText='font-size:15px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — שלחו לבינה המלאכותית'; box.appendChild(s2);
@@ -4302,7 +4302,7 @@ function openPartAi(partId){
   var title=document.createElement('div'); title.style.cssText='font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px;';
   title.textContent='🤖 שאלות ב-AI — פרק '+(pIdx+1)+' ('+typeLabel+')';
   box.appendChild(title);
-  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 22'; box.appendChild(_vtag);
+  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 23'; box.appendChild(_vtag);
   var desc=document.createElement('div'); desc.style.cssText='font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בפרק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
   box.appendChild(desc);
@@ -4360,12 +4360,12 @@ function openPartAi(partId){
   var pBox=document.createElement('textarea'); pBox.id='examc-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:140px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
   pBox.value=examCreatePrompt('append', partId); box.appendChild(pBox);
+  var atRemind=document.createElement('div'); atRemind.id='examc-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:10px 0 6px; font-size:13.5px; color:var(--ink); line-height:1.5;';
+  atRemind.textContent='📎 אם אתם מצרפים חומר — צרפו אותו יחד עם ההנחיה באותה הודעה.';
+  box.appendChild(atRemind);
   var copyBtn=document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת הפרומפט'; copyBtn.style.cssText='width:100%; margin:10px 0 16px; font-size:16px; padding:12px;';
   copyBtn.onclick=function(){ pBox.select(); try{document.execCommand('copy');}catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){copyBtn.textContent='📋 העתקת הפרומפט';},1500); };
   box.appendChild(copyBtn);
-  var atRemind=document.createElement('div'); atRemind.id='examc-attach-remind'; atRemind.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:11px 14px; margin:-6px 0 14px; font-size:13.5px; color:var(--ink); line-height:1.5;';
-  atRemind.textContent='📎 אם אתם מצרפים חומר — צרפו אותו יחד עם ההנחיה באותה הודעה.';
-  box.appendChild(atRemind);
   var bnote=document.createElement('div'); bnote.id='examc-batch-note'; bnote.style.cssText='display:none; background:rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.3); border-radius:10px; padding:12px 14px; margin:-6px 0 14px; font-size:13px; color:var(--ink); line-height:1.6;';
   box.appendChild(bnote);
   var s2=document.createElement('div'); s2.style.cssText='font-size:14px; color:var(--gold); font-weight:800; margin-bottom:4px;'; s2.textContent='שלב 2 — שלחו לבינה המלאכותית'; box.appendChild(s2);
