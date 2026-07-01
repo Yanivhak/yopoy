@@ -649,7 +649,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
   </div>
 </div>
 
-<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 12</span></div>
+<div class="conn"><span class="dot" id="conn-dot"></span><span id="conn-txt">לא מחובר</span> <span style="opacity:.5; margin-inline-start:6px;">tp-בדיקה 13</span></div>
 <!-- v114: שם-החשבון קבוע למעלה-במרכז, נראה בכל מסך כשמחובר. מידע בלבד (לא לחיץ) — לדעת באיזה חשבון נמצאים. -->
 <div id="user-badge" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; font-size:13px; color:var(--ink-dim); background:rgba(10,16,32,.82); padding:4px 14px; border-radius:12px; max-width:55vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🟢 <b id="user-badge-name" style="color:var(--gold); font-weight:700;"></b></div>
 
@@ -898,7 +898,7 @@ body.tts-student .pbtn.sel::after{content:' \2713'; font-weight:900;}
           <span class="sw"></span><span>הפעלה</span>
         </span>
       </div>
-      <div style="font-size:13px; color:var(--ink-dim); margin-top:11px; line-height:1.55;">במצב בחינה השאלות מאורגנות בחלקים, לכל שאלה ניקוד, וציון-הבחינה עד 100 (ועוד בונוס). השאר זהה לחידון רגיל.</div>
+      <div style="font-size:13px; color:var(--ink-dim); margin-top:11px; line-height:1.55;">במצב בחינה השאלות מאורגנות בפרקים, לכל שאלה ניקוד, וציון-הבחינה עד 100 (ועוד בונוס). השאר זהה לחידון רגיל.</div>
     </div>
 
     <h2 style="margin-top:14px;">השאלות <span class="info-i" onclick="showInfo(event, 'לכל שאלה כתבו 2 עד 4 תשובות, וסמנו את התשובה הנכונה בלחיצה על העיגול הירוק שלצידה. רק תשובה אחת יכולה להיות מסומנת כנכונה.')">i</span></h2>
@@ -3580,7 +3580,7 @@ function examEnsure(){
     quiz.questions.forEach(function(q){ if (_ids.indexOf(q.partId)<0) q.partId = quiz.parts[0].id; });
   }
 }
-function examPartLabel(i){ return 'חלק ' + String.fromCharCode('א'.charCodeAt(0)+i); }
+function examPartLabel(i){ return 'פרק ' + String.fromCharCode('א'.charCodeAt(0)+i); }
 function examNewId(){ return 'p' + Date.now().toString(36) + Math.floor(Math.random()*1e4).toString(36); }
 function examQsOf(pid){ return quiz.questions.filter(q => q.partId === pid); }
 function examQPoints(q, part){ if (part && part.type==='open'){ return (q.subs||[]).reduce(function(s,x){ return s + (Number(x.points)||0); }, 0); } return Number(q.points)||0; }
@@ -3600,13 +3600,13 @@ function examIsValid(){
   return quiz.parts.every(examPartOk);
 }
 function examInvalidMsg(){
-  if (!quiz.parts.length) return 'הבחינה ריקה — אין חלקים.';
-  if (examTotal() > examCap()) return 'ציון-הבחינה (' + examTotal() + ') חורג מהמותר (' + examCap() + '). הקטינו ציוני-חלקים או הוסיפו בונוס.';
+  if (!quiz.parts.length) return 'הבחינה ריקה — אין פרקים.';
+  if (examTotal() > examCap()) return 'ציון-הבחינה (' + examTotal() + ') חורג מהמותר (' + examCap() + '). הקטינו ציוני-פרקים או הוסיפו בונוס.';
   var bad = quiz.parts.find(function(p){ return !examPartOk(p); });
   if (bad){
     var i = quiz.parts.indexOf(bad), c = examEffChoice(bad), score = Number(bad.score)||0;
-    if (c>0 && score % c !== 0) return examPartLabel(i) + ': בחלק-בחירה, ציון-החלק (' + score + ') חייב להתחלק ב-' + c + ' (מספר-השאלות לענות) לניקוד שווה.';
-    return examPartLabel(i) + ': סכום-נקודות-השאלות (' + examPartSum(bad) + ') אינו שווה לציון-החלק (' + score + ').';
+    if (c>0 && score % c !== 0) return examPartLabel(i) + ': בפרק-בחירה, ציון-הפרק (' + score + ') חייב להתחלק ב-' + c + ' (מספר-השאלות לענות) לניקוד שווה.';
+    return examPartLabel(i) + ': סכום-נקודות-השאלות (' + examPartSum(bad) + ') אינו שווה לציון-הפרק (' + score + ').';
   }
   return '';
 }
@@ -3657,7 +3657,7 @@ function examSetPartType(part, t){
     if (part.type==='open') return (q.subs||[]).some(function(s){ return (s.text&&s.text.trim()) || (Number(s.points)||0)>0; });
     return (q.answers||[]).some(function(a){ return a && a.trim(); });
   });
-  if (hasContent && !confirm('החלפת סוג-החלק תמיר את השאלות שבו. הנוסח יישמר, אך התוכן הייחודי לסוג הנוכחי (תשובות אמריקאיות או תת-סעיפים) יימחק. להמשיך?')) return;
+  if (hasContent && !confirm('החלפת סוג-הפרק תמיר את השאלות שבו. הנוסח יישמר, אך התוכן הייחודי לסוג הנוכחי (תשובות אמריקאיות או תת-סעיפים) יימחק. להמשיך?')) return;
   part.type = t;
   if (t==='open' && typeof part.subCount === 'undefined') part.subCount = 2;
   qs.forEach(function(q){
@@ -3669,7 +3669,7 @@ function examSetPartType(part, t){
   renderQuestions(); touch();
 }
 function examDelPart(pid){
-  if (!confirm('למחוק את החלק וכל שאלותיו?')) return;
+  if (!confirm('למחוק את הפרק וכל שאלותיו?')) return;
   quiz.questions = quiz.questions.filter(function(q){ return q.partId !== pid; });
   quiz.parts = quiz.parts.filter(function(p){ return p.id !== pid; });
   renderQuestions(); touch();
@@ -3731,18 +3731,18 @@ function examImportPrompt(mode){
     '- examTime: משך המבחן בדקות (מספר שלם). אם לא כתוב — 45.',
     '- bonus: נקודות-בונוס מעבר ל-100 (0 אם אין).',
     '- כל פרק בבחינה = part נפרד.',
-    '- type: "mc" לשאלות אמריקאיות (רב-ברירה), "open" לשאלות פתוחות. אל תערבב סוגים בתוך חלק.',
-    '- score: ניקוד החלק כולו (מספר שלם).',
-    '- choiceCount: כמה שאלות עונים מתוך החלק. "יש לענות על 2 מבין 4" → choiceCount:2 (והבא את כל 4 השאלות). אם עונים על הכל → 0.',
-    '- passage: קטע-קריאה (אנ-סין) המופיע מעל שאלות החלק. אם אין קטע בחלק — השמט את השדה.',
+    '- type: "mc" לשאלות אמריקאיות (רב-ברירה), "open" לשאלות פתוחות. אל תערבב סוגים בתוך פרק.',
+    '- score: ניקוד הפרק כולו (מספר שלם).',
+    '- choiceCount: כמה שאלות עונים מתוך הפרק. "יש לענות על 2 מבין 4" → choiceCount:2 (והבא את כל 4 השאלות). אם עונים על הכל → 0.',
+    '- passage: קטע-קריאה (אנ-סין) המופיע מעל שאלות הפרק. אם אין קטע בפרק — השמט את השדה.',
     '- mc: answers = רשימת התשובות; correct = אינדקס התשובה הנכונה מ-0 (או -1 אם לא ידוע).',
     '- open: subs = תת-הסעיפים, לכל אחד text ו-points. שאלה פתוחה בלי סעיפים → sub יחיד עם מלוא ניקוד-השאלה.'
   ];
   if (mode==='structure'){
     lines.push('');
     lines.push('חשוב — ייבוא מבנה בלבד: השאר את כל שדות ה-text ריקים (""). אל תכתוב את נוסחי השאלות, התשובות או הסעיפים.');
-    lines.push('מלא רק את המבנה: type, score, choiceCount, מספר השאלות בכל חלק, מספר התשובות בכל שאלת-mc (כמחרוזות ריקות), וב-open את הסעיפים עם ה-points בלבד.');
-    lines.push('אם בחלק יש קטע-קריאה, כלול "passage":"" ריק (השדה קיים אך בלי התוכן).');
+    lines.push('מלא רק את המבנה: type, score, choiceCount, מספר השאלות בכל פרק, מספר התשובות בכל שאלת-mc (כמחרוזות ריקות), וב-open את הסעיפים עם ה-points בלבד.');
+    lines.push('אם בפרק יש קטע-קריאה, כלול "passage":"" ריק (השדה קיים אך בלי התוכן).');
   }
   lines.push('');
   lines.push('השתמש במרכאות כפולות ישרות (") בלבד — לא מרכאות מסולסלות/חכמות.');
@@ -3809,7 +3809,7 @@ function examApplyToPart(data, opts){
   opts = opts||{};
   var pid = opts.appendToPartId;
   var tp = null; for (var i=0;i<quiz.parts.length;i++){ if (quiz.parts[i].id===pid){ tp=quiz.parts[i]; break; } }
-  if (!tp){ if(typeof showToast==='function') showToast('החלק לא נמצא — ייתכן שנמחק.'); return; }
+  if (!tp){ if(typeof showToast==='function') showToast('הפרק לא נמצא — ייתכן שנמחק.'); return; }
   if (opts.replaceAll){
     quiz.questions = quiz.questions.filter(function(q){ return q.partId !== pid; });
   } else if (opts.replaceIds && opts.replaceIds.length){
@@ -3834,7 +3834,7 @@ function examApplyToPart(data, opts){
       var pairs = findSimilarPairs(quiz.questions);   // כל הבחינה — חוצה-חלקים וחוצה-סוגים
       if (pairs && pairs.length){ dupMsg = ' ⚠️ ייתכנו ' + pairs.length + ' כפילויות בבחינה — לחצו "🔁 בדוק כפילויות" לפירוט.'; }
     }
-    var head = opts.replaceAll ? 'החלק נבנה מחדש' : ('נוספו ' + added + ' שאלות לחלק');
+    var head = opts.replaceAll ? 'הפרק נבנה מחדש' : ('נוספו ' + added + ' שאלות לפרק');
     if (typeof showToast==='function') showToast(head + ' ✓ — בדקו את הניקוד והחלוקה.' + dupMsg);
   }, 60);
 }
@@ -3886,7 +3886,7 @@ function examApplyBuild(data, opts){
     return te;
   });
   setTimeout(function(){
-    if (append){ showToast('נוספו שאלות לבחינה ✓ — בדקו את הניקוד והחלוקה לחלקים.'); }
+    if (append){ showToast('נוספו שאלות לבחינה ✓ — בדקו את הניקוד והחלוקה לפרקים.'); }
     else if (!struct && _allEmpty){ showToast('ה-JSON לא כלל תוכן שאלות — נבנה המבנה בלבד. אם רצית תוכן, ודאו שהעתקתם את ההנחיה הנכונה.'); }
     else if (!examIsValid()){ showToast('הבחינה נבנתה — יש הערות-אימות לתיקון (ראו אדום).'); }
     else { showToast('הבחינה נבנתה בהצלחה ✓'); }
@@ -3901,7 +3901,7 @@ function examImportBuild(jsonText, opts){
   var _r = examParseExam(jsonText);
   if (!_r.ok){ examImportError('לא הצלחתי לקרוא את ה-JSON.\nשגיאה: ' + _r.err + '\n\nהתחלת מה שהתקבל:\n' + _r.snippet, msgId); return; }
   var data = _r.data;
-  if (!data || !Array.isArray(data.parts) || !data.parts.length){ examImportError('ה-JSON נקרא, אך אין בו "parts" (רשימת חלקים) תקינה. ודאו שההנחיה רצה במלואה ושהתשובה לא נחתכה.', msgId); return; }
+  if (!data || !Array.isArray(data.parts) || !data.parts.length){ examImportError('ה-JSON נקרא, אך אין בו "parts" (רשימת פרקים) תקינה. ודאו שההנחיה רצה במלואה ושהתשובה לא נחתכה.', msgId); return; }
   if (opts.append){ examApplyBuild(data, {structure:opts.structure, append:true, appendToPartId:opts.appendToPartId, replaceAll:opts.replaceAll, replaceIds:opts.replaceIds, overlayId:opts.overlayId, msgId:opts.msgId}); return; }
   if (typeof quiz==='undefined' || !quiz){ if (typeof newQuiz==='function'){ Promise.resolve(newQuiz()).then(function(){ examApplyBuild(data, {structure:opts.structure, overlayId:opts.overlayId}); }); } return; }
   var hasContent = (typeof quizHasRealContent==='function' && quizHasRealContent());
@@ -3922,10 +3922,10 @@ function openExamImport(mode){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 12';
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:10px;'; _vtag.textContent='גרסה: tp-בדיקה 13';
   box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
-  desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: חלקים, סוגים, ניקוד ובחירה.';
+  desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: פרקים, סוגים, ניקוד ובחירה.';
   box.appendChild(desc);
   var note = document.createElement('div'); note.style.cssText='background:rgba(46,196,182,.08); border:1px solid rgba(46,196,182,.25); border-radius:10px; padding:11px 13px; margin-bottom:16px; font-size:13.5px; color:var(--ink); line-height:1.55;';
   note.textContent='📎 את קובץ-הבחינה מצרפים בכלי ה-AI (שם), לא כאן. כלי-ה-AI קוראים PDF/Word — כולל עברית — טוב יותר מכל חילוץ בדפדפן.';
@@ -3949,7 +3949,7 @@ function openExamImport(mode){
   var msg = document.createElement('div'); msg.id='exam-imp-msg'; msg.style.cssText='display:none; white-space:pre-wrap; color:#ff8a8a; background:rgba(255,107,107,.10); border:1px solid rgba(255,107,107,.35); border-radius:10px; padding:10px 13px; font-size:13px; line-height:1.5; margin-top:12px; font-family:Heebo;';
   box.appendChild(msg);
   var modeNote = document.createElement('div'); modeNote.style.cssText='font-size:12.5px; color:var(--ink-dim); margin:12px 0 2px; line-height:1.5;';
-  modeNote.textContent = (mode==='structure') ? 'מצב מבנה בלבד — ייבנה השלד (חלקים, מספר שאלות, ניקוד ובחירה) עם שאלות ריקות למילוי.' : 'מצב מלא — ייבנו גם נוסחי השאלות, התשובות והסעיפים.';
+  modeNote.textContent = (mode==='structure') ? 'מצב מבנה בלבד — ייבנה השלד (פרקים, מספר שאלות, ניקוד ובחירה) עם שאלות ריקות למילוי.' : 'מצב מלא — ייבנו גם נוסחי השאלות, התשובות והסעיפים.';
   box.appendChild(modeNote);
   var actions = document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:14px;';
   var doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent='✓ בנה בחינה'; doBtn.style.flex='1';
@@ -3987,11 +3987,11 @@ function examCreatePrompt(mode, partId){
       if (_attach) P.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף.');
       if (_exist.length){
         P.push('');
-        P.push('אלה השאלות שכבר נמצאות בחלק — צור שאלות חדשות ושונות מהן, ואל תחזור על אף אחת מהן:');
+        P.push('אלה השאלות שכבר נמצאות בפרק — צור שאלות חדשות ושונות מהן, ואל תחזור על אף אחת מהן:');
         _exist.forEach(function(t,i){ P.push((i+1)+'. '+t); });
       }
       P.push('');
-      P.push('החזר JSON יחיד במבנה הזה (חלק אחד בלבד):');
+      P.push('החזר JSON יחיד במבנה הזה (פרק אחד בלבד):');
       P.push('{ "parts": [ {');
       P.push('    "type": "' + _tp.type + '",');
       if (_tp.type==='open'){
@@ -4033,10 +4033,10 @@ function examCreatePrompt(mode, partId){
   if (age) L.push('שכבת הגיל: ' + age + '. התאם את רמת השאלות, אורך הניסוח והמורכבות.');
   if (traits.length) L.push('מאפייני הנבחנים: ' + traits.join(', ') + '. התאם בהתאם.');
   if (!append){
-    L.push('ציון הבחינה הכולל: ' + total + ' נקודות. חלק את הניקוד בין החלקים כך שסכום ציוני-החלקים יהיה בדיוק ' + total + '.');
+    L.push('ציון הבחינה הכולל: ' + total + ' נקודות. חלק את הניקוד בין הפרקים כך שסכום ציוני-הפרקים יהיה בדיוק ' + total + '.');
     L.push('משך הבחינה: ' + etime + ' דקות (שדה examTime).');
   } else {
-    L.push('לכל חלק חדש קבע score סביר; אתאים את הניקוד הסופי בעורך.');
+    L.push('לכל פרק חדש קבע score סביר; אתאים את הניקוד הסופי בעורך.');
   }
   if (note) L.push('הנחיה נוספת חשובה: ' + note + '.');
   if (attach) L.push('מצורף חומר-לימוד (קובץ אחד או יותר). בסס את השאלות על תוכן החומר המצורף; הנושא והמאפיינים משמשים כהקשר בלבד.');
@@ -4062,11 +4062,11 @@ function examCreatePrompt(mode, partId){
   L.push('- title: שם הבחינה (נסח שם קצר וברור).');
   L.push('- examTime: משך המבחן בדקות (מספר שלם).');
   L.push('- bonus: 0 (אלא אם ביקשתי אחרת).');
-  L.push('- כל פרק/חלק = part נפרד. אל תערבב סוגים בתוך אותו חלק.');
+  L.push('- כל פרק = part נפרד. אל תערבב סוגים בתוך אותו פרק.');
   L.push('- type: "mc" לאמריקאיות, "open" לפתוחות.');
-  L.push('- score: ניקוד החלק כולו (מספר שלם).');
-  L.push('- choiceCount: אם עונים על כל שאלות החלק → 0. (חלוקת-בחירה "ענה על X מתוך Y" אקבע בעצמי בעורך.)');
-  L.push('- passage: קטע-קריאה (אנ-סין) מעל שאלות החלק. אם אין קטע — השמט את השדה.');
+  L.push('- score: ניקוד הפרק כולו (מספר שלם).');
+  L.push('- choiceCount: אם עונים על כל שאלות הפרק → 0. (חלוקת-בחירה "ענה על X מתוך Y" אקבע בעצמי בעורך.)');
+  L.push('- passage: קטע-קריאה (אנ-סין) מעל שאלות הפרק. אם אין קטע — השמט את השדה.');
   L.push('- mc: answers = רשימת התשובות; correct = אינדקס התשובה הנכונה מ-0.');
   L.push('- open: subs = תת-הסעיפים, לכל אחד text ו-points.');
   L.push('');
@@ -4087,12 +4087,12 @@ function openExamCreate(mode){
   var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;';
   title.textContent = (mode==='append') ? '✨ הוספת שאלות ב-AI' : '✨ בניית בחינה חדשה עם AI';
   box.appendChild(title);
-  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 12'; box.appendChild(_vtag);
+  var _vtag = document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 13'; box.appendChild(_vtag);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
   desc.textContent = (mode==='append') ? 'הגדירו כמה שאלות להוסיף ובאיזה נושא, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה.' : 'הגדירו את הבחינה, העתיקו את ההנחיה ל-ChatGPT / Gemini / Claude, והדביקו כאן את התשובה. המערכת תבנה את הבחינה ותוביל לעריכה.';
   box.appendChild(desc);
   var tip = document.createElement('div'); tip.style.cssText='font-size:13px; color:var(--ink); background:rgba(46,196,182,.10); border:1px solid rgba(46,196,182,.22); border-radius:9px; padding:8px 12px; line-height:1.55; margin-bottom:14px;';
-  tip.textContent='💡 אין חובה למלא הכל — שדות ריקים לא ייכנסו להנחיה. את המבנה המדויק (חלוקה לחלקים, "ענה על X מתוך Y") תכווננו בעורך אחרי-כן.';
+  tip.textContent='💡 אין חובה למלא הכל — שדות ריקים לא ייכנסו להנחיה. את המבנה המדויק (חלוקה לפרקים, "ענה על X מתוך Y") תכווננו בעורך אחרי-כן.';
   box.appendChild(tip);
   var C = IMP_CONTENT.study;
   var acc = document.createElement('div'); box.appendChild(acc);
@@ -4126,14 +4126,17 @@ function openExamCreate(mode){
     inp.oninput = refresh;
     wrap.appendChild(lab); wrap.appendChild(inp); return wrap;
   };
-  grid.appendChild(numField('examc-open','מספר שאלות פתוחות', 2));
-  grid.appendChild(numField('examc-mc','מספר שאלות אמריקאיות', (mode==='append'?0:4)));
+  grid.appendChild(numField('examc-open','מספר שאלות פתוחות לייצר', 2));
+  grid.appendChild(numField('examc-mc','מספר שאלות אמריקאיות לייצר', (mode==='append'?0:4)));
   grid.appendChild(numField('examc-ansin','מספר קטעי אנ-סין', 0));
   if (mode!=='append'){
     grid.appendChild(numField('examc-score','ציון כולל', 100));
     grid.appendChild(numField('examc-time','משך הבחינה (דקות)', 45));
   }
   struct.appendChild(grid);
+  var poolNote = document.createElement('div'); poolNote.style.cssText='font-size:12px; color:var(--ink-dim); margin-top:8px; line-height:1.5; background:rgba(141,141,242,.08); border:1px solid rgba(141,141,242,.22); border-radius:9px; padding:8px 11px;';
+  poolNote.textContent='אלה כל השאלות ש-ה-AI ייצר (המאגר). כמה מהן התלמיד עונה — חלוקת-בחירה \u201Cענה על X מתוך Y\u201D — תקבעו בעורך אחרי הבנייה.';
+  struct.appendChild(poolNote);
   box.appendChild(struct);
   var noteWrap = document.createElement('div'); noteWrap.style.cssText='margin:14px 0 4px;';
   noteWrap.innerHTML='<div style="font-size:14px; color:var(--ink); font-weight:700; margin-bottom:6px;">הנחיה חופשית (לא חובה)</div><div style="font-size:12px; color:var(--ink-dim); margin-bottom:7px; line-height:1.5;">לדוגמה: "התמקד בפרק 3" או "כלול שאלה על נושא מסוים". לחומר ארוך עדיף לצרף קובץ.</div>';
@@ -4173,7 +4176,7 @@ function openExamCreate(mode){
 }
 function openPartAi(partId){
   var tp=null, pIdx=-1; for(var i=0;i<quiz.parts.length;i++){ if(quiz.parts[i].id===partId){ tp=quiz.parts[i]; pIdx=i; break; } }
-  if (!tp){ if(typeof showToast==='function') showToast('החלק לא נמצא.'); return; }
+  if (!tp){ if(typeof showToast==='function') showToast('הפרק לא נמצא.'); return; }
   var typeLabel = (tp.type==='open') ? 'פתוח' : 'אמריקאי';
   var st = { mode:'add', selIdx:[] };
   var ov=$('examc-overlay'); if(ov) ov.remove();
@@ -4184,11 +4187,11 @@ function openPartAi(partId){
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:560px; width:100%; text-align:right; margin:auto;';
   var refresh=function(){ var p=$('examc-prompt'); if(p) p.value=examCreatePrompt('append', partId); };
   var title=document.createElement('div'); title.style.cssText='font-size:22px; font-weight:800; color:var(--gold); margin-bottom:4px;';
-  title.textContent='🤖 שאלות ב-AI — חלק '+(pIdx+1)+' ('+typeLabel+')';
+  title.textContent='🤖 שאלות ב-AI — פרק '+(pIdx+1)+' ('+typeLabel+')';
   box.appendChild(title);
-  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 12'; box.appendChild(_vtag);
+  var _vtag=document.createElement('div'); _vtag.style.cssText='font-size:11px; color:var(--ink-dim); opacity:.7; margin-bottom:8px;'; _vtag.textContent='גרסה: tp-בדיקה 13'; box.appendChild(_vtag);
   var desc=document.createElement('div'); desc.style.cssText='font-size:13.5px; color:var(--ink-dim); line-height:1.6; margin-bottom:12px;';
-  desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בחלק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
+  desc.textContent='ה-AI ייצר שאלות מסוג '+typeLabel+' בלבד, שונות מהשאלות שכבר בפרק. העתיקו את ההנחיה, הריצו ב-AI, והדביקו כאן.';
   box.appendChild(desc);
   var cWrap=document.createElement('div'); cWrap.style.cssText='margin-bottom:12px;';
   cWrap.innerHTML='<label style="display:block; font-size:13px; color:var(--ink-dim); margin-bottom:4px;">כמה שאלות להוסיף</label>';
@@ -4202,9 +4205,9 @@ function openPartAi(partId){
   var selBox=document.createElement('div'); selBox.style.cssText='display:none; margin-bottom:12px; max-height:180px; overflow:auto; border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px 10px;';
   var buildSelBox=function(){
     selBox.innerHTML='';
-    var hint=document.createElement('div'); hint.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:6px;'; hint.textContent='סמנו אילו שאלות בחלק להחליף:'; selBox.appendChild(hint);
+    var hint=document.createElement('div'); hint.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:6px;'; hint.textContent='סמנו אילו שאלות בפרק להחליף:'; selBox.appendChild(hint);
     var idxs=[]; quiz.questions.forEach(function(q,i){ if(q.partId===partId) idxs.push(i); });
-    if(!idxs.length){ var e=document.createElement('div'); e.style.cssText='font-size:12.5px; color:var(--ink-dim);'; e.textContent='אין עדיין שאלות בחלק.'; selBox.appendChild(e); return; }
+    if(!idxs.length){ var e=document.createElement('div'); e.style.cssText='font-size:12.5px; color:var(--ink-dim);'; e.textContent='אין עדיין שאלות בפרק.'; selBox.appendChild(e); return; }
     idxs.forEach(function(i,ord){
       var q=quiz.questions[i];
       var row=document.createElement('label'); row.style.cssText='display:flex; align-items:flex-start; gap:8px; padding:5px 0; cursor:pointer; font-size:13px; color:var(--ink); '+(ord?'border-top:1px solid rgba(255,255,255,.07);':'');
@@ -4268,7 +4271,7 @@ function renderExamEditor(){
   _aiWrap.appendChild(_aiHead);
   var _aiSub = document.createElement('div'); _aiSub.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:9px; line-height:1.5;'; _aiSub.textContent='הוסיפו שאלות בעזרת AI, או ייבאו בחינה קיימת (עם תוכן או מבנה בלבד).';
   _aiWrap.appendChild(_aiSub);
-  var _aiHint = document.createElement('div'); _aiHint.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; _aiHint.textContent='לשאלות-AI — השתמשו בכפתור \u201C🤖 שאלות ב-AI\u201D בתוך כל חלק (הסוג נשמר אוטומטית).';
+  var _aiHint = document.createElement('div'); _aiHint.style.cssText='font-size:12.5px; color:var(--ink-dim); margin-bottom:8px; line-height:1.5;'; _aiHint.textContent='לשאלות-AI — השתמשו בכפתור \u201C🤖 הוסף שאלות עם AI\u201D בתוך כל פרק (הסוג נשמר אוטומטית).';
   _aiWrap.appendChild(_aiHint);
   var _impRow = document.createElement('div'); _impRow.style.cssText='display:flex; gap:8px; flex-wrap:wrap;';
   var _impFull = document.createElement('button'); _impFull.className='btn sm'; _impFull.style.cssText='flex:1 1 auto; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.2); color:var(--ink); font-weight:700;'; _impFull.textContent='📄 ייבוא עם תוכן'; _impFull.onclick=function(){ openExamImport('full'); };
@@ -4316,7 +4319,8 @@ function renderExamEditor(){
   list.appendChild(cfg);
 
   // חלקים
-  quiz.parts.forEach(function(part, pi){
+  var _qNum = 0;
+    quiz.parts.forEach(function(part, pi){
     var n = examQsOf(part.id).length;
     var pscore = Number(part.score)||0;
     var isChoice = examIsChoice(part);
@@ -4331,7 +4335,7 @@ function renderExamEditor(){
       var tb=document.createElement('button'); var on=(part.type===pair[0]);
       tb.textContent=pair[1];
       tb.style.cssText='border:none; padding:5px 13px; font-family:Heebo; font-size:13px; font-weight:700; cursor:pointer; background:'+(on?'var(--violet)':'transparent')+'; color:'+(on?'#0b0b2a':'var(--ink-dim)')+';';
-      tb.title = (n>0 ? 'החלפת סוג תמיר את השאלות בחלק' : 'בחרו את סוג-החלק');
+      tb.title = (n>0 ? 'החלפת סוג תמיר את השאלות בפרק' : 'בחרו את סוג-הפרק');
       tb.onclick=function(){ examSetPartType(part, pair[0]); };
       typeWrap.appendChild(tb);
     });
@@ -4348,7 +4352,7 @@ function renderExamEditor(){
     var chOf = document.createElement('span'); chOf.textContent = canChoice ? ('מתוך '+n) : ('מתוך '+n+' — דרושות 2+ שאלות'); chOf.style.cssText='font-size:12px; color:var(--ink-dim);';
     chWrap.appendChild(chLbl); chWrap.appendChild(chIn); chWrap.appendChild(chOf);
     var scWrap = document.createElement('span'); scWrap.style.cssText='display:inline-flex; align-items:center; gap:5px;';
-    var sLbl = document.createElement('span'); sLbl.textContent='ציון החלק:'; sLbl.style.cssText='font-size:13px; color:var(--ink-dim);';
+    var sLbl = document.createElement('span'); sLbl.textContent='ציון הפרק:'; sLbl.style.cssText='font-size:13px; color:var(--ink-dim);';
     var sIn = document.createElement('input'); sIn.type='number'; sIn.min='0'; sIn.value=String(pscore);
     sIn.style.cssText='width:66px; padding:7px 9px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.07); color:var(--ink); font-family:Heebo; font-size:14px; text-align:center;';
     sIn.onchange=function(){ examSetPartScore(part, sIn.value); };
@@ -4356,10 +4360,18 @@ function renderExamEditor(){
     sWrap.appendChild(chWrap); sWrap.appendChild(scWrap);
     head.appendChild(sWrap);
     box.appendChild(head);
+    // כותרת-הפרק (שם שהמורה מזין; ריק → בהצגה יופיע ברירת-המחדל, ו-mc יקבל "שאלות רב-ברירה")
+    var titRow = document.createElement('div'); titRow.style.cssText='margin:2px 0 10px; display:flex; align-items:center; gap:8px;';
+    var titLbl = document.createElement('span'); titLbl.textContent='כותרת:'; titLbl.style.cssText='font-size:12.5px; color:var(--ink-dim); flex:0 0 auto;';
+    var ptitle = document.createElement('input'); ptitle.type='text'; ptitle.value = part.title || '';
+    ptitle.placeholder = (part.type==='mc' ? 'שאלות רב-ברירה' : 'למשל: החומרים שמהם אנו ניזונים');
+    ptitle.style.cssText='flex:1 1 auto; padding:7px 11px; border-radius:8px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); font-family:Heebo; font-size:14px; font-weight:600;';
+    ptitle.oninput=function(){ part.title = ptitle.value; touch(); };
+    titRow.appendChild(titLbl); titRow.appendChild(ptitle); box.appendChild(titRow);
     var note = document.createElement('div');
     var noteTxt, noteOk;
     if (isChoice){
-      if (pscore % effC !== 0){ noteTxt='⛔ בחלק-בחירה: ציון-החלק ('+pscore+') חייב להתחלק ב-'+effC+' לניקוד שווה'; noteOk=false; }
+      if (pscore % effC !== 0){ noteTxt='⛔ בפרק-בחירה: ציון-הפרק ('+pscore+') חייב להתחלק ב-'+effC+' לניקוד שווה'; noteOk=false; }
       else { noteTxt='✓ עונים על '+effC+' מתוך '+n+' · כל שאלה '+(pscore/effC)+' נק׳ (שווה)'; noteOk=true; }
     } else {
       var sum=examPartSum(part);
@@ -4374,7 +4386,7 @@ function renderExamEditor(){
     if (hasP){
       var pWrap = document.createElement('div'); pWrap.style.cssText='margin-bottom:12px; background:rgba(243,200,90,.07); border:1px solid rgba(243,200,90,.28); border-radius:10px; padding:10px 12px;';
       var pHd = document.createElement('div'); pHd.style.cssText='display:flex; align-items:center; gap:8px; margin-bottom:6px;';
-      var pLbl = document.createElement('span'); pLbl.style.cssText='font-size:13px; font-weight:700; color:var(--gold);'; pLbl.textContent='📄 קטע קריאה (מוצג מעל שאלות החלק)';
+      var pLbl = document.createElement('span'); pLbl.style.cssText='font-size:13px; font-weight:700; color:var(--gold);'; pLbl.textContent='📄 קטע קריאה (מוצג מעל שאלות הפרק)';
       var pRm = document.createElement('button'); pRm.className='btn ghost sm'; pRm.style.cssText='margin-inline-start:auto; color:#ff8a8a; border-color:rgba(255,107,107,.3); padding:3px 10px; font-size:12px;'; pRm.textContent='הסר';
       pRm.onclick=function(){ delete part.passage; renderExamEditor(); touch(); };
       pHd.appendChild(pLbl); pHd.appendChild(pRm); pWrap.appendChild(pHd);
@@ -4391,7 +4403,7 @@ function renderExamEditor(){
       box.appendChild(pAdd);
     }
     examQsOf(part.id).forEach(function(q){
-      box.appendChild(examQCard(q, quiz.questions.indexOf(q)));
+      _qNum++; box.appendChild(examQCard(q, quiz.questions.indexOf(q), _qNum));
     });
     var addQ = document.createElement('button'); addQ.className='btn ghost sm'; addQ.style.cssText='margin-top:4px;';
     addQ.textContent='➕ הוסף שאלה ידנית'; addQ.onclick=function(){ examAddQuestion(part.id); };
@@ -4400,25 +4412,25 @@ function renderExamEditor(){
     aiQ.textContent='🤖 הוסף שאלות עם AI'; aiQ.onclick=function(){ openPartAi(part.id); };
     box.appendChild(aiQ);
     var delP = document.createElement('button'); delP.className='btn ghost sm'; delP.style.cssText='margin-top:4px; margin-inline-start:8px; color:#ff8a8a; border-color:rgba(255,107,107,.35);';
-    delP.textContent='🗑 מחק חלק'; delP.onclick=function(){ examDelPart(part.id); };
+    delP.textContent='🗑 מחק פרק'; delP.onclick=function(){ examDelPart(part.id); };
     box.appendChild(delP);
     list.appendChild(box);
   });
 
   var addP = document.createElement('button'); addP.className='btn'; addP.style.cssText='background:var(--violet); color:#0b0b2a; font-weight:800; margin-top:4px;';
-  addP.textContent='➕ הוסף חלק'; addP.onclick=examAddPart;
+  addP.textContent='➕ הוסף פרק'; addP.onclick=examAddPart;
   list.appendChild(addP);
 
   if ($('clear-all-wrap')) $('clear-all-wrap').style.display='block';
 }
 /* כרטיס-שאלה במצב-בחינה (אמריקאי) — כולל שדה-ניקוד; בלי חצי-הזזה (בהמשך) */
-function examQCard(q, gi){
+function examQCard(q, gi, qNum){
   var part = quiz.parts.find(function(p){ return p.id===q.partId; });
   var isOpen = !!(part && part.type==='open');
   var isChoice = examIsChoice(part);
   var card = document.createElement('div'); card.className='qcard'; card.style.marginBottom='12px';
   var top = document.createElement('div'); top.className='qtop';
-  var lbl = document.createElement('span'); lbl.className='qlabel'; lbl.textContent='שאלה';
+  var lbl = document.createElement('span'); lbl.className='qlabel'; lbl.textContent='שאלה ' + (qNum || (gi+1));
   var ptsWrap = document.createElement('span'); ptsWrap.style.cssText='display:inline-flex; align-items:center; gap:5px; margin-inline-start:12px;';
   var ptsLbl = document.createElement('span'); ptsLbl.textContent='ניקוד:'; ptsLbl.style.cssText='font-size:12px; color:var(--gold);';
   ptsWrap.appendChild(ptsLbl);
@@ -4426,7 +4438,7 @@ function examQCard(q, gi){
   if (isChoice || isOpen){
     var ptsBox = document.createElement('span'); ptsBox.textContent=String(qpts);
     ptsBox.style.cssText='min-width:40px; text-align:center; padding:5px 9px; border-radius:7px; background:rgba(243,200,90,.10); border:1px solid rgba(243,200,90,.3); color:var(--gold); font-size:13px; font-weight:700;';
-    ptsBox.title = isChoice ? 'בחלק-בחירה הניקוד שווה לכל השאלות (נקבע אוטומטית)' : 'ניקוד-השאלה = סכום תת-הסעיפים';
+    ptsBox.title = isChoice ? 'בפרק-בחירה הניקוד שווה לכל השאלות (נקבע אוטומטית)' : 'ניקוד-השאלה = סכום תת-הסעיפים';
     ptsWrap.appendChild(ptsBox);
   } else {
     var ptsIn = document.createElement('input'); ptsIn.type='number'; ptsIn.min='0'; ptsIn.value=String(Number(q.points)||0);
