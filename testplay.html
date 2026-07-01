@@ -3679,8 +3679,8 @@ function syncExamToggle(){
 /* ═══════════════ TestPlay — ייבוא-בחינה באמצעות AI (v1: פרומפט → JSON → בנייה) ═══════════════
    דפוס זהה ל-openImport של QuizPlay: המורה נותן לכלי-ה-AI את הבחינה (קובץ/טקסט שם),
    TestPlay נותן הנחיה וקולט JSON. אין חילוץ-קובץ בדפדפן — כלי-ה-AI קוראים PDF/Word טוב יותר. */
-function examImportPrompt(){
-  return [
+function examImportPrompt(mode){
+  var lines = [
     'צור ייצוג JSON של הבחינה המצורפת — כטקסט בלבד, בלי עיצוב, בלי הסברים ובלי בלוק-קוד.',
     '',
     'המר את הבחינה בדיוק למבנה הזה (דוגמה תקינה):',
@@ -3709,10 +3709,17 @@ function examImportPrompt(){
     '- score: ניקוד החלק כולו (מספר שלם).',
     '- choiceCount: כמה שאלות עונים מתוך החלק. "יש לענות על 2 מבין 4" → choiceCount:2 (והבא את כל 4 השאלות). אם עונים על הכל → 0.',
     '- mc: answers = רשימת התשובות; correct = אינדקס התשובה הנכונה מ-0 (או -1 אם לא ידוע).',
-    '- open: subs = תת-הסעיפים, לכל אחד text ו-points. שאלה פתוחה בלי סעיפים → sub יחיד עם מלוא ניקוד-השאלה.',
-    '',
-    'החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.'
-  ].join('\n');
+    '- open: subs = תת-הסעיפים, לכל אחד text ו-points. שאלה פתוחה בלי סעיפים → sub יחיד עם מלוא ניקוד-השאלה.'
+  ];
+  if (mode==='structure'){
+    lines.push('');
+    lines.push('חשוב — ייבוא מבנה בלבד: השאר את כל שדות ה-text ריקים (""). אל תכתוב את נוסחי השאלות, התשובות או הסעיפים.');
+    lines.push('מלא רק את המבנה: type, score, choiceCount, מספר השאלות בכל חלק, מספר התשובות בכל שאלת-mc (כמחרוזות ריקות), וב-open את הסעיפים עם ה-points בלבד.');
+  }
+  lines.push('');
+  lines.push('השתמש במרכאות כפולות ישרות (") בלבד — לא מרכאות מסולסלות/חכמות.');
+  lines.push('החזר JSON תקין אחד בלבד, בלי טקסט לפני או אחרי.');
+  return lines.join('\n');
 }
 function examImportError(msg){
   var m = $('exam-imp-msg');
@@ -3725,8 +3732,14 @@ function examParseExam(text){
   s = s.trim().replace(/^```[a-zA-Z]*\s*/i,'').replace(/\s*```$/,'').trim();
   var lo = s.indexOf('{'), hi = s.lastIndexOf('}');
   if (lo>=0 && hi>lo) s = s.slice(lo, hi+1);
-  var noC = s.replace(/\/\/[^\n\r]*/g,'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/,(\s*[}\]])/g,'$1');
-  var attempts = [ s, s.replace(/,(\s*[}\]])/g,'$1'), noC, noC.replace(/[\u201C\u201D\u201E\u201F]/g,'"').replace(/[\u2018\u2019]/g,"'") ];
+  function noTrail(x){ return x.replace(/,(\s*[}\]])/g,'$1'); }
+  function noCmt(x){ return x.replace(/\/\/[^\n\r]*/g,'').replace(/\/\*[\s\S]*?\*\//g,''); }
+  function fixCurly(x){
+    x = x.replace(/([{\[,:]\s*)[\u201C\u201D\u201E\u201F]/g,'$1"');
+    x = x.replace(/[\u201C\u201D\u201E\u201F](\s*[:,}\]])/g,'"$1');
+    return x;
+  }
+  var attempts = [ s, noTrail(s), noTrail(noCmt(s)), noTrail(fixCurly(s)), noTrail(noCmt(fixCurly(s))) ];
   var lastErr='';
   for (var i=0;i<attempts.length;i++){ try { return { ok:true, data: JSON.parse(attempts[i]) }; } catch(e){ lastErr = e.message; } }
   return { ok:false, err: lastErr, snippet: (s.slice(0,160) || '(ריק)') };
@@ -3774,15 +3787,16 @@ function examImportBuild(jsonText, mode){
   renderQuestions(); touch(); syncExamToggle();
   setTimeout(function(){ if (!examIsValid()) showToast('הבחינה יובאה — יש הערות-אימות לתיקון (ראו אדום).'); else showToast('הבחינה יובאה בהצלחה ✓'); }, 60);
 }
-function openExamImport(){
+function openExamImport(mode){
+  mode = (mode==='structure') ? 'structure' : 'full';
   var ov = $('exam-imp-overlay');
-  if (ov){ ov.remove(); return; }
+  if (ov) ov.remove();
   ov = document.createElement('div'); ov.id='exam-imp-overlay';
   ov.style.cssText='position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.65); display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow:auto;';
   ov.onclick = function(e){ if (e.target===ov) ov.remove(); };
   var box = document.createElement('div');
   box.style.cssText='background:#0d1426; border:1px solid rgba(255,255,255,.18); border-radius:18px; padding:22px; max-width:600px; width:100%; text-align:right; margin:auto;';
-  var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent='🤖 ייבוא בחינה באמצעות AI';
+  var title = document.createElement('div'); title.style.cssText='font-size:23px; font-weight:800; color:var(--gold); margin-bottom:6px;'; title.textContent = (mode==='structure') ? '📐 ייבוא בחינה — מבנה בלבד (ללא תוכן)' : '🤖 ייבוא בחינה — כולל תוכן השאלות';
   box.appendChild(title);
   var desc = document.createElement('div'); desc.style.cssText='font-size:14px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;';
   desc.textContent='העתיקו את ההנחיה, פתחו את ChatGPT / Gemini / Claude, וצרפו שם את קובץ-הבחינה (Word/PDF) או הדביקו את הטקסט שלה. הדביקו כאן את התשובה — והמערכת תבנה את הבחינה: חלקים, סוגים, ניקוד ובחירה.';
@@ -3794,7 +3808,7 @@ function openExamImport(){
   box.appendChild(s1);
   var pBox = document.createElement('textarea'); pBox.id='exam-imp-prompt'; pBox.readOnly=true;
   pBox.style.cssText='width:100%; height:150px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:var(--ink); padding:10px; font-family:Heebo; font-size:14px; resize:vertical;';
-  pBox.value = examImportPrompt();
+  pBox.value = examImportPrompt(mode);
   box.appendChild(pBox);
   var copyBtn = document.createElement('button'); copyBtn.className='btn teal'; copyBtn.textContent='📋 העתקת ההנחיה'; copyBtn.style.cssText='width:100%; margin:10px 0 18px; font-size:17px; padding:13px;';
   copyBtn.onclick = function(){ pBox.select(); try{ document.execCommand('copy'); }catch(e){} copyBtn.textContent='✓ הועתק!'; setTimeout(function(){ copyBtn.textContent='📋 העתקת ההנחיה'; },1500); };
@@ -3808,16 +3822,12 @@ function openExamImport(){
   box.appendChild(paste);
   var msg = document.createElement('div'); msg.id='exam-imp-msg'; msg.style.cssText='display:none; white-space:pre-wrap; color:#ff8a8a; background:rgba(255,107,107,.10); border:1px solid rgba(255,107,107,.35); border-radius:10px; padding:10px 13px; font-size:13px; line-height:1.5; margin-top:12px; font-family:Heebo;';
   box.appendChild(msg);
-  var modeWrap = document.createElement('label'); modeWrap.style.cssText='display:flex; align-items:center; gap:9px; cursor:pointer; margin:14px 0 2px; font-size:14px; color:var(--ink); font-weight:700;';
-  var modeChk = document.createElement('input'); modeChk.type='checkbox'; modeChk.id='exam-imp-content'; modeChk.checked=true; modeChk.style.cssText='width:18px; height:18px; accent-color:var(--teal); cursor:pointer; flex:0 0 auto;';
-  var modeTxt = document.createElement('span'); modeTxt.textContent='כלול גם את תוכן השאלות (לא רק את המבנה)';
-  modeWrap.appendChild(modeChk); modeWrap.appendChild(modeTxt); box.appendChild(modeWrap);
-  var modeSub = document.createElement('div'); modeSub.style.cssText='font-size:12px; color:var(--ink-dim); margin-bottom:6px; line-height:1.5;';
-  modeSub.textContent='בלי סימון — ייבנה רק השלד (חלקים, מספר שאלות, ניקוד ובחירה) עם שאלות ריקות למילוי.';
-  box.appendChild(modeSub);
+  var modeNote = document.createElement('div'); modeNote.style.cssText='font-size:12.5px; color:var(--ink-dim); margin:12px 0 2px; line-height:1.5;';
+  modeNote.textContent = (mode==='structure') ? 'מצב מבנה בלבד — ייבנה השלד (חלקים, מספר שאלות, ניקוד ובחירה) עם שאלות ריקות למילוי.' : 'מצב מלא — ייבנו גם נוסחי השאלות, התשובות והסעיפים.';
+  box.appendChild(modeNote);
   var actions = document.createElement('div'); actions.style.cssText='display:flex; gap:10px; margin-top:14px;';
   var doBtn = document.createElement('button'); doBtn.className='btn teal'; doBtn.textContent='✓ בנה בחינה'; doBtn.style.flex='1';
-  doBtn.onclick = function(){ examImportBuild(paste.value, modeChk.checked ? 'full' : 'structure'); };
+  doBtn.onclick = function(){ examImportBuild(paste.value, mode); };
   var closeBtn = document.createElement('button'); closeBtn.className='btn ghost sm'; closeBtn.textContent='ביטול';
   closeBtn.onclick = function(){ ov.remove(); };
   actions.appendChild(doBtn); actions.appendChild(closeBtn);
@@ -3828,7 +3838,14 @@ function openExamImport(){
 function renderExamEditor(){
   var list = $('q-list'); list.innerHTML = '';
   examEnsure();
-  var _impBtn = document.createElement('button'); _impBtn.className='btn'; _impBtn.style.cssText='background:rgba(243,200,90,.14); border:1px solid rgba(243,200,90,.4); color:var(--gold); font-weight:700; margin-bottom:14px;'; _impBtn.textContent='🤖 ייבוא בחינה באמצעות AI'; _impBtn.onclick=openExamImport; list.appendChild(_impBtn);
+  var _impWrap = document.createElement('div'); _impWrap.style.cssText='margin-bottom:14px;';
+  var _impLbl = document.createElement('div'); _impLbl.style.cssText='font-size:13.5px; color:var(--gold); font-weight:700; margin-bottom:7px;'; _impLbl.textContent='🤖 ייבוא בחינה באמצעות AI:';
+  _impWrap.appendChild(_impLbl);
+  var _impRow = document.createElement('div'); _impRow.style.cssText='display:flex; gap:8px; flex-wrap:wrap;';
+  var _impFull = document.createElement('button'); _impFull.className='btn'; _impFull.style.cssText='flex:1 1 200px; background:rgba(243,200,90,.14); border:1px solid rgba(243,200,90,.4); color:var(--gold); font-weight:700;'; _impFull.textContent='כולל תוכן השאלות'; _impFull.onclick=function(){ openExamImport('full'); };
+  var _impStruct = document.createElement('button'); _impStruct.className='btn'; _impStruct.style.cssText='flex:1 1 200px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.2); color:var(--ink); font-weight:700;'; _impStruct.textContent='מבנה בלבד (ללא תוכן)'; _impStruct.onclick=function(){ openExamImport('structure'); };
+  _impRow.appendChild(_impFull); _impRow.appendChild(_impStruct); _impWrap.appendChild(_impRow);
+  list.appendChild(_impWrap);
   var total = examTotal(), cap = examCap(), over = total > cap;
 
   // הגדרות-בחינה
